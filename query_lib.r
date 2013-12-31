@@ -1,4 +1,4 @@
-getcounts <- function(labels, queries, ...) {
+query.aggregate <- function(queries, labels=queries, sets, ...) {
   result = NULL
   for (i in 1:length(queries)) {
     r = amcat.getobjects(conn,"aggregate", filters=list(q=URLencode(queries[i]), ...))
@@ -8,4 +8,19 @@ getcounts <- function(labels, queries, ...) {
     }
   }
   return(result)  
+}
+
+query.hits <- function(queries, labels=queries, sets, ...) {
+  result = NULL
+  for (i in 1:length(queries)) {
+    q = URLencode(paste("count", queries[i], sep="#"))
+    r = amcat.getobjects(conn, "search",filters=list(q=q, col="hits", sets=sets, ...))
+    if (nrow(r) > 0) {
+      r$query = labels[i]
+      result = rbind(result, r)
+    } else {
+      warning(paste("Query",labels[i]," produced no results"))
+    }
+  }
+  return(result)
 }
