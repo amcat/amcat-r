@@ -31,7 +31,6 @@ corpus.compare <- function(words.x, freq.x=rep(1, length(words.x)), words.y, fre
 
 corpus.split <- function(aid, words, freq=NULL, pattern, ...) {
   selected.aid = aid[grepl(pattern, words, ...)]
-  selected.aid = aid[grepl(pattern, words)]
   print(paste("Selected", length(selected.aid),"/", length(unique(aid)),"using pattern", pattern))
   words.x = words[aid %in% selected.aid]
   freq.x = if (is.null(freq)) NULL else freq[aid %in% selected.aid]
