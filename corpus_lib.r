@@ -38,3 +38,15 @@ corpus.split <- function(aid, words, freq=NULL, pattern, ...) {
   freq.y = if (is.null(freq)) NULL else freq[!(aid %in% selected.aid)]
   list(words.x=words.x, freq.x=freq.x, words.y=words.y, freq.y=freq.y)  
 }
+
+corpus.freqs <- function(aid, words, freq) {
+  # compute the document frequency for all words
+  freqs = aggregate(freq, list(words), FUN=sum)
+  docfreqs = aggregate(aid, list(words), FUN=function(x) length(unique(x)))
+  result = merge(freqs, docfreqs, by='Group.1')
+  colnames(result) <- c("word", "tf", "df")
+  result$df.prop = result$df / length(unique(aid))
+  result$idf = log(length(unique(aid)) / result$df)
+  result$tfidf = result$tf * result$idf
+  result
+}
