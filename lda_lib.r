@@ -32,21 +32,6 @@ lda.cluster <- function(corpus, voca, nclusters = 25, niterations=25) {
                               compute.log.likelihood=TRUE)
 }
 
-chi2 <- function(a,b,c,d) {
-  # Compute the chi^2 statistic for a 2x2 crosstab containing the values
-  # [[a, b], [c, d]]
-  ooe <- function(o, e) {(o-e)*(o-e) / e}
-  tot = 0.0 + a+b+c+d
-  a = as.numeric(a)
-  b = as.numeric(b)
-  c = as.numeric(c)
-  d = as.numeric(d)
-  (ooe(a, (a+c)*(a+b)/tot)
-   +  ooe(b, (b+d)*(a+b)/tot)
-   +  ooe(c, (a+c)*(c+d)/tot)
-   +  ooe(d, (d+b)*(c+d)/tot))
-}
-
 fixUnitId <- function(data){
   ## if unit_level is 'paragraph' or 'sentence', merge parnr/sentnr into article id 
   if('paragraph' %in% colnames(data) | 'sentence' %in% colnames(data)){ 
