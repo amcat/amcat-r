@@ -77,3 +77,22 @@ amcat.runaction <- function(conn, action, format='csv', ...) {
   }
   result
 }
+
+amcat.getMeta <- function(conn, articlesets, media=c(), from_date=NA, to_date=NA, filter_columns=c('id','date','medium','length'), time=F){
+  meta = NULL
+  if(length(media) == 0) media = c(NA)
+  
+  for(medium in media) {
+    filters = list(articleset=articlesets)
+    if(!is.na(medium)) filters = c(filters, medium=medium)
+    if(!is.na(from_date)) filters = c(filters, date_from=from_date)
+    if(!is.na(to_date)) filters = c(filters, date_to=to_date)
+    
+    ameta = amcat.getobjects(conn, "articlemeta", filters=filters, use__in=c('articleset'))
+    if(nrow(ameta) == 0) next
+    if(length(filter_columns > 0)) ameta = ameta[,filter_columns]
+    meta = rbind(meta,ameta)
+  }
+  if(time == T) meta$date = as.POSIXct(meta$date, format='%Y-%m-%d %H:%M:%S') else meta$date = as.Date(meta$date, format='%Y-%m-%d')
+  meta
+}
