@@ -1,0 +1,30 @@
+\name{amcat.articlemeta}
+\alias{amcat.articlemeta}
+%- Also NEED an '\alias' for EACH other topic documented here.
+\title{
+Retrieve article metadata from the API
+}
+\description{
+Retrieve a data frame with the id, headline etc for the given articles
+}
+\usage{
+amcat.articlemeta(conn, articlesets, media=c(), from_date=NA, to_date=NA, filter_columns=c('id','date','medium','length'), time=F)
+}
+\arguments{
+}
+\details{
+}
+\value{
+}
+\references{
+}
+\author{
+}
+\note{
+}
+
+
+\seealso{
+}
+\examples{
+}
