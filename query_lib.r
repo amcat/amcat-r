@@ -1,4 +1,4 @@
-query.aggregate <- function(queries, labels=queries, sets, ...) {
+query.aggregate <- function(conn, queries, labels=queries, sets, ...) {
   result = NULL
   for (i in 1:length(queries)) {
     r = amcat.getobjects(conn,"aggregate", filters=list(q=URLencode(queries[i]), ...))
@@ -10,7 +10,7 @@ query.aggregate <- function(queries, labels=queries, sets, ...) {
   return(result)  
 }
 
-query.hits <- function(queries, labels=queries, sets, ...) {
+query.hits <- function(conn, queries, labels=queries, sets, ...) {
   result = NULL
   for (i in 1:length(queries)) {
     q = URLencode(paste("count", queries[i], sep="#"))
