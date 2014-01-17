@@ -1,4 +1,4 @@
-codebook.getChildren <- function(hierarchy, code){
+amcat.getChildren <- function(hierarchy, code){
   children = as.character(hierarchy[hierarchy$parent==code,]$code)
   allchildren = children
   while(length(children) > 0){
@@ -8,8 +8,8 @@ codebook.getChildren <- function(hierarchy, code){
   allchildren
 }
 
-codebook.aggCode <- function(hits, hierarchy, code){
-  columns = c(code, as.character(codebook.getChildren(hierarchy, code)))
+amcat.aggCode <- function(hits, hierarchy, code){
+  columns = c(code, as.character(amcat.getChildren(hierarchy, code)))
   occ = hits[hits$code %in% columns,]
   print(code)
   print(paste("    nr of children =", length(columns)))
@@ -20,13 +20,13 @@ codebook.aggCode <- function(hits, hierarchy, code){
   occ
 }
 
-codebook.aggAllCodes <- function(hits, hierarchy, codes=c()){
+amcat.aggAllCodes <- function(hits, hierarchy, codes=c()){
   if(length(codes)==0) codes = unique(c(as.character(hierarchy$parent),as.character(hierarchy$code)))
   codes = as.character(codes)
   aggscores = data.frame()
   print('Aggregating hits')
   for(code in codes){
-    aggscore = codebook.aggCode(hits, hierarchy, code)
+    aggscore = amcat.aggCode(hits, hierarchy, code)
     if(nrow(aggscore)==0) next
     aggscores = rbind(aggscores, aggscore)
   }
@@ -34,15 +34,15 @@ codebook.aggAllCodes <- function(hits, hierarchy, codes=c()){
   aggscores
 }
 
-codebook.appendAggHits <- function(hits, hierarchy){
+amcat.appendAggHits <- function(hits, hierarchy){
   hits = hits[,colnames(hits)[!colnames(hits) == 'agg_hits']]
-  agghits = codebook.aggAllCodes(hits, hierarchy)
+  agghits = amcat.aggAllCodes(hits, hierarchy)
   agghits = merge(agghits, hits, by=c('id','code'), all.x=T)
   agghits$hits[is.na(agghits$hits)] = 0
   agghits
 }
 
-codebook.gethierarchy <- function(conn, codebook_id, languages=NULL) {
+amcat.gethierarchy <- function(conn, codebook_id, languages=NULL) {
   
   hierarchy = amcat.getobjects(conn, "codebookcode", filters=list(codebook__id=codebook_id))
   hierarchy = hierarchy[,c("code", "parent")]
@@ -75,25 +75,25 @@ codebook.gethierarchy <- function(conn, codebook_id, languages=NULL) {
   return(hierarchy)
 }
 
-get.ancestors <- function (hierarchy){
-  p = data.frame(c=hierarchy$code, p1 = hierarchy$parent)
-  for (i in 1:nrow(p)) { #nrow(p) is max number of required merges, but we'll break sooner
-    m = p[, c("c", "p1")]
-    colnames(m) = paste("p", c(i, i+1), sep="")
-    p = merge(p, m, all.x=T)
-    if (all(is.na(p[, ncol(p)]))) {
-      # last column is all NA, so we are done. Drop the column and break to return
-      p = p[, -ncol(p)]
-      break
-    }
-  }
-  p = p[, sort(colnames(p))]
-  return(p)
-}
-
-
-codebook.cat <- function(hierarchy, depth=0) {
+amcat.codebookcat <- function(hierarchy, depth=0) {
   # depth 0 is root, depth 1 is cat, etc
+
+  get.ancestors <- function (hierarchy){
+    p = data.frame(c=hierarchy$code, p1 = hierarchy$parent)
+    for (i in 1:nrow(p)) { #nrow(p) is max number of required merges, but we'll break sooner
+      m = p[, c("c", "p1")]
+      colnames(m) = paste("p", c(i, i+1), sep="")
+      p = merge(p, m, all.x=T)
+      if (all(is.na(p[, ncol(p)]))) {
+	# last column is all NA, so we are done. Drop the column and break to return
+	p = p[, -ncol(p)]
+	break
+      }
+    }
+    p = p[, sort(colnames(p))]
+    return(p)
+  }
+
   anc = get.ancestors(hierarchy)
   x = rep(NA, nrow(anc))
   for (i in 1:(ncol(anc) - depth)) {
@@ -107,10 +107,10 @@ codebook.cat <- function(hierarchy, depth=0) {
 }
 
 
-codebook.addcats <- function(hierarchy, maxdepth=2) {
+amcat.codebook.cats <- function(hierarchy, maxdepth=2) {
   for(depth in 0:maxdepth) {
     target = paste("cat", (depth+1), sep=".")
-    hierarchy[, target] = codebook.cat(hierarchy, depth)  
+    hierarchy[, target] = amcat.codebookcat(hierarchy, depth)  
     if (depth > 0) {
       fallback = paste("cat", (depth), sep=".")
       hierarchy[is.na(hierarchy[,target]), target] = hierarchy[is.na(hierarchy[, target]), fallback]
@@ -121,13 +121,7 @@ codebook.addcats <- function(hierarchy, maxdepth=2) {
   hierarchy[do.call("order", hierarchy[, sortnames]),]
 }
 
-parenthesize <- function(s) {
-  spaces = grepl(" ", s)
-  s[spaces] =  paste("(", s[spaces], ")", sep="")
-  return(s)
-}
-
-codebook.getqueries <- function(queries, index) {
+amcat.getqueries <- function(queries, index) {
   result = list()
   for (i in 1:length(queries)) {
     c = as.character(index[i])                
@@ -135,7 +129,13 @@ codebook.getqueries <- function(queries, index) {
     if (!is.na(new)) 
       result[[c]] = c(result[[c]], new)
   }
+
   # combine queries to single string
+  parenthesize <- function(s) {
+    spaces = grepl(" ", s)
+    s[spaces] =  paste("(", s[spaces], ")", sep="")
+    return(s)  
+  }
   combined = NULL
   for(q in names(result))
     combined = rbind(combined, c(label=q, query= paste(parenthesize(result[[q]]), collapse=" ")))
