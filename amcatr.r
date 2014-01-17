@@ -35,7 +35,7 @@ amcat.getobjects <- function(conn, resource, format='csv', stepsize=50000, filte
   result = data.frame()
   while(TRUE){
     subresult = getURL(paste(url, '&page=', as.integer(page), sep=''), .opts=opts)
-    subresult = amcat.readoutput(subresult, format=format)
+    subresult = .amcat.readoutput(subresult, format=format)
     result = rbind(result, subresult)
     #print(paste("Got",nrow(subresult),"rows, expected", stepsize))
     if(nrow(subresult) < stepsize) break
@@ -44,7 +44,7 @@ amcat.getobjects <- function(conn, resource, format='csv', stepsize=50000, filte
   result
 }
 
-amcat.readoutput <- function(result, format){
+.amcat.readoutput <- function(result, format){
   if (result == '401 Unauthorized')
     stop("401 Unauthorized")
   if (format == 'json') {
@@ -78,7 +78,7 @@ amcat.runaction <- function(conn, action, format='csv', ...) {
   result
 }
 
-amcat.getMeta <- function(conn, articlesets, media=c(), from_date=NA, to_date=NA, filter_columns=c('id','date','medium','length'), time=F){
+amcat.articlemeta <- function(conn, articlesets, media=c(), from_date=NA, to_date=NA, filter_columns=c('id','date','medium','length'), time=F){
   meta = NULL
   if(length(media) == 0) media = c(NA)
   
