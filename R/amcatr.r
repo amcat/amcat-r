@@ -38,14 +38,12 @@ amcat.connect <- function(host, username=NULL, passwd=NULL, test=T) {
 #' @param format the format to use, e.g. csv or json. 
 #' @param stepsize the number of objects to retrieve per query. Set to a lower number of larger objects
 #' @param filters a list of filters to pass to the API, e.g. list(project=1)
-#' @param test if True, make a test call to check the password
 #' @param use__in a subset of names(filters) that should be passed with an in argument
 #' @return A dataframe of objects (rows) by properties (columns)
 #' @export
-amcat.getobjects <- function(conn, resource, format='csv', stepsize=50000, filters=list(), use__in=c(), ...) {
+amcat.getobjects <- function(conn, resource, format='csv', stepsize=50000, filters=list(), use__in=c()) {
   limit = stepsize
   url = paste(conn$host, '/api/v4/', resource, '?format=', format, '&page_size=', limit, sep='')
-  filters = c(filters, list(...))
   if (length(filters) > 0) {
     for (i in 1:length(filters))
       if(names(filters)[i] %in% use__in) {
@@ -88,6 +86,7 @@ amcat.getobjects <- function(conn, resource, format='csv', stepsize=50000, filte
 #' @param conn the connection object from \code{\link{amcat.connect}}
 #' @param action the name of the action
 #' @param format the format to request, e.g. csv or json
+#' @param ... any additional (e.g. action-specific) arguments to pass to the action API
 #' @return A dataframe containing the result of the action [WvA: shouldn't that depend on the action??]
 #' @export
 amcat.runaction <- function(conn, action, format='csv', ...) {
@@ -118,7 +117,6 @@ amcat.runaction <- function(conn, action, format='csv', ...) {
 #' @param sets the article set id(s) to retrieve
 #' @param filters additional filters, e.g. list(medium=1)
 #' @param columns the names of columns to retrieve
-#' @param format the format to request, e.g. csv or json
 #' @param time if true, parse the date as POSIXct datetime instead of Date
 #' @return A dataframe containing the articles and the selected columns
 #' @export
