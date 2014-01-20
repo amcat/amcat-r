@@ -3,30 +3,56 @@ library(RCurl)
 
 #' Connect to the AmCAT API
 #'
-#' Connect to the AmCAT API. Currently simply stores the authentication information
-#' in a list and performs a trivial call to check that the use can log in.
+#' Connect to the AmCAT API and requests a temporary (24h) authentication token that will be stored in the output
+#' If username and password are not given, a file ~/.amcatauth will be read, which should be a csv file with
+#' columns host (may be *), username, password. If the file cannot be read, username will be taken from $USER
+#' and the user will be prompted for the password.
 #' 
 #' @param host the hostname, e.g. http://amcat.vu.nl or http://localhost:8000
-#' @param username the username to login with, e.g. 'amcat'
+#' @param username the username to login with, e.g. 'amcat'. 
 #' @param passwd the password to login with, e.g. 'amcat'
-#' @param test if True, make a test call to check the password
+#' @param token an existing token to authenticate with. If given, username and password are not used and the token is not tested
 #' @return A list with authentication information that is used by the other functions in this package
 #' @export
-amcat.connect <- function(host, username=NULL, passwd=NULL, test=T) {
-  if (is.null(username)) {
-    cat(paste("Please enter the username for", host, "\n"))
-    username=readline()
+amcat.connect <- function(host, username=NULL, passwd=NULL, token=NULL) {
+  if (is.null(token)) {
+    if (is.null(passwd)) { # try amcatauth file
+      a = tryCatch(.readauth(host), error=function(e) print("Could not read ~/.amcatauth"))
+      if (!is.null(a)) {
+        username = a$username
+        passwd = a$password
+      }
+    }
+    if (is.null(username)) { # try USER variable
+      username = Sys.getenv("USER")
+      if (username == '') { # ask
+        cat(paste("Please enter the username for", host, "\n"))
+        username=readline()
+      }
+    }
+    if (is.null(passwd)) { #ask
+      cat(paste("Please enter the password for ",username,"@", host, " (or create a ~/.amcatauth file) \n", sep=""))
+      passwd=readline()
+    }
+    # get auth token
+    url = paste(host, '/api/v4/get_token', sep='')
+    
+    res = tryCatch(postForm(url, username=username, password=passwd, .checkParams=F), 
+                   error=function(e) stop(paste("Could not get token from ",
+                                                 username,":",passwd,"@", host,
+                                                 " please check host, username and password. Error: ", e, sep="")))
+    token = fromJSON(res)$token
   }
-  if (is.null(passwd)) {
-    cat(paste("Please enter the password for ",username,"@", host, "\n", sep=""))
-    passwd=readline()
-  }
-  conn = list(passwd=passwd, username=username, host=host)
-  if (test) {
-    version = amcat.getobjects(conn, "amcat")$db_version
-    cat(paste("Connected to ", username, "@", host, " (db_version=",version,")\n", sep=""))
-  }
-  conn
+  list(host=host, token=token)
+}
+
+#' Get authentication info from ~/.amcatauth file
+.readauth <- function(host) {
+  if (!file.exists("~/.amcatauth")) return()
+  rows = read.csv("~/.amcatauth", header=F, stringsAsFactors=F)
+  colnames(rows) <- c("host", "username", "password")
+  r = rows[rows$host == '*' | rows$host == host,]
+  if (nrow(r) > 0) list(username=r$username[1], password=r$password[1]) 
 }
 
 #' Get objects from the AmCAT API
@@ -51,12 +77,12 @@ amcat.getobjects <- function(conn, resource, format='csv', stepsize=50000, filte
       } else url = paste(url, '&', names(filters)[i], '=', filters[[i]], sep='')
   }
   
-  opts = list(userpwd=paste(conn$username,conn$passwd,sep=':'), ssl.verifypeer = FALSE, httpauth=1L)
+  httpheader = c(Authorization=paste("Token", conn$token))
   print(paste("Getting objects from", url))
   page = 1
   result = data.frame()
   while(TRUE){
-    subresult = getURL(paste(url, '&page=', as.integer(page), sep=''), .opts=opts)
+    subresult = getURL(paste(url, '&page=', as.integer(page), sep=''), httpheader=httpheader)
     subresult = .amcat.readoutput(subresult, format=format)
     result = rbind(result, subresult)
     #print(paste("Got",nrow(subresult),"rows, expected", stepsize))
@@ -94,8 +120,8 @@ amcat.runaction <- function(conn, action, format='csv', ...) {
   url = paste(conn$host, resource, action, sep="/")
   url = paste(url, '?format=', format, sep="")
   print(paste("Running action at", url))
-  opts = list(userpwd=paste(conn$username,conn$passwd,sep=':'), ssl.verifypeer = FALSE, httpauth=1L)
-  result = postForm(url, ..., .opts=opts)
+  httpheader = c(Authorization=paste("Token", conn$token))
+  result = postForm(url, ..., .opts=list(httpheader=httpheader))
   
   if (result == '401 Unauthorized')
     stop("401 Unauthorized")
