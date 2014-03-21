@@ -92,6 +92,38 @@ amcat.getobjects <- function(conn, resource, format='csv', stepsize=50000, filte
   result
 }
 
+#' Get objects from the AmCAT API
+#'
+#' Get a table of objects from the AmCAT API, e.g. projects, sets etc.
+#' 
+#' @param conn the connection object from \code{\link{amcat.connect}}
+#' @param resource the name of the resource, e.g. 'projects'
+#' @param format the format to use, e.g. csv or json. 
+#' @param stepsize the number of objects to retrieve per query. Set to a lower number of larger objects
+#' @param filters a list of filters to pass to the API, e.g. list(project=1)
+#' @param use__in a subset of names(filters) that should be passed with an in argument
+#' @return A dataframe of objects (rows) by properties (columns)
+#' @export
+amcat.getobjects.post <- function(conn, resource, format='csv', stepsize=50000, filters=list(), use__in=c()) {
+  url = paste(conn$host, '/api/v4/', resource, sep="")
+  form = modifyList(list(page_size=stepsize), filters)
+
+  httpheader = c(Authorization=paste("Token", conn$token), Accept="text/csv")
+  print(paste("Getting objects from", url))
+  page = 1
+  result = data.frame()
+  while(TRUE){
+    form = modifyList(form, list(page=page))
+    subresult = postForm(url, .params=form, .opts=list(httpheader=httpheader))
+    subresult = .amcat.readoutput(subresult, format=format)
+    result = rbind(result, subresult)
+    #print(paste("Got",nrow(subresult),"rows, expected", stepsize))
+    if(nrow(subresult) < stepsize) break
+    page = page + 1
+  }
+  result
+}
+
 #' Internal call to check GET results and parse as csv or json
 .amcat.readoutput <- function(result, format){
   if (result == '401 Unauthorized')

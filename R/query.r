@@ -15,7 +15,7 @@
 amcat.aggregate <- function(conn, queries, labels=queries, sets, ...) {
   result = NULL
   for (i in 1:length(queries)) {
-    r = amcat.getobjects(conn,"aggregate", filters=list(q=URLencode(queries[i]), ...))
+    r = amcat.getobjects.post(conn,"aggregate", filters=list(q=URLencode(queries[i]), sets=sets, ...))
     if (nrow(r) > 0) {
       r$query = labels[i]
       result = rbind(result, r)
