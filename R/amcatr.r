@@ -71,7 +71,7 @@ amcat.getURL <- function(conn, path, filters=NULL, post=FALSE) {
   url = paste(conn$host, path, sep="/")
   if (!post) {
     # build GET url query
-    filters = sapply(names(filters), function(key) paste(key, curlEscape(filters[key]), sep="="))
+    filters = sapply(1:length(filters), function(i) paste(names(filters)[i], curlEscape(filters[i]), sep="="))
     url = paste(url, paste(filters, collapse="&"), sep="?")
     print(paste("GET ", url))
     getURL(url, httpheader=httpheader, .opts=conn$opts)
