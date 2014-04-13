@@ -1,0 +1,26 @@
+\name{amcat.getobjects}
+\alias{amcat.getobjects}
+\title{Get objects from the AmCAT API}
+\usage{
+amcat.getobjects(conn, resource, ...)
+}
+\arguments{
+  \item{conn}{the connection object from
+  \code{\link{amcat.connect}}}
+
+  \item{resource}{the name of the resource, e.g.
+  'projects'. If it is of length>1, a path a/b/c/ will be
+  created (e.g. c("projects",1,"articlesets"))}
+
+  \item{...}{Other options to pass to
+  \code{\link{amcat.getpages}}, e.g. page_size, format, and
+  filters}
+}
+\value{
+A dataframe of objects (rows) by properties (columns)
+}
+\description{
+Get a table of objects from the AmCAT API, e.g. projects,
+sets etc.
+}
+

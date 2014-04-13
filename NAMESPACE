@@ -1,0 +1,8 @@
+export(amcat.aggregate)
+export(amcat.articlemeta)
+export(amcat.connect)
+export(amcat.features)
+export(amcat.gethierarchy)
+export(amcat.getobjects)
+export(amcat.hits)
+export(amcat.runaction)

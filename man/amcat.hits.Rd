@@ -1,0 +1,30 @@
+\name{amcat.hits}
+\alias{amcat.hits}
+\title{Conduct a query on amcat}
+\usage{
+amcat.hits(conn, queries, labels = queries, sets, ...)
+}
+\arguments{
+  \item{conn}{the connection object from
+  \code{\link{amcat.connect}}}
+
+  \item{queries}{a vector of queries to run}
+
+  \item{labels}{if given, labels corresponding to the
+  queries}
+
+  \item{sets}{one or more article set ids to query on}
+
+  \item{...}{additional arguments to pass to the AmCAT API,
+  e.g. extra filters}
+}
+\value{
+A data frame with hits per article
+}
+\description{
+This function is similar to using the 'show article list'
+function in AmCAT. It allows you to specify a number of
+queries and get document metadata and number of hits per
+document
+}
+

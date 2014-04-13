@@ -4,11 +4,7 @@
 # Example code in package build process
 *-Ex.R
 
-# Code produced by building package and documentation
-man
-NAMESPACE
-
-# Emacs meuk 
+# Emacs meuk
 *~
 \#*\#
 .\#*
