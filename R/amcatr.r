@@ -12,9 +12,12 @@ library(RCurl)
 #' @param username the username to login with, e.g. 'amcat'. 
 #' @param passwd the password to login with, e.g. 'amcat'
 #' @param token an existing token to authenticate with. If given, username and password are not used and the token is not tested
+#' @param disable_ipv6. If True, only use ipv4 resolving (faster if ipv6 causes timeout). Defaults to true, but this may change in the future.
 #' @return A list with authentication information that is used by the other functions in this package
 #' @export
-amcat.connect <- function(host, username=NULL, passwd=NULL, token=NULL) {
+amcat.connect <- function(host, username=NULL, passwd=NULL, token=NULL, disable_ipv6=TRUE) {
+  opts = if (disable_ipv6) list(ipresolve=1) else list()
+  
   if (is.null(token)) {
     if (is.null(passwd)) { # try amcatauth file
       a = tryCatch(.readauth(host), error=function(e) print("Could not read ~/.amcatauth"))
@@ -37,13 +40,13 @@ amcat.connect <- function(host, username=NULL, passwd=NULL, token=NULL) {
     # get auth token
     url = paste(host, '/api/v4/get_token', sep='')
     
-    res = tryCatch(postForm(url, username=username, password=passwd, .checkParams=F), 
+    res = tryCatch(postForm(url, username=username, password=passwd, .checkParams=F, .opts=opts), 
                    error=function(e) stop(paste("Could not get token from ",
                                                  username,":",passwd,"@", host,
                                                  " please check host, username and password. Error: ", e, sep="")))
     token = fromJSON(res)$token
   }
-  list(host=host, token=token)
+  list(host=host, token=token, opts=opts)
 }
 
 #' Get authentication info from ~/.amcatauth file
@@ -55,38 +58,46 @@ amcat.connect <- function(host, username=NULL, passwd=NULL, token=NULL) {
   if (nrow(r) > 0) list(username=r$username[1], password=r$password[1]) 
 }
 
-#' Get objects from the AmCAT API
-#'
-#' Get a table of objects from the AmCAT API, e.g. projects, sets etc.
+
+#' Retrieve a single URL from AmCAT with authentication and specified filters (GET or POST) 
 #' 
 #' @param conn the connection object from \code{\link{amcat.connect}}
-#' @param resource the name of the resource, e.g. 'projects'
-#' @param format the format to use, e.g. csv or json. 
-#' @param stepsize the number of objects to retrieve per query. Set to a lower number of larger objects
-#' @param filters a list of filters to pass to the API, e.g. list(project=1)
-#' @param use__in a subset of names(filters) that should be passed with an in argument
-#' @return A dataframe of objects (rows) by properties (columns)
-#' @export
-amcat.getobjects <- function(conn, resource, format='csv', stepsize=50000, filters=list(), use__in=c()) {
-  limit = stepsize
-  url = paste(conn$host, '/api/v4/', resource, '?format=', format, '&page_size=', limit, sep='')
-  if (length(filters) > 0) {
-    for (i in 1:length(filters))
-      if(names(filters)[i] %in% use__in) {
-        url = paste(url, '&', paste(paste(names(filters)[i],filters[[i]],sep='='),collapse='&'), sep='')
-      } else url = paste(url, '&', names(filters)[i], '=', filters[[i]], sep='')
-  }
-  
+#' @param path the path of the url to retrieve (using the host from conn)
+#' @param filters a named vector of filters, e.g. c(project=2, articleset=3)
+#' @param post use HTTP POST instead of GET
+#' @return the raw result
+amcat.getURL <- function(conn, path, filters=NULL, post=FALSE) {
   httpheader = c(Authorization=paste("Token", conn$token))
-  print(paste("Getting objects from", url))
-  page = 1
+  url = paste(conn$host, path, sep="/")
+  if (!post) {
+    # build GET url query
+    filters = sapply(names(filters), function(key) paste(key, curlEscape(filters[key]), sep="="))
+    url = paste(url, paste(filters, collapse="&"), sep="?")
+    print(paste("GET ", url))
+    getURL(url, httpheader=httpheader, .opts=conn$opts)
+  } else {  
+    post_opts = modifyList(conn$opts, list(httpheader=httpheader))
+    postForm(url, .params=filters, .opts=list(httpheader=httpheader))
+  }
+}
+
+#' Get and rbind pages from the AmCAT API
+#' 
+#' @param conn the connection object from \code{\link{amcat.connect}}
+#' @param path the path of the url to retrieve (using the host from conn)
+#' @param filters: a named vector of filters, e.g. c(project=2, articleset=3)
+#' @param post use HTTP POST instead of GET
+#' @return dataframe 
+amcat.getpages <- function(conn, path, format='csv', page=1, page_size=1000, filters=NULL, post=FALSE) {
+  filters = c(filters, page_size=page_size, format=format)
   result = data.frame()
   while(TRUE){
-    subresult = getURL(paste(url, '&page=', as.integer(page), sep=''), httpheader=httpheader)
+    page_filters = c(filters, page=page)
+    subresult = amcat.getURL(conn, path, page_filters, post=post)
+    if (subresult == "") break
     subresult = .amcat.readoutput(subresult, format=format)
     result = rbind(result, subresult)
-    #print(paste("Got",nrow(subresult),"rows, expected", stepsize))
-    if(nrow(subresult) < stepsize) break
+    if(nrow(subresult) < page_size) break
     page = page + 1
   }
   result
@@ -97,31 +108,14 @@ amcat.getobjects <- function(conn, resource, format='csv', stepsize=50000, filte
 #' Get a table of objects from the AmCAT API, e.g. projects, sets etc.
 #' 
 #' @param conn the connection object from \code{\link{amcat.connect}}
-#' @param resource the name of the resource, e.g. 'projects'
-#' @param format the format to use, e.g. csv or json. 
-#' @param stepsize the number of objects to retrieve per query. Set to a lower number of larger objects
-#' @param filters a list of filters to pass to the API, e.g. list(project=1)
-#' @param use__in a subset of names(filters) that should be passed with an in argument
+#' @param resource the name of the resource, e.g. 'projects'. If it is of length>1, a path a/b/c/ will be created (e.g. c("projects",1,"articlesets"))
+#' @param ... Other options to pass to \code{\link{amcat.getpages}}, e.g. page_size, format, and filters
 #' @return A dataframe of objects (rows) by properties (columns)
 #' @export
-amcat.getobjects.post <- function(conn, resource, format='csv', stepsize=50000, filters=list(), use__in=c()) {
-  url = paste(conn$host, '/api/v4/', resource, sep="")
-  form = modifyList(list(page_size=stepsize), filters)
-
-  httpheader = c(Authorization=paste("Token", conn$token), Accept="text/csv")
-  print(paste("Getting objects from", url))
-  page = 1
-  result = data.frame()
-  while(TRUE){
-    form = modifyList(form, list(page=page))
-    subresult = postForm(url, .params=form, .opts=list(httpheader=httpheader))
-    subresult = .amcat.readoutput(subresult, format=format)
-    result = rbind(result, subresult)
-    #print(paste("Got",nrow(subresult),"rows, expected", stepsize))
-    if(nrow(subresult) < stepsize) break
-    page = page + 1
-  }
-  result
+amcat.getobjects <- function(conn, resource, ...) {
+  if (length(resource) > 1) resource = paste(c(resource, ""), collapse="/")
+  path = paste('api', 'v4', resource, sep='/')
+  amcat.getpages(conn, path, ...)
 }
 
 #' Internal call to check GET results and parse as csv or json
