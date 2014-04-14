@@ -172,7 +172,7 @@ amcat.runaction <- function(conn, action, format='csv', ...) {
 #' @param time if true, parse the date as POSIXct datetime instead of Date
 #' @return A dataframe containing the articles and the selected columns
 #' @export
-amcat.articlemeta <- function(conn, sets, filters=list(), columns=c('id','date','medium','length'), time=F){
+amcat.getarticlemeta <- function(conn, sets, filters=list(), columns=c('id','date','medium','length'), time=F){
   filters[['articleset']] = sets 
   result = amcat.getobjects(conn, "articlemeta", filters=filters, use__in=c('articleset'))
   if(length(columns > 0)) result = result[,columns]

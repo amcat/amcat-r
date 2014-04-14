@@ -1,8 +1,8 @@
-\name{amcat.articlemeta}
-\alias{amcat.articlemeta}
+\name{amcat.getarticlemeta}
+\alias{amcat.getarticlemeta}
 \title{Get article metadata from AmCAT}
 \usage{
-amcat.articlemeta(conn, sets, filters = list(), columns = c("id", "date",
+amcat.getarticlemeta(conn, sets, filters = list(), columns = c("id", "date",
   "medium", "length"), time = F)
 }
 \arguments{

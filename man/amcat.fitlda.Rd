@@ -1,0 +1,31 @@
+\name{amcat.fitlda}
+\alias{amcat.fitlda}
+\title{Estimate a topic model using the lda package}
+\usage{
+amcat.fitlda(dtm, K = 50, num.iterations = 100, alpha = 50/K,
+  eta = 0.01)
+}
+\arguments{
+  \item{dtm}{a document term matrix (e.g. the output of
+  \code{\link{amcat.createDTM}})}
+
+  \item{K}{the number of clusters}
+
+  \item{num.iterations}{the number of iterations}
+
+  \item{alpha}{the alpha parameter}
+
+  \item{eta}{the eta parameter}
+}
+\value{
+A fitted LDA model (see
+\code{\link{lda.collapsed.gibbs.sampler}})
+}
+\description{
+Estimate an LDA topic model using the
+\code{\link{lda.collapsed.gibbs.sampler}} function The
+parameters other than dtm are simply passed to the sampler
+but provide a workable default. See the description of that
+function for more information
+}
+

@@ -1,10 +1,10 @@
-\name{amcat.getTokens}
-\alias{amcat.getTokens}
+\name{amcat.gettokens}
+\alias{amcat.gettokens}
 \title{Get Tokens from AmCAT}
 \usage{
-amcat.getTokens(conn, project, articleset, module = "corenlp_lemmatize",
+amcat.gettokens(conn, project, articleset, module = "corenlp_lemmatize",
   keep = NULL, drop = c("id", "sentence", "offset"), filters = NULL,
-  page_size = 1, npages = NULL)
+  page_size = 1, page = 1, npages = NULL)
 }
 \arguments{
   \item{conn}{the connection object from

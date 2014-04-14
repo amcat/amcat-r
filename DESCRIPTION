@@ -7,7 +7,9 @@ Maintainer: Wouter van Atteveldt <wouter@vanatteveldt.com>
 Depends:
     rjson,
     RCurl,
-    plyr
+    plyr,
+    tm,
+    slam
 Description: Functions to call the AmCAT API
 License: MIT
 URL: http://github.com/amcat/amcat

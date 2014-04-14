@@ -1,3 +1,6 @@
+library(tm)
+library(slam)
+
 #' Get Tokens from AmCAT
 #' 
 #' Get Tokens (pos, lemma etc) from AmCAT
@@ -12,13 +15,12 @@
 #' @param page_size the number of features (articles?) to include per call
 #' @return A data frame of tokens
 #' @export
-amcat.getTokens <- function(conn, project, articleset, module="corenlp_lemmatize", keep=NULL, drop=c("id", "sentence", "offset"), filters=NULL, page_size=1, npages=NULL) {
-  filters = c(module="corenlp_lemmatize", filters)
+amcat.gettokens <- function(conn, project, articleset, module="corenlp_lemmatize", keep=NULL, drop=c("id", "sentence", "offset"), filters=NULL, page_size=1, page=1, npages=NULL) {
+  filters = c(module=module, page_size=page_size, format='csv', filters)
   path = paste("api", "v4", "projects", project, "articlesets", articleset, "tokens", "", sep="/")
-  page = 1
   result = NULL
   while (TRUE) {
-    page_filters = c(page=page, page_size=page_size, module=module, format='csv', filters)
+    page_filters = c(page=page, filters)
     t = amcat.getURL(conn, path, page_filters)
     if (t == "") break
     
@@ -33,3 +35,42 @@ amcat.getTokens <- function(conn, project, articleset, module="corenlp_lemmatize
   result
 } 
 
+#' Create a document term matrix from a list of tokens
+#' 
+#' Create a document-term matrix (dtm) from a list of ids, terms, and frequencies
+#' 
+#' @param ids a vector of document ids
+#' @param terms a vector of words of the same length as ids
+#' @param freqs a vector of the frequency a a term in a document
+#' @return a document-term matrix  \code{\link{DocumentTermMatrix}}
+#' @export
+
+amcat.createdtm <- function(ids, terms, freqs) {
+    documents = unique(ids)
+    vocabulary = unique(terms)
+    m = simple_triplet_matrix(match(ids, documents), 
+                              match(terms, vocabulary), 
+                              freqs, 
+                              dimnames=list(documents=as.character(documents), words=as.character(vocabulary)))
+    as.DocumentTermMatrix(m, weighting=weightTf)
+}
+
+#' Estimate a topic model using the lda package
+#' 
+#' Estimate an LDA topic model using the \code{\link{lda.collapsed.gibbs.sampler}} function
+#' The parameters other than dtm are simply passed to the sampler but provide a workable default.
+#' See the description of that function for more information
+#' 
+#' @param dtm a document term matrix (e.g. the output of \code{\link{amcat.createDTM}})
+#' @param K the number of clusters
+#' @param num.iterations the number of iterations
+#' @param alpha the alpha parameter
+#' @param eta the eta parameter
+#' @return A fitted LDA model (see \code{\link{lda.collapsed.gibbs.sampler}})
+#' @export
+amcat.fitlda <- function(dtm, K=50, num.iterations=100, alpha=50/K, eta=.01) {
+  x = dtm2ldaformat(dtm)
+  m = lda.collapsed.gibbs.sampler(x$documents, vocab=x$vocab, K=K, num.iterations=num.iterations, alpha=alpha, eta=eta)
+  m$dtm = dtm
+  m
+}
