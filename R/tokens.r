@@ -18,8 +18,8 @@ amcat.getTokens <- function(conn, project, articleset, module="corenlp_lemmatize
   page = 1
   result = NULL
   while (TRUE) {
-    filters = c(page=page, page_size=page_size, module=module, format='csv')
-    t = amcat.getURL(conn, path, filters)
+    page_filters = c(page=page, page_size=page_size, module=module, format='csv', filters)
+    t = amcat.getURL(conn, path, page_filters)
     if (t == "") break
     
     t = .amcat.readoutput(t, format='csv')
@@ -27,8 +27,8 @@ amcat.getTokens <- function(conn, project, articleset, module="corenlp_lemmatize
     freqs = count(t[, keep])
     result = rbind(result, freqs)
     
-    page += 1
-    if (!is.null(npages) & npages <= page) break
+    if (!is.null(npages)) if (npages <= page) break
+    page = page + 1
   }
   result
 } 

@@ -6,7 +6,8 @@ Author: Wouter van Atteveldt and Kasper Welbers
 Maintainer: Wouter van Atteveldt <wouter@vanatteveldt.com>
 Depends:
     rjson,
-    RCurl
+    RCurl,
+    plyr
 Description: Functions to call the AmCAT API
 License: MIT
 URL: http://github.com/amcat/amcat

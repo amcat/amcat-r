@@ -2,7 +2,7 @@
 \alias{amcat.getpages}
 \title{Get and rbind pages from the AmCAT API}
 \usage{
-amcat.getpages(conn, path, format = "csv", page_size = 1000,
+amcat.getpages(conn, path, format = "csv", page = 1, page_size = 1000,
   filters = NULL, post = FALSE)
 }
 \arguments{
