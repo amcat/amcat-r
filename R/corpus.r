@@ -1,6 +1,3 @@
-library(tm)
-library(slam)
-
 #' Get Tokens from AmCAT
 #' 
 #' Get Tokens (pos, lemma etc) from AmCAT
@@ -45,7 +42,7 @@ amcat.gettokens <- function(conn, project, articleset, module="corenlp_lemmatize
 #' @return a document-term matrix  \code{\link{DocumentTermMatrix}}
 #' @export
 
-amcat.createdtm <- function(ids, terms, freqs) {
+amcat.dtm.create <- function(ids, terms, freqs) {
     documents = unique(ids)
     vocabulary = unique(terms)
     m = simple_triplet_matrix(match(ids, documents), 
@@ -68,9 +65,36 @@ amcat.createdtm <- function(ids, terms, freqs) {
 #' @param eta the eta parameter
 #' @return A fitted LDA model (see \code{\link{lda.collapsed.gibbs.sampler}})
 #' @export
-amcat.fitlda <- function(dtm, K=50, num.iterations=100, alpha=50/K, eta=.01) {
+amcat.lda.fit <- function(dtm, K=50, num.iterations=100, alpha=50/K, eta=.01) {
   x = dtm2ldaformat(dtm)
   m = lda.collapsed.gibbs.sampler(x$documents, vocab=x$vocab, K=K, num.iterations=num.iterations, alpha=alpha, eta=eta)
   m$dtm = dtm
   m
 }
+
+
+#' Compute some useful corpus statistics for a dtm
+#' 
+#' Compute a number of useful statistics for filtering words: term frequency, idf, etc.
+#' 
+#' @param dtm a document term matrix (e.g. the output of \code{\link{amcat.createDTM}})
+#' @return A data frame with rows corresponding to the terms in dtm and the statistics in the columns
+#' @export
+amcat.term.statistics <- function(dtm) {
+  # STUB
+}
+
+#' Get the topics per document, optionally merged with 
+#' 
+#' Return a data frame containing article metadata and topic occurence per document
+#' 
+#' @param dtm a document term matrix (e.g. the output of \code{\link{amcat.createDTM}})
+#' @return A data frame with rows corresponding to the terms in dtm and the statistics in the columns
+#' @export
+amcat.lda.topics.per.document <- function(topics) {
+  ids = as.numeric(rownames(topics$dtm))
+  cbind(id=ids, data.frame(t(topics$document_sums)))
+}
+
+
+

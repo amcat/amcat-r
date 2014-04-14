@@ -166,19 +166,27 @@ amcat.runaction <- function(conn, action, format='csv', ...) {
 #' additional postprocessing, e.g. to convert the data to Date objects.
 #'
 #' @param conn the connection object from \code{\link{amcat.connect}}
-#' @param sets the article set id(s) to retrieve
+#' @param set the article set id to retrieve
 #' @param filters additional filters, e.g. list(medium=1)
 #' @param columns the names of columns to retrieve
 #' @param time if true, parse the date as POSIXct datetime instead of Date
+#' @param dateparts if true, add date parts (year, month, week)
 #' @return A dataframe containing the articles and the selected columns
 #' @export
-amcat.getarticlemeta <- function(conn, sets, filters=list(), columns=c('id','date','medium','length'), time=F){
-  filters[['articleset']] = sets 
-  result = amcat.getobjects(conn, "articlemeta", filters=filters, use__in=c('articleset'))
+amcat.getarticlemeta <- function(conn, set, filters=list(), columns=c('id','date','medium','length'), time=F, dateparts=F){
+  filters[['articleset']] = set 
+  result = amcat.getobjects(conn, "articlemeta", filters=filters)
   if(length(columns > 0)) result = result[,columns]
   if ("date" %in% names(result)) {
     result$date = (if(time == T) as.POSIXct(result$date, format='%Y-%m-%d %H:%M:%S') 
                    else as.Date(result$date, format='%Y-%m-%d'))
   }
+  if (dateparts) {
+    result$year = as.Date(format(result$date, '%Y-1-1'))
+    result$month = as.Date(format(result$date, '%Y-%m-1'))
+    result$week = as.Date(paste(format(result$date, '%Y-%W'),1), '%Y-%W %u')
+  }
   return(result)
 }
+
+

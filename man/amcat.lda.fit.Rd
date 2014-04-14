@@ -1,8 +1,8 @@
-\name{amcat.fitlda}
-\alias{amcat.fitlda}
+\name{amcat.lda.fit}
+\alias{amcat.lda.fit}
 \title{Estimate a topic model using the lda package}
 \usage{
-amcat.fitlda(dtm, K = 50, num.iterations = 100, alpha = 50/K,
+amcat.lda.fit(dtm, K = 50, num.iterations = 100, alpha = 50/K,
   eta = 0.01)
 }
 \arguments{

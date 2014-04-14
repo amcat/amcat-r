@@ -2,14 +2,14 @@
 \alias{amcat.getarticlemeta}
 \title{Get article metadata from AmCAT}
 \usage{
-amcat.getarticlemeta(conn, sets, filters = list(), columns = c("id", "date",
-  "medium", "length"), time = F)
+amcat.getarticlemeta(conn, set, filters = list(), columns = c("id", "date",
+  "medium", "length"), time = F, dateparts = F)
 }
 \arguments{
   \item{conn}{the connection object from
   \code{\link{amcat.connect}}}
 
-  \item{sets}{the article set id(s) to retrieve}
+  \item{set}{the article set id to retrieve}
 
   \item{filters}{additional filters, e.g. list(medium=1)}
 
@@ -17,6 +17,9 @@ amcat.getarticlemeta(conn, sets, filters = list(), columns = c("id", "date",
 
   \item{time}{if true, parse the date as POSIXct datetime
   instead of Date}
+
+  \item{dateparts}{if true, add date parts (year, month,
+  week)}
 }
 \value{
 A dataframe containing the articles and the selected

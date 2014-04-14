@@ -1,8 +1,8 @@
-\name{amcat.createdtm}
-\alias{amcat.createdtm}
+\name{amcat.dtm.create}
+\alias{amcat.dtm.create}
 \title{Create a document term matrix from a list of tokens}
 \usage{
-amcat.createdtm(ids, terms, freqs)
+amcat.dtm.create(ids, terms, freqs)
 }
 \arguments{
   \item{ids}{a vector of document ids}
