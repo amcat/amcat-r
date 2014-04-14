@@ -1,0 +1,40 @@
+\name{amcat.getTokens}
+\alias{amcat.getTokens}
+\title{Get Tokens from AmCAT}
+\usage{
+amcat.getTokens(conn, project, articleset, module = "corenlp_lemmatize",
+  keep = NULL, drop = c("id", "sentence", "offset"), filters = NULL,
+  page_size = 1, npages = NULL)
+}
+\arguments{
+  \item{conn}{the connection object from
+  \code{\link{amcat.connect}}}
+
+  \item{project}{id of the project containing the tokens}
+
+  \item{articleset}{id of the articleset to get features
+  from}
+
+  \item{module}{the NLP preprocessing module to get the
+  tokens from}
+
+  \item{keep}{an optional list of attributes to keep (and
+  aggregate on), e.g. c("lemma", "pos1")}
+
+  \item{drop}{an optional list of attributes to drop,
+  default (token)id and sentence. If keep is given, drop is
+  ignored.}
+
+  \item{filters}{Additional filters, ie c(pos1="V",
+  pos1="A") to select only verbs and adjectives}
+
+  \item{page_size}{the number of features (articles?) to
+  include per call}
+}
+\value{
+A data frame of tokens
+}
+\description{
+Get Tokens (pos, lemma etc) from AmCAT
+}
+
