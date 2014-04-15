@@ -173,7 +173,7 @@ amcat.runaction <- function(conn, action, format='csv', ...) {
 #' @param dateparts if true, add date parts (year, month, week)
 #' @return A dataframe containing the articles and the selected columns
 #' @export
-amcat.getarticlemeta <- function(conn, set, filters=list(), columns=c('id','date','medium','length'), time=F, dateparts=F){
+amcat.getarticlemeta <- function(conn, set, filters=list(), columns=c('id','date','medium','length'), time=F, dateparts=F, medium_names=T){
   filters[['articleset']] = set 
   result = amcat.getobjects(conn, "articlemeta", filters=filters)
   if(length(columns > 0)) result = result[,columns]
@@ -185,6 +185,13 @@ amcat.getarticlemeta <- function(conn, set, filters=list(), columns=c('id','date
     result$year = as.Date(format(result$date, '%Y-1-1'))
     result$month = as.Date(format(result$date, '%Y-%m-1'))
     result$week = as.Date(paste(format(result$date, '%Y-%W'),1), '%Y-%W %u')
+  }
+  if (medium_names) {
+    media = unique(result$medium)
+    # make filter from names by adding names (pk=)
+    names(media) = rep("pk", length(media))
+    media = amcat.getobjects(conn, "medium", filters=media)
+    result$medium = factor(result$medium, levels=media$id, labels=media$name)
   }
   return(result)
 }
