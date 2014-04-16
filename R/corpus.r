@@ -81,9 +81,15 @@ amcat.lda.fit <- function(dtm, K=50, num.iterations=100, alpha=50/K, eta=.01) {
 #' @return A data frame with rows corresponding to the terms in dtm and the statistics in the columns
 #' @export
 amcat.term.statistics <- function(dtm) {
-  # STUB
+    vocabulary = colnames(dtm)
+    data.frame(term = vocabulary,
+               characters = nchar(vocabulary),
+               number = grepl("[0-9]", vocabulary),
+               termfreq = col_sums(dtm),
+               docfreq = col_sums(dtm > 0),
+               tfidf = tapply(dtm$v/row_sums(dtm)[dtm$i], dtm$j, mean) * log2(nDocs(dtm)/col_sums(dtm > 0)))
 }
-
+ 
 #' Get the topics per document, optionally merged with 
 #' 
 #' Return a data frame containing article metadata and topic occurence per document
