@@ -41,13 +41,17 @@ amcat.gettokens <- function(conn, project, articleset, module="corenlp_lemmatize
 #' @param freqs a vector of the frequency a a term in a document
 #' @return a document-term matrix  \code{\link{DocumentTermMatrix}}
 #' @export
-
 amcat.dtm.create <- function(ids, terms, freqs) {
-    documents = unique(ids)
-    vocabulary = unique(terms)
-    m = simple_triplet_matrix(match(ids, documents), 
-                              match(terms, vocabulary), 
-                              freqs, 
+    d = data.frame(ids=ids, terms=terms, freqs=freqs)  
+    if(nrow(unique(d[,c('ids','terms')])) < nrow(d[,c('ids','terms')])){
+      warning('Duplicate terms within articles occured. Frequencies of duplicates are summed.')
+      d = aggregate(freqs ~ ids + terms, d, FUN='sum')
+    } 
+    documents = unique(d$ids)
+    vocabulary = unique(d$terms)
+    m = simple_triplet_matrix(match(d$ids, documents), 
+                              match(d$terms, vocabulary), 
+                              d$freqs, 
                               dimnames=list(documents=as.character(documents), words=as.character(vocabulary)))
     as.DocumentTermMatrix(m, weighting=weightTf)
 }
@@ -65,10 +69,11 @@ amcat.dtm.create <- function(ids, terms, freqs) {
 #' @param eta the eta parameter
 #' @return A fitted LDA model (see \code{\link{lda.collapsed.gibbs.sampler}})
 #' @export
-amcat.lda.fit <- function(dtm, K=50, num.iterations=100, alpha=50/K, eta=.01, burnin=100) {
+amcat.lda.fit <- function(dtm, K=50, num.iterations=100, alpha=50/K, eta=.01, burnin=100, compute.log.likelihood=F) {
   dtm = dtm[row_sums(dtm) > 0,col_sums(dtm) > 0]
   x = dtm2ldaformat(dtm)
-  m = lda.collapsed.gibbs.sampler(x$documents, vocab=x$vocab, K=K, num.iterations=num.iterations, alpha=alpha, eta=eta, burnin=burnin)
+  m = lda.collapsed.gibbs.sampler(x$documents, vocab=x$vocab, K=K, num.iterations=num.iterations, 
+                                  alpha=alpha, eta=eta, burnin=burnin, compute.log.likelihood=compute.log.likelihood)
   m$dtm = dtm
   m
 }
