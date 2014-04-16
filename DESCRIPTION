@@ -9,7 +9,9 @@ Depends:
     RCurl,
     plyr,
     tm,
-    slam
+    slam,
+    lda,
+    topicmodels
 Description: Functions to call the AmCAT API
 License: MIT
 URL: http://github.com/amcat/amcat
