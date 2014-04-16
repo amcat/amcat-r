@@ -17,7 +17,7 @@ amcat.aggregate <- function(conn, queries, labels=queries, sets, ...) {
   queries = as.character(queries)
   for (i in 1:length(queries)) {
     if (!is.na(queries[i])) {
-      r = amcat.getobjects(conn,"aggregate", filters=list(q=URLencode(queries[i]), sets=sets, ...))
+      r = amcat.getobjects(conn,"aggregate", filters=list(q=queries[i], sets=sets, ...))
       if (nrow(r) > 0) {
         if (names(r)[1] == "count") {
           r$query = labels[i]
