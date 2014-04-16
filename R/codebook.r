@@ -41,3 +41,142 @@ amcat.gethierarchy <- function(conn, codebook_id, languages=NULL) {
   return(hierarchy)
 }
 
+
+
+
+
+.codebookcat <- function(hierarchy, depth=0) {
+  # depth 0 is root, depth 1 is cat, etc
+  get.ancestors <- function (hierarchy){
+    p = data.frame(c=hierarchy$code, p1 = hierarchy$parent)
+    for (i in 1:nrow(p)) { #nrow(p) is max number of required merges, but we'll break sooner
+      m = p[, c("c", "p1")]
+      colnames(m) = paste("p", c(i, i+1), sep="")
+      p = merge(p, m, all.x=T)
+      if (all(is.na(p[, ncol(p)]))) {
+        # last column is all NA, so we are done. Drop the column and break to return
+        p = p[, -ncol(p)]
+        break
+      }
+    }
+    p = p[, sort(colnames(p))]
+    return(p)
+  }
+  anc = get.ancestors(hierarchy)
+  x = rep(NA, nrow(anc))
+  for (i in 1:(ncol(anc) - depth)) {
+    col = anc[, i]
+    parent = anc[, i+depth]
+    x[!is.na(parent)] = as.character(col[!is.na(parent)])
+  }
+  
+  return(x[match(hierarchy$code, anc$c)])
+}
+
+#' Add categories (ancestors) to a codebook 'hierarchy'
+#' 
+#' Adds one or more categories to codebook codes. Suppose that you have a hierarchy like
+#' 
+#' code, parent
+#' issue, NA
+#' economy, issue
+#' unemployment, economy
+#' environment, issue
+#' 
+#' The first category or 'root' for all objects will be 'issue'. The second category would be
+#' 'economy' for economy and unemployment, and 'environment' for environment. For 'issue', the second
+#' category would simply be issue:
+#' 
+#' code, parent, cat1, cat2
+#' issue, NA, issue, issue
+#' economy, issue, issue, economy
+#' unemployment, economy, issue, economy
+#' environment, issue, issue, environment
+#' #' 
+#' @param hierarchy the hierarchy data frame from \code{\link{amcat.gethierarchy}}
+#' @param maxdepth the maxium number of ancestors per code
+#' @return The hierarchy data frame with a column added for each code
+#' @export
+amcat.hierarchy.cats <- function(hierarchy, maxdepth=2) {
+  for(depth in 0:maxdepth) {
+    target = paste("cat", (depth+1), sep=".")
+    hierarchy[, target] = .codebookcat(hierarchy, depth)  
+    if (depth > 0) {
+      fallback = paste("cat", (depth), sep=".")
+      hierarchy[is.na(hierarchy[,target]), target] = hierarchy[is.na(hierarchy[, target]), fallback]
+    }
+  }
+  # Thanks, http://stackoverflow.com/questions/16441952/sort-a-data-frame-by-multiple-columns-whose-names-are-contained-in-a-single-obje
+  sortnames = paste("cat", (0:maxdepth) + 1, sep=".")
+  hierarchy[do.call("order", hierarchy[, sortnames]),]
+}
+
+
+
+
+
+.codebookcat <- function(hierarchy, depth=0) {
+  # depth 0 is root, depth 1 is cat, etc
+  get.ancestors <- function (hierarchy){
+    p = data.frame(c=hierarchy$code, p1 = hierarchy$parent)
+    for (i in 1:nrow(p)) { #nrow(p) is max number of required merges, but we'll break sooner
+      m = p[, c("c", "p1")]
+      colnames(m) = paste("p", c(i, i+1), sep="")
+      p = merge(p, m, all.x=T)
+      if (all(is.na(p[, ncol(p)]))) {
+        # last column is all NA, so we are done. Drop the column and break to return
+        p = p[, -ncol(p)]
+        break
+      }
+    }
+    p = p[, sort(colnames(p))]
+    return(p)
+  }
+  anc = get.ancestors(hierarchy)
+  x = rep(NA, nrow(anc))
+  for (i in 1:(ncol(anc) - depth)) {
+    col = anc[, i]
+    parent = anc[, i+depth]
+    x[!is.na(parent)] = as.character(col[!is.na(parent)])
+  }
+  
+  return(x[match(hierarchy$code, anc$c)])
+}
+
+#' Add categories (ancestors) to a codebook 'hierarchy'
+#' 
+#' Adds one or more categories to codebook codes. Suppose that you have a hierarchy like
+#' 
+#' code, parent
+#' issue, NA
+#' economy, issue
+#' unemployment, economy
+#' environment, issue
+#' 
+#' The first category or 'root' for all objects will be 'issue'. The second category would be
+#' 'economy' for economy and unemployment, and 'environment' for environment. For 'issue', the second
+#' category would simply be issue:
+#' 
+#' code, parent, cat1, cat2
+#' issue, NA, issue, issue
+#' economy, issue, issue, economy
+#' unemployment, economy, issue, economy
+#' environment, issue, issue, environment
+#' #' 
+#' @param hierarchy the hierarchy data frame from \code{\link{amcat.gethierarchy}}
+#' @param maxdepth the maxium number of ancestors per code
+#' @return The hierarchy data frame with a column added for each code
+#' @export
+amcat.hierarchy.cats <- function(hierarchy, maxdepth=2) {
+  for(depth in 0:maxdepth) {
+    target = paste("cat", (depth+1), sep=".")
+    hierarchy[, target] = .codebookcat(hierarchy, depth)  
+    if (depth > 0) {
+      fallback = paste("cat", (depth), sep=".")
+      hierarchy[is.na(hierarchy[,target]), target] = hierarchy[is.na(hierarchy[, target]), fallback]
+    }
+  }
+  # Thanks, http://stackoverflow.com/questions/16441952/sort-a-data-frame-by-multiple-columns-whose-names-are-contained-in-a-single-obje
+  sortnames = paste("cat", (0:maxdepth) + 1, sep=".")
+  hierarchy[do.call("order", hierarchy[, sortnames]),]
+}
