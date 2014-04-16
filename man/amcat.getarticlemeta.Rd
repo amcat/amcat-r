@@ -3,7 +3,7 @@
 \title{Get article metadata from AmCAT}
 \usage{
 amcat.getarticlemeta(conn, set, filters = list(), columns = c("id", "date",
-  "medium", "length"), time = F, dateparts = F)
+  "medium", "length"), time = F, dateparts = F, medium_names = T)
 }
 \arguments{
   \item{conn}{the connection object from
@@ -20,6 +20,9 @@ amcat.getarticlemeta(conn, set, filters = list(), columns = c("id", "date",
 
   \item{dateparts}{if true, add date parts (year, month,
   week)}
+
+  \item{medium_names}{if true, retrieve medium names and
+  turn medium column into a factor}
 }
 \value{
 A dataframe containing the articles and the selected

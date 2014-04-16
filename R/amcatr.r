@@ -171,6 +171,7 @@ amcat.runaction <- function(conn, action, format='csv', ...) {
 #' @param columns the names of columns to retrieve
 #' @param time if true, parse the date as POSIXct datetime instead of Date
 #' @param dateparts if true, add date parts (year, month, week)
+#' @param medium_names if true, retrieve medium names and turn medium column into a factor
 #' @return A dataframe containing the articles and the selected columns
 #' @export
 amcat.getarticlemeta <- function(conn, set, filters=list(), columns=c('id','date','medium','length'), time=F, dateparts=F, medium_names=T){
