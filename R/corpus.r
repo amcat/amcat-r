@@ -65,9 +65,10 @@ amcat.dtm.create <- function(ids, terms, freqs) {
 #' @param eta the eta parameter
 #' @return A fitted LDA model (see \code{\link{lda.collapsed.gibbs.sampler}})
 #' @export
-amcat.lda.fit <- function(dtm, K=50, num.iterations=100, alpha=50/K, eta=.01) {
+amcat.lda.fit <- function(dtm, K=50, num.iterations=100, alpha=50/K, eta=.01, burnin=100) {
+  dtm = dtm[row_sums(dtm) > 0,col_sums(dtm) > 0]
   x = dtm2ldaformat(dtm)
-  m = lda.collapsed.gibbs.sampler(x$documents, vocab=x$vocab, K=K, num.iterations=num.iterations, alpha=alpha, eta=eta)
+  m = lda.collapsed.gibbs.sampler(x$documents, vocab=x$vocab, K=K, num.iterations=num.iterations, alpha=alpha, eta=eta, burnin=burnin)
   m$dtm = dtm
   m
 }
