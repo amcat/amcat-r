@@ -20,7 +20,7 @@ amcat.connect <- function(host, username=NULL, passwd=NULL, token=NULL, disable_
   
   if (is.null(token)) {
     if (is.null(passwd)) { # try amcatauth file
-      a = tryCatch(.readauth(host), error=function(e) print("Could not read ~/.amcatauth"))
+      a = tryCatch(.readauth(host), error=function(e) warning("Could not read ~/.amcatauth"))
       if (!is.null(a)) {
         username = a$username
         passwd = a$password
@@ -73,7 +73,7 @@ amcat.getURL <- function(conn, path, filters=NULL, post=FALSE) {
     # build GET url query
     filters = sapply(1:length(filters), function(i) paste(names(filters)[i], curlEscape(filters[i]), sep="="))
     url = paste(url, paste(filters, collapse="&"), sep="?")
-    print(paste("GET ", url))
+    message("GET ", url)
     getURL(url, httpheader=httpheader, .opts=conn$opts)
   } else {  
     post_opts = modifyList(conn$opts, list(httpheader=httpheader))
@@ -145,7 +145,7 @@ amcat.runaction <- function(conn, action, format='csv', ...) {
   resource = 'api/action'
   url = paste(conn$host, resource, action, sep="/")
   url = paste(url, '?format=', format, sep="")
-  print(paste("Running action at", url))
+  message("Running action at ", url)
   httpheader = c(Authorization=paste("Token", conn$token))
   result = postForm(url, ..., .opts=list(httpheader=httpheader))
   
