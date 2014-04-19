@@ -106,9 +106,10 @@ a = amcat.aggregate(conn, sets=10271, axis1="year",
 head(a)
 ```
 
-As above, this can be transformed from 'long' to 'wide' format using the `cast` function (from the `reshape` package) and plotted:
+This can be transformed from 'long' to 'wide' format using the `cast` function (from the `reshape` package) and plotted:
 
-```{r}
+```{r query-presidents, message=FALSE}
+library(reshape)
 wide = cast(a, year~query, value="count")
 plot(wide$year, wide$Bush / wide$Total, type='l', frame.plot=F, ylim = c(0, 0.4), col="red",
      xlab="Year", ylab="% of Articles", main="Percentage of articles mentioning US Presidents")
@@ -157,8 +158,7 @@ head(h)
 
 Now, we can plot the results over time, e.g. per year:
 
-```{r, message=FALSE}
-library(reshape)
+```{r query-saddam, message=FALSE}
 peryear = cast(h, year ~ query, value="count", fun.aggregate=sum)
 plot(peryear$year, peryear$saddam, type='l', frame.plot=F, 
      xlab="Year", ylab="Articles", main="Articles mentioning Saddam")
@@ -169,7 +169,7 @@ rather than by Saddam being more salient in that year rather than earlier.
 Using the metadata, we can add the total number of articles, 
 and plot the percentage rather than the absolute number of articles:
 
-```{r, message=FALSE}
+```{r query-saddam-relative, message=FALSE}
 total = aggregate(meta$id, by=list(meta$year), FUN=length)
 colnames(total) = c("year", "total")
 peryear = merge(peryear, total)

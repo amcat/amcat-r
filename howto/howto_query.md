@@ -166,41 +166,19 @@ head(a)
 ```
 
 
-As above, this can be transformed from 'long' to 'wide' format using the `cast` function (from the `reshape` package) and plotted:
+This can be transformed from 'long' to 'wide' format using the `cast` function (from the `reshape` package) and plotted:
 
 
 ```r
+library(reshape)
 wide = cast(a, year ~ query, value = "count")
-```
-
-```
-## Error: could not find function "cast"
-```
-
-```r
 plot(wide$year, wide$Bush/wide$Total, type = "l", frame.plot = F, ylim = c(0, 
     0.4), col = "red", xlab = "Year", ylab = "% of Articles", main = "Percentage of articles mentioning US Presidents")
-```
-
-```
-## Error: object 'wide' not found
-```
-
-```r
 lines(wide$year, wide$Obama/wide$Total, col = "blue")
-```
-
-```
-## Error: object 'wide' not found
-```
-
-```r
 legend("top", legend = c("Bush", "Obama"), col = c("red", "blue"), lty = 1)
 ```
 
-```
-## Error: plot.new has not been called yet
-```
+![plot of chunk query-presidents](figure/query-presidents.png) 
 
 
 
@@ -299,13 +277,12 @@ Now, we can plot the results over time, e.g. per year:
 
 
 ```r
-library(reshape)
 peryear = cast(h, year ~ query, value = "count", fun.aggregate = sum)
 plot(peryear$year, peryear$saddam, type = "l", frame.plot = F, xlab = "Year", 
     ylab = "Articles", main = "Articles mentioning Saddam")
 ```
 
-![plot of chunk unnamed-chunk-11](figure/unnamed-chunk-11.png) 
+![plot of chunk query-saddam](figure/query-saddam.png) 
 
 
 The large number of articles in 2013 is most likely caused by wikinews containing more articles that year
@@ -322,7 +299,7 @@ plot(peryear$year, peryear$saddam/peryear$total, type = "l", frame.plot = F,
     xlab = "Year", ylab = "% of Articles", main = "Percentage of articles mentioning Saddam")
 ```
 
-![plot of chunk unnamed-chunk-12](figure/unnamed-chunk-12.png) 
+![plot of chunk query-saddam-relative](figure/query-saddam-relative.png) 
 
 
 So, quite interestingly it seems that on wikinews, 
