@@ -10,5 +10,9 @@
 .\#*
 
 
-
 .Rproj.user
+
+# Knitr meuk
+howto/cache
+howto/figure
+howto/*.html
