@@ -1,0 +1,24 @@
+Vocabulary Analysis and LDA using the AmCAT API
+===============================================
+
+The AmCAT API has an endpoint for downloading token frequencies per document.
+This allows for corpus linguistic analyses such as frequency analysis, collocations, 
+corpus comparisons, and topic modeling. 
+
+When downloading token frequencies, one usually wants lemmatized and/or POS-tagged tokens.
+This means that the word 'means' is analysed as a verb (POS) with lemma mean.
+Technically, this linguistic processing is performed by AmCAT using [xTas](www.xtas.net), 
+which means that the first time a document is requested with a certain analysis it is cached,
+so asking the same document again does not cause processing to be repeated.
+
+Requesting tokens
+-----------------
+
+Tokens are requested from the `projects/articleset/ID/tokens` endpoint, 
+specifying the set and analysis module to use. 
+Currently, the useful modules are `corenlp_lemmatize` for English (default)
+and `tadpole` for Dutch. 
+
+```{r}
+
+```
