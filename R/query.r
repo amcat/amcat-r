@@ -7,17 +7,17 @@
 #' @param queries a vector of queries to run
 #' @param labels if given, labels corresponding to the queries
 #' @param sets one or more article set ids to query on
-#' @param ... additional arguments to pass to the AmCAT API. Use axis1 and axis2 to specify
-#'            the grouping, possible values are medium, year/month/week/day. Additional filters
-#'            are also possible.
+#' @param axis1 The first grouping (break/group by) variable, e.g. year, month, week, day, or medium
+#' @param axis2 The second grouping (break/group by) variable, e.g. medium. Do not use a date interval here.
+#' @param ... additional arguments to pass to the AmCAT API. 
 #' @return A data frame with hits per group
 #' @export
-amcat.aggregate <- function(conn, queries, labels=queries, sets, ...) {
+amcat.aggregate <- function(conn, queries, labels=queries, sets, axis1=NULL, axis2=NULL, ...) {
   result = NULL
   queries = as.character(queries)
   for (i in 1:length(queries)) {
     if (!is.na(queries[i])) {
-      r = amcat.getobjects(conn,"aggregate", filters=list(q=queries[i], sets=sets, ...))
+      r = amcat.getobjects(conn,"aggregate", filters=list(q=queries[i], sets=sets, axis1=axis1, axis2=axis2, ...))
       if (nrow(r) > 0) {
         if (names(r)[1] == "count") {
           r$query = labels[i]
@@ -27,7 +27,9 @@ amcat.aggregate <- function(conn, queries, labels=queries, sets, ...) {
         }
       }
     }
-  }
+  }  
+  # convert axis1 to Date object if needed
+  if (axis1 %in% c("year", "quarter", "month", "week", "day")) result[, axis1] = as.Date(result[, axis1])
   return(result)
 }
 
@@ -43,11 +45,11 @@ amcat.aggregate <- function(conn, queries, labels=queries, sets, ...) {
 #' @param ... additional arguments to pass to the AmCAT API, e.g. extra filters
 #' @return A data frame with hits per article
 #' @export
-amcat.hits <- function(conn, queries, labels=queries, sets, ...) {
+amcat.hits <- function(conn, queries, labels=queries, sets, minimal=T, ...) {
   result = NULL
   for (i in 1:length(queries)) {
     q = paste("count", queries[i], sep="#")
-    r = amcat.getobjects(conn, "search",filters=list(q=q, col="hits", sets=sets, ...))
+    r = amcat.getobjects(conn, "search",filters=list(q=q, col="hits", sets=sets, minimal=minimal, ...))
     if (nrow(r) > 0) {
       r$query = labels[i]
       result = rbind(result, r)

@@ -69,7 +69,10 @@ amcat.connect <- function(host, username=NULL, passwd=NULL, token=NULL, disable_
 amcat.getURL <- function(conn, path, filters=NULL, post=FALSE) {
   httpheader = c(Authorization=paste("Token", conn$token))
   url = paste(conn$host, path, sep="/")
+  # strip NULL filters
+  for (n in names(filters)) if (is.null(filters[[n]])) filters[[n]] <- NULL
   if (!post) {
+    
     # build GET url query
     filters = sapply(1:length(filters), function(i) paste(names(filters)[i], curlEscape(filters[i]), sep="="))
     url = paste(url, paste(filters, collapse="&"), sep="?")
