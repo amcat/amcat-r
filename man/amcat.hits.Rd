@@ -2,7 +2,7 @@
 \alias{amcat.hits}
 \title{Conduct a query on amcat}
 \usage{
-amcat.hits(conn, queries, labels = queries, sets, ...)
+amcat.hits(conn, queries, labels = queries, sets, minimal = T, ...)
 }
 \arguments{
   \item{conn}{the connection object from

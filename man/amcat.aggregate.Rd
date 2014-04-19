@@ -2,7 +2,8 @@
 \alias{amcat.aggregate}
 \title{Conduct an aggregate query on amcat}
 \usage{
-amcat.aggregate(conn, queries, labels = queries, sets, ...)
+amcat.aggregate(conn, queries, labels = queries, sets, axis1 = NULL,
+  axis2 = NULL, ...)
 }
 \arguments{
   \item{conn}{the connection object from
@@ -15,10 +16,14 @@ amcat.aggregate(conn, queries, labels = queries, sets, ...)
 
   \item{sets}{one or more article set ids to query on}
 
-  \item{...}{additional arguments to pass to the AmCAT API.
-  Use axis1 and axis2 to specify the grouping, possible
-  values are medium, year/month/week/day. Additional
-  filters are also possible.}
+  \item{axis1}{The first grouping (break/group by)
+  variable, e.g. year, month, week, day, or medium}
+
+  \item{axis2}{The second grouping (break/group by)
+  variable, e.g. medium. Do not use a date interval here.}
+
+  \item{...}{additional arguments to pass to the AmCAT
+  API.}
 }
 \value{
 A data frame with hits per group
