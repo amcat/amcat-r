@@ -17,4 +17,7 @@ install_github(repo="amcat-r", username="amcat")
 Usage
 -----
 
-See [Howto: Querying](howto/howto_query.md) for an introduction to querying and metadata retrieval. 
+To help you get started with the AmCAT API, please see the following how-to guides:
+
++ [Howto: Querying](howto/howto_query.md) deals with querying and metadata retrieval. 
++ [Howto: Corpus](howto/howto_corpus.md) shows how you can analyse and comparse corpora and fit LDA topic models. 
