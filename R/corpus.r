@@ -43,6 +43,11 @@ amcat.gettokens <- function(conn, project, articleset, module="corenlp_lemmatize
 #' @export
 amcat.dtm.create <- function(ids, terms, freqs) {
     d = data.frame(ids=ids, terms=terms, freqs=freqs)  
+    # remove NA terms
+    if (sum(is.na(d$terms)) > 0) {
+      warning("Removing ", sum(is.na(d$terms)), "rows with missing term names")
+      d = d[!is.na(d$terms), ]
+    }
     if(nrow(unique(d[,c('ids','terms')])) < nrow(d[,c('ids','terms')])){
       warning('Duplicate terms within articles occured. Frequencies of duplicates are summed.')
       d = aggregate(freqs ~ ids + terms, d, FUN='sum')
