@@ -87,10 +87,12 @@ amcat.lda.fit <- function(dtm, K=50, num.iterations=100, alpha=50/K, eta=.01, bu
 #' @return A data frame with rows corresponding to the terms in dtm and the statistics in the columns
 #' @export
 amcat.term.statistics <- function(dtm) {
+    dtm = dtm[row_sums(dtm) > 0,col_sums(dtm) > 0]    # get rid of empty rows/columns
     vocabulary = colnames(dtm)
     data.frame(term = vocabulary,
                characters = nchar(vocabulary),
                number = grepl("[0-9]", vocabulary),
+               nonalpha = grepl("\\W", vocabulary),
                termfreq = col_sums(dtm),
                docfreq = col_sums(dtm > 0),
                tfidf = tapply(dtm$v/row_sums(dtm)[dtm$i], dtm$j, mean) * log2(nDocs(dtm)/col_sums(dtm > 0)))
@@ -106,6 +108,43 @@ amcat.term.statistics <- function(dtm) {
 amcat.lda.topics.per.document <- function(topics) {
   ids = as.numeric(rownames(topics$dtm))
   cbind(id=ids, data.frame(t(topics$document_sums)))
+}
+
+#' Compute the chi^2 statistic for a 2x2 crosstab containing the values
+#' [[a, b], [c, d]]
+chi2 <- function(a,b,c,d) {
+  ooe <- function(o, e) {(o-e)*(o-e) / e}
+  tot = 0.0 + a+b+c+d
+  a = as.numeric(a)
+  b = as.numeric(b)
+  c = as.numeric(c)
+  d = as.numeric(d)
+  (ooe(a, (a+c)*(a+b)/tot)
+   +  ooe(b, (b+d)*(a+b)/tot)
+   +  ooe(c, (a+c)*(c+d)/tot)
+   +  ooe(d, (d+b)*(c+d)/tot))
+}
+
+#' Compare two corpora
+#' 
+#' Compare the term use in corpus dtm with a refernece corpus dtm.ref, returning relative frequencies
+#' and overrepresentation using various measures
+#' 
+#' @param dtm.x the main document-term matrix
+#' @param dtm.y the 'reference' document-term matrix
+#' @param smooth the smoothing parameter for computing overrepresentation
+#' @return A data frame with rows corresponding to the terms in dtm and the statistics in the columns
+#' @export
+amcat.compare.corpora <- function(dtm.x, dtm.y, smooth=.001) {
+  freqs = amcat.term.statistics(dtm.x)[, c("term", "termfreq")]
+  freqs.rel = amcat.term.statistics(dtm.y)[, c("term", "termfreq")]
+  f = merge(freqs, freqs.rel, all=T, by="term")    
+  f[is.na(f)] = 0
+  f$relfreq.x = f$termfreq.x / sum(freqs$termfreq)
+  f$relfreq.y = f$termfreq.y / sum(freqs.rel$termfreq)
+  f$over = (f$relfreq.x + smooth) / (f$relfreq.y + smooth)
+  f$chi = chi2(f$termfreq.x, f$termfreq.y, sum(f$termfreq.x) - f$termfreq.x, sum(f$termfreq.y) - f$termfreq.y)
+  f
 }
 
 

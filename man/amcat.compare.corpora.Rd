@@ -1,0 +1,24 @@
+\name{amcat.compare.corpora}
+\alias{amcat.compare.corpora}
+\title{Compare two corpora}
+\usage{
+amcat.compare.corpora(dtm.x, dtm.y, smooth = 0.001)
+}
+\arguments{
+  \item{dtm.x}{the main document-term matrix}
+
+  \item{dtm.y}{the 'reference' document-term matrix}
+
+  \item{smooth}{the smoothing parameter for computing
+  overrepresentation}
+}
+\value{
+A data frame with rows corresponding to the terms in dtm
+and the statistics in the columns
+}
+\description{
+Compare the term use in corpus dtm with a refernece corpus
+dtm.ref, returning relative frequencies and
+overrepresentation using various measures
+}
+

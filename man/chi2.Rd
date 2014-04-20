@@ -1,0 +1,12 @@
+\name{chi2}
+\alias{chi2}
+\title{Compute the chi^2 statistic for a 2x2 crosstab containing the values
+[[a, b], [c, d]]}
+\usage{
+chi2(a, b, c, d)
+}
+\description{
+Compute the chi^2 statistic for a 2x2 crosstab containing
+the values [[a, b], [c, d]]
+}
+
