@@ -100,6 +100,7 @@ amcat.term.statistics <- function(dtm) {
                nonalpha = grepl("\\W", vocabulary),
                termfreq = col_sums(dtm),
                docfreq = col_sums(dtm > 0),
+               reldocfreq = col_sums(dtm > 0) / nDocs(dtm),
                tfidf = tapply(dtm$v/row_sums(dtm)[dtm$i], dtm$j, mean) * log2(nDocs(dtm)/col_sums(dtm > 0)))
 }
  
