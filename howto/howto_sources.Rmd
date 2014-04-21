@@ -1,0 +1,43 @@
+Extracting Source/Quote pairs using the AmCAT API
+=================================================
+
+(This howto (and source extraction in general) is work-in-progress. All feedback appreciated!)
+
+Using graph transformations on the grammatical (dependency) structure of text, 
+we can extract quotes/paraphrases and sources with reasonable accuracy 
+(See e.g. [my 2013 LSE Text as data paper](http://www.kenbenoit.net/new-directions-in-analyzing-text-as-data-workshop-2013/))
+Technically, extracting sources in not different from extracting tokens.
+However, two strong caveats apply here:
+
+- Currently, only Dutch is supported
+- As dependency parsing takes quite long, expect *very* long load times if material has not been parsed before. 
+  I would recommend preprocessing any non-trivial articleset. 
+  
+Getting sources
+---------------
+
+Sources can be extracted using the `amcat.gettokens` command by specifying `sources_nl` as the module and adding `sources=T` as a filter:
+
+```{r, message=FALSE}
+library(amcatr)
+conn = amcat.connect("http://preview.amcat.nl")
+t = amcat.gettokens(conn, project=403, articleset=10284, module="sources_nl", filters=c(sources=T), 
+                    page_size=1, npages=1, )              
+head(t, n=10)
+```
+
+As can be seen above, this retrieves tokens from the specified articleset, with two additional columns: 
+`source_id` and `source_place`. 
+The former is the quote number within the article, and can be used to match specific quotes to specific sources.
+The latter inficates whether a token is from the quote or from its source.
+
+As before, the `keep=` argument and `pos1=` filters can be used to reduce the amount of information requested:
+```{r, message=FALSE}
+library(amcatr)
+conn = amcat.connect("http://preview.amcat.nl")
+t = amcat.gettokens(conn, project=403, articleset=10284, module="sources_nl", filters=c(sources=T, pos1="M", pos1="N"), 
+                    keep=c("aid", "lemma", "pos1", "source_id", "source_place"),
+                    page_size=1, npages=1, )              
+tail(t, n=10)
+```
+
