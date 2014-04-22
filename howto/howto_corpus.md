@@ -143,17 +143,17 @@ head(terms, n = 10)
 ## blog                     blog          4  FALSE    FALSE        9       3
 ## Bush                     Bush          4  FALSE    FALSE      311     115
 ## can                       can          3  FALSE    FALSE      171     116
-##                   tfidf
-## accuracy       0.036326
-## administration 0.029439
-## America        0.015922
-## answer         0.031095
-## anyone         0.031019
-## ask            0.020624
-## be             0.005354
-## blog           0.109372
-## Bush           0.040001
-## can            0.017838
+##                reldocfreq    tfidf
+## accuracy         0.008902 0.036326
+## administration   0.075668 0.029439
+## America          0.265579 0.015922
+## answer           0.028190 0.031095
+## anyone           0.020772 0.031019
+## ask              0.129080 0.020624
+## be               0.940653 0.005354
+## blog             0.004451 0.109372
+## Bush             0.170623 0.040001
+## can              0.172107 0.017838
 ```
 
 
@@ -172,17 +172,28 @@ head(voca, n = 10)
 ```
 
 ```
-##              term characters number nonalpha termfreq docfreq    tfidf
-## Iraq         Iraq          4  FALSE    FALSE     2156     634 0.002162
-## source     source          6  FALSE    FALSE      678     545 0.002974
-## politics politics          8  FALSE    FALSE      520     512 0.003675
-## conflict conflict          8  FALSE    FALSE      538     515 0.003680
-## have         have          4  FALSE    FALSE     2397     577 0.005515
-## East         East          4  FALSE    FALSE      444     433 0.006173
-## Middle     Middle          6  FALSE    FALSE      445     433 0.006179
-## Category Category          8  FALSE    FALSE     4202     624 0.006291
-## United     United          6  FALSE    FALSE      707     409 0.008642
-## say           say          3  FALSE    FALSE     1517     483 0.008674
+##              term characters number nonalpha termfreq docfreq reldocfreq
+## Iraq         Iraq          4  FALSE    FALSE     2156     634     0.9407
+## source     source          6  FALSE    FALSE      678     545     0.8086
+## politics politics          8  FALSE    FALSE      520     512     0.7596
+## conflict conflict          8  FALSE    FALSE      538     515     0.7641
+## have         have          4  FALSE    FALSE     2397     577     0.8561
+## East         East          4  FALSE    FALSE      444     433     0.6424
+## Middle     Middle          6  FALSE    FALSE      445     433     0.6424
+## Category Category          8  FALSE    FALSE     4202     624     0.9258
+## United     United          6  FALSE    FALSE      707     409     0.6068
+## say           say          3  FALSE    FALSE     1517     483     0.7166
+##             tfidf
+## Iraq     0.002162
+## source   0.002974
+## politics 0.003675
+## conflict 0.003680
+## have     0.005515
+## East     0.006173
+## Middle   0.006179
+## Category 0.006291
+## United   0.008642
+## say      0.008674
 ```
 
 
@@ -224,13 +235,20 @@ head(terms.bush)
 ```
 
 ```
-##   term characters number nonalpha termfreq.x docfreq   tfidf termfreq.y
-## 1               0  FALSE    FALSE          1       1 0.01956          1
-## 2   >>          2  FALSE     TRUE          2       2 0.05667          0
-## 3    |          1  FALSE     TRUE        138      51 0.02090        519
-## 4   __          2  FALSE    FALSE          2       2 0.01664          8
-## 5    *          1  FALSE     TRUE         16      16 0.01744         64
-## 6    %          1  FALSE     TRUE         71      14 0.05040         98
+##   term characters number nonalpha termfreq.x docfreq reldocfreq   tfidf
+## 1               0  FALSE    FALSE          1       1   0.008696 0.01956
+## 2   >>          2  FALSE     TRUE          2       2   0.017391 0.05667
+## 3    |          1  FALSE     TRUE        138      51   0.443478 0.02090
+## 4   __          2  FALSE    FALSE          2       2   0.017391 0.01664
+## 5    *          1  FALSE     TRUE         16      16   0.139130 0.01744
+## 6    %          1  FALSE     TRUE         71      14   0.121739 0.05040
+##   termfreq.y
+## 1          1
+## 2          0
+## 3        519
+## 4          8
+## 5         64
+## 6         98
 ```
 
 
@@ -248,28 +266,28 @@ head(terms.bush, n = 10)
 ```
 
 ```
-##                term characters number nonalpha termfreq.x docfreq    tfidf
-## 541            Bush          4  FALSE    FALSE        311     115 0.000000
-## 2830      President          9  FALSE    FALSE        177      82 0.005675
-## 1531         George          6  FALSE    FALSE         92      65 0.007598
-## 3920             W.          2  FALSE     TRUE         78      59 0.008545
-## 3937            war          3  FALSE    FALSE        155      54 0.013838
-## 80   administration         14  FALSE    FALSE         67      39 0.013215
-## 1712          House          5  FALSE    FALSE         78      44 0.012347
-## 2310           memo          4  FALSE    FALSE         49      13 0.047050
-## 793        Congress          8  FALSE    FALSE         53      26 0.023120
-## 3983          White          5  FALSE    FALSE         52      29 0.016142
-##      termfreq.y relfreq.x relfreq.y   over
-## 541           0  0.013227 0.0000000 13.227
-## 2830         75  0.007528 0.0008940  3.975
-## 1531         14  0.003913 0.0001669  3.353
-## 3920          5  0.003317 0.0000596  3.131
-## 3937        131  0.006592 0.0015615  2.574
-## 80           14  0.002849 0.0001669  2.442
-## 1712         44  0.003317 0.0005245  2.176
-## 2310          9  0.002084 0.0001073  1.882
-## 793          18  0.002254 0.0002146  1.856
-## 3983         19  0.002212 0.0002265  1.803
+##                term characters number nonalpha termfreq.x docfreq
+## 541            Bush          4  FALSE    FALSE        311     115
+## 2830      President          9  FALSE    FALSE        177      82
+## 1531         George          6  FALSE    FALSE         92      65
+## 3920             W.          2  FALSE     TRUE         78      59
+## 3937            war          3  FALSE    FALSE        155      54
+## 80   administration         14  FALSE    FALSE         67      39
+## 1712          House          5  FALSE    FALSE         78      44
+## 2310           memo          4  FALSE    FALSE         49      13
+## 793        Congress          8  FALSE    FALSE         53      26
+## 3983          White          5  FALSE    FALSE         52      29
+##      reldocfreq    tfidf termfreq.y relfreq.x relfreq.y   over
+## 541      1.0000 0.000000          0  0.013227 0.0000000 13.227
+## 2830     0.7130 0.005675         75  0.007528 0.0008940  3.975
+## 1531     0.5652 0.007598         14  0.003913 0.0001669  3.353
+## 3920     0.5130 0.008545          5  0.003317 0.0000596  3.131
+## 3937     0.4696 0.013838        131  0.006592 0.0015615  2.574
+## 80       0.3391 0.013215         14  0.002849 0.0001669  2.442
+## 1712     0.3826 0.012347         44  0.003317 0.0005245  2.176
+## 2310     0.1130 0.047050          9  0.002084 0.0001073  1.882
+## 793      0.2261 0.023120         18  0.002254 0.0002146  1.856
+## 3983     0.2522 0.016142         19  0.002212 0.0002265  1.803
 ```
 
 
@@ -310,7 +328,7 @@ so by matching the ids in the meta file with the (numeric) row names we can put 
 
 ```r
 meta = amcat.getarticlemeta(conn, set = 10271, dateparts = T)
-years = meta$year[match(meta$id, as.numeric(rownames(dtm)))]
+years = meta$year[match(as.numeric(rownames(dtm)), meta$id)]
 dtm.before = dtm[years < as.Date("2012-01-01"), ]
 dtm.after = dtm[years >= as.Date("2012-01-01"), ]
 terms = amcat.compare.corpora(dtm.after, dtm.before)
@@ -375,48 +393,27 @@ top.topic.words(m$topics)
 ```
 
 ```
-##       [,1]        [,2]        [,3]         [,4]             
-##  [1,] "Abu"       "election"  "Iran"       "journalist"     
-##  [2,] "abuse"     "video"     "blast"      "Turkey"         
-##  [3,] "Ghraib"    "Blair"     "resolution" "Green"          
-##  [4,] "crash"     "oil"       "center"     "hostage"        
-##  [5,] "Australia" "Basra"     "Romania"    "raid"           
-##  [6,] "bill"      "poll"      "execution"  "Fallujah"       
-##  [7,] "Ford"      "memo"      "Syria"      "truck"          
-##  [8,] "Senator"   "sailor"    "company"    "gunman"         
-##  [9,] "girl"      "Obama"     "marine"     "mosque"         
-## [10,] "rape"      "Kurdistan" "embassy"    "son"            
-## [11,] "Reid"      "Nay"       "jail"       "Carroll"        
-## [12,] "Marines"   "Air"       "Petraeus"   "PKK"            
-## [13,] "Group"     "Royal"     "WikiNews"   "Workers"        
-## [14,] "Rights"    "Annan"     "brigade"    "phosphorus"     
-## [15,] "convoy"    "Sadr"      "Muqtada"    "Zone"           
-## [16,] "seat"      "voter"     "Musab"      "style"          
-## [17,] "Harry"     "Gates"     "tape"       "Allawi"         
-## [18,] "device"    "policeman" "Maliki"     "throw"          
-## [19,] "Jordan"    "roadside"  "Tehran"     "Cheney"         
-## [20,] "flight"    "crew"      "Basescu"    "Representatives"
-##       [,5]          
-##  [1,] "vote"        
-##  [2,] "helicopter"  
-##  [3,] "category"    
-##  [4,] "constitution"
-##  [5,] "accident"    
-##  [6,] "figure"      
-##  [7,] "Mosul"       
-##  [8,] "Brown"       
-##  [9,] "CIA"         
-## [10,] "Rumsfeld"    
-## [11,] "Talabani"    
-## [12,] "Diyala"      
-## [13,] "Muslims"     
-## [14,] "flag"        
-## [15,] "shooting"    
-## [16,] "Sgrena"      
-## [17,] "Human"       
-## [18,] "Italy"       
-## [19,] "City"        
-## [20,] "align"
+##       [,1]         [,2]         [,3]           [,4]         [,5]        
+##  [1,] "Abu"        "election"   "category"     "journalist" "Iran"      
+##  [2,] "abuse"      "vote"       "execution"    "helicopter" "oil"       
+##  [3,] "blast"      "Blair"      "constitution" "video"      "poll"      
+##  [4,] "Ghraib"     "Turkey"     "accident"     "Green"      "Syria"     
+##  [5,] "resolution" "Basra"      "sailor"       "crash"      "hostage"   
+##  [6,] "figure"     "center"     "Obama"        "Romania"    "bill"      
+##  [7,] "company"    "memo"       "count"        "Australia"  "truck"     
+##  [8,] "raid"       "Kurdistan"  "Senator"      "Mosul"      "Annan"     
+##  [9,] "Brown"      "CIA"        "Royal"        "Fallujah"   "marine"    
+## [10,] "Ford"       "gunman"     "Muslims"      "Nay"        "mosque"    
+## [11,] "Rumsfeld"   "Reid"       "flag"         "Air"        "shooting"  
+## [12,] "Sadr"       "Human"      "Group"        "rape"       "seat"      
+## [13,] "Rights"     "Carroll"    "Sgrena"       "Talabani"   "Harry"     
+## [14,] "convoy"     "align"      "son"          "Diyala"     "PKK"       
+## [15,] "device"     "jail"       "Italy"        "Marines"    "Workers"   
+## [16,] "Jordan"     "Muqtada"    "voter"        "Gates"      "China"     
+## [17,] "City"       "referendum" "brigade"      "policeman"  "flight"    
+## [18,] "embassy"    "style"      "Zone"         "Donald"     "Health"    
+## [19,] "roadside"   "Cheney"     "Howard"       "WikiNews"   "Rice"      
+## [20,] "Petraeus"   "abducted"   "draft"        "crew"       "restaurant"
 ```
 
 
@@ -435,18 +432,18 @@ head(docs)
 ```
 ##         id       date   medium length       year      month       week X1
 ## 1 81112681 2013-08-29 Wikinews    406 2013-01-01 2013-08-01 2013-08-26  0
-## 2 81112682 2012-01-20 Wikinews    149 2012-01-01 2012-01-01 2012-01-16  8
-## 3 81112683 2011-02-06 Wikinews    486 2011-01-01 2011-02-01 2011-01-31  2
+## 2 81112682 2012-01-20 Wikinews    149 2012-01-01 2012-01-01 2012-01-16  1
+## 3 81112683 2011-02-06 Wikinews    486 2011-01-01 2011-02-01 2011-01-31  0
 ## 4 81112684 2010-09-23 Wikinews    314 2010-01-01 2010-09-01 2010-09-20  0
-## 5 81112685 2013-08-30 Wikinews    394 2013-01-01 2013-08-01 2013-08-26  0
-## 6 81112686 2009-08-12 Wikinews    244 2009-01-01 2009-08-01 2009-08-10  7
+## 5 81112685 2013-08-30 Wikinews    394 2013-01-01 2013-08-01 2013-08-26  3
+## 6 81112686 2009-08-12 Wikinews    244 2009-01-01 2009-08-01 2009-08-10  0
 ##   X2 X3 X4 X5
-## 1  3  3  0  1
-## 2  1  0  3  2
-## 3  0  3  1  0
-## 4  0  0  3  4
-## 5  3  5  2  2
-## 6  1  0  0  9
+## 1  5  0  1  1
+## 2  2  5  1  5
+## 3  0  4  2  0
+## 4  0  3  4  0
+## 5  3  1  4  1
+## 6  0  2 15  0
 ```
 
 

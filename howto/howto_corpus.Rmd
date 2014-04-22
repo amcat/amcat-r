@@ -159,7 +159,7 @@ so by matching the ids in the meta file with the (numeric) row names we can put 
 
 ```{r message=FALSE}
 meta = amcat.getarticlemeta(conn, set=10271, dateparts=T)
-years = meta$year[match(meta$id, as.numeric(rownames(dtm)))]
+years = meta$year[match(as.numeric(rownames(dtm)), meta$id)]
 dtm.before = dtm[years < as.Date('2012-01-01'),]
 dtm.after = dtm[years >= as.Date('2012-01-01'),]
 terms = amcat.compare.corpora(dtm.after, dtm.before)
