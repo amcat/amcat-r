@@ -1,0 +1,29 @@
+\name{amcat.add.articles.to.set}
+\alias{amcat.add.articles.to.set}
+\title{Add articles to an article set}
+\usage{
+amcat.add.articles.to.set(conn, project, articles, articleset = NULL,
+  articleset.name = NULL, articleset.provenance = NULL)
+}
+\arguments{
+  \item{conn}{the connection object from
+  \code{\link{amcat.connect}}}
+
+  \item{project}{the project to add the articles to}
+
+  \item{articles}{a vector of article ids}
+
+  \item{articleset}{the article set id of an existing set}
+
+  \item{articleset.name}{the name for a new article set}
+
+  \item{articleset.provenance}{a provenance text for a new
+  article set}
+}
+\value{
+The articleset id of the new or existing article set
+}
+\description{
+Add the given article ids to a new or existing article set
+}
+

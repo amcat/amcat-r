@@ -66,7 +66,7 @@ amcat.connect <- function(host, username=NULL, passwd=NULL, token=NULL, disable_
 #' @param filters a named vector of filters, e.g. c(project=2, articleset=3)
 #' @param post use HTTP POST instead of GET
 #' @return the raw result
-amcat.getURL <- function(conn, path, filters=NULL, post=FALSE) {
+amcat.getURL <- function(conn, path, filters=NULL, post=FALSE, post_options=list()) {
   httpheader = c(Authorization=paste("Token", conn$token))
   url = paste(conn$host, path, sep="/")
   # strip NULL filters
@@ -80,7 +80,8 @@ amcat.getURL <- function(conn, path, filters=NULL, post=FALSE) {
     getURL(url, httpheader=httpheader, .opts=conn$opts)
   } else {  
     post_opts = modifyList(conn$opts, list(httpheader=httpheader))
-    postForm(url, .params=filters, .opts=list(httpheader=httpheader))
+    post_opts = modifyList(post_opts, post_options)
+    postForm(url, .params=filters, .opts=post_opts)
   }
 }
 
@@ -201,3 +202,79 @@ amcat.getarticlemeta <- function(conn, set, filters=list(), columns=c('id','date
 }
 
 
+#' Add articles to an article set
+#' 
+#' Add the given article ids to a new or existing article set
+#' 
+#' @param conn the connection object from \code{\link{amcat.connect}}
+#' @param project the project to add the articles to
+#' @param articles a vector of article ids
+#' @param articleset the article set id of an existing set
+#' @param articleset.name the name for a new article set
+#' @param articleset.provenance a provenance text for a new article set
+#' @return The articleset id of the new or existing article set
+amcat.add.articles.to.set <- function(conn, project, articles, articleset=NULL,
+                                      articleset.name=NULL, articleset.provenance=NULL) {
+  if (is.null(articleset)) {
+    if (is.null(articleset.name)) 
+      stop("Provide articleset or articleset.name")
+    path = paste("api", "v4", "projects",project, "articlesets", "?format=json", sep="/")
+    if (is.null(articleset.provenance)) 
+      articleset.provenance=paste("Uploaded", length(articles), "articles from R on", format(Sys.time(), "%FT%T"))
+    r = amcat.getURL(conn, path, filters=list(name=articleset.name, provenance=articleset.provenance), post=TRUE) 
+    
+    articleset = fromJSON(r)$id
+    message("Created articleset ", articleset, ": ", articleset.name," in project ", project)
+  }
+  idlist = lapply(articles, function(x) list(id=x))
+  path = paste("", "api", "v4", "projects",project, "articlesets", articleset, "articles", "", sep="/")
+  .amcat.post(conn, path, toJSON(idlist))
+  articleset
+}
+
+
+#' Unfortunately, rcurl postform does not allow us to specify the json content-type
+#' so we need to use a raw call using make.socket
+#' Inspired by httprequest, but its functions don't allow us to specify authentication header :-(
+.amcat.post <- function (conn, path, data, expect.status=201) {
+  if (grepl(":\\d+$", conn$host)) {
+    port = as.numeric(sub(".*:(\\d+)$", "\\1", conn$host))
+    host = sub(":\\d+", "", conn$host)
+  } else {
+    port = 80
+    host = conn$host
+  }
+  # strip http:
+  host = sub("^http://", "", host)
+  lengthdata <- length(strsplit(data, "")[[1]])
+  
+  header <- paste("POST ", path, " HTTP/1.1\n", sep = "")
+  header <- c(header, paste("Host: ", host, "\n", sep = ""))
+  header <- c(header, "Accept: application/json\n")
+  header <- c(header, "Content-Type: application/json\n")
+  header <- c(header, paste("Authorization: Token ", conn$token, "\n", sep=""))
+  header <- c(header, paste("Content-Length: ", lengthdata, "\n"))
+  header <- c(header, "Connection: Keep-Alive")
+  tosend  <- paste(c(header, "\n\n", data, "\n"), collapse = "")
+  fp <- make.socket(host = host, port = port, server = FALSE)
+  write.socket(fp, tosend)
+  output <- character(0)
+  repeat {
+    ss <- read.socket(fp, loop = FALSE)
+    output <- paste(output, ss, sep = "")
+    if (regexpr("\r\n0\r\n\r\n", ss) > -1) 
+      (break)()
+    if (ss == "") 
+      (break)()
+  }
+  close.socket(fp)
+  if (!is.null(expect.status)) {
+    # try to interpret output, no idea how robus this really is
+    tokens = strsplit(output, "\\s+")[[1]]
+    if (expect.status != as.numeric(tokens[2])) {
+      status = paste(tokens[1:3], collapse=" ")
+      stop(paste("Server returned '", status, "', expected status ", expect.status, sep=""))
+    }
+  }
+  return(output)
+}
