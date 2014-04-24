@@ -1,0 +1,85 @@
+Using AmCAT codebooks in R 
+==========================
+
+Codebooks in AmCAT are essentially hierarchical lists of codes that have one or more labels attached to them. 
+We can use this feature to create a query dictionary by adding codes with a 'human' label, for example in English,
+and with the keyword query to use. 
+
+The hierarchical nature of codebooks makes it possible to have more general codes (e.g. economy) 
+with below them more specific codes (e.g. inflation). 
+
+This howto will show how to download a codebook, use it for querying articles, 
+and use the hierarchical nature to classify results.
+
+Downloading codebooks
+=====================
+
+The `amcat.gethierarchy` function can be used to download all codes and their hierarchy from a codebook:
+
+```{r, message=F}
+library(amcatr)
+conn = amcat.connect("http://amcat.nl")
+h = amcat.gethierarchy(conn, codebook_id=374, languages=c("en", "query"))
+h
+```
+
+The resulting data frame has a column `code` that specifies the code and a column `parent` that specifies the parent of the code.
+For example, the parent of `nuclear` is `wmd`, which has `goals` as a parent, which does not itself have a parent. 
+
+Querying codes
+==============
+
+The functions `amcat.hits` and `amcat.aggregate` described in the Querying howto can be directly used from a codebook:
+
+```{r, message=FALSE}
+counts = amcat.aggregate(conn, queries=h$label.query, labels=h$label.en, sets=10271)
+counts
+```
+
+
+
+Adding categories
+=================
+
+These parent-child relations define the hierarchy, but they are not very easy to use.
+The `amcat.hierarchy.cats` function creates category variables that specify in which part of the tree a code is found:
+
+```{r, message=FALSE}
+h = amcat.hierarchy.cats(h, maxdepth=1)
+h
+```
+
+So, nuclear has 'goals' as its main category (`cat.1`), and 'wmd' as a secondary category. 
+This information can be directly merged with the counts data:
+
+```{r, message=F}
+counts = merge(h, counts, by.x="code", by.y="query")
+counts
+tapply(counts$count, counts$cat.1, sum)
+```
+
+Note that if the queries have a possible overlap, it is not correct to simply add counts like this. 
+It is probably a better idea to get the results per article, and then count the number of unique articles
+that contain any of the codes in a specific category: 
+
+```{r, message=F}
+arts = amcat.hits(conn, queries=h$label.query, labels=h$label.en, sets=10271)
+head(arts)
+table(arts$query)
+```
+
+As can be seen in the output, `amcat.hits` returns a data frame with counts per article per query.
+The tabulation gives the same results as `amcat.aggregate` shown above, as would be expected. 
+
+Now, let's merge the data, and count unique article ids per cat.1 instead:
+
+```{r, message=FALSE}
+arts = merge(h, arts, by.x="code", by.y="query")
+head(arts)
+tapply(arts$id, arts$cat.1, function (x) length(unique(x)))
+```
+
+Compared to the earlier results, we can see that 5 goals articles and 2 means articles were indeed overlapping. 
+If you plan to do a lot of different plots, categorizations, etc. on the same basic queries and data,
+it is very flexible and often more efficient to retrieve all data from AmCAT first, 
+and then do the tabulating, filtering, etc. in R rather than by using `amcat.aggregate`.

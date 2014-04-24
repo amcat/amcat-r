@@ -29,7 +29,8 @@ amcat.aggregate <- function(conn, queries, labels=queries, sets, axis1=NULL, axi
     }
   }  
   # convert axis1 to Date object if needed
-  if (axis1 %in% c("year", "quarter", "month", "week", "day")) result[, axis1] = as.Date(result[, axis1])
+  if (!is.null(axis1))
+    if (axis1 %in% c("year", "quarter", "month", "week", "day")) result[, axis1] = as.Date(result[, axis1])
   return(result)
 }
 
