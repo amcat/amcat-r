@@ -213,6 +213,7 @@ amcat.getarticlemeta <- function(conn, set, filters=list(), columns=c('id','date
 #' @param articleset.name the name for a new article set
 #' @param articleset.provenance a provenance text for a new article set
 #' @return The articleset id of the new or existing article set
+#' @export
 amcat.add.articles.to.set <- function(conn, project, articles, articleset=NULL,
                                       articleset.name=NULL, articleset.provenance=NULL) {
   if (is.null(articleset)) {

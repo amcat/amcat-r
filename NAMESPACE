@@ -1,3 +1,4 @@
+export(amcat.add.articles.to.set)
 export(amcat.aggregate)
 export(amcat.compare.corpora)
 export(amcat.connect)

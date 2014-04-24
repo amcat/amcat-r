@@ -139,9 +139,51 @@ and we can use the `labels=` argument to specify the result name:
 ```{r, message=FALSE}
 h = amcat.hits(conn, queries=c("tyrant OR brute", "saddam"), labels=c("tyrant", "saddam"), sets=10271)
 head(h)
+table(h$query)
 ```
 
 As you can see, the `query` column contains the label as specified in the `labels=` argument. 
+In total, 95 articles mentioned Saddam, while 2 articles mentioned a tyrant word.
+
+Saving results to a (new or existing) set
+-----------------------------
+So, let's save all articles that contained the 'tyrant' query as a new set. 
+For this, we can use the `amcat.add.articles.to.set` function.
+This function adds existing articles to an article set. 
+By specifying the ID of an existing set, it will add the articles to that set.
+If no ID is specified the function will create a new set with the given name,
+and add the articles to that new set. 
+The function returns the ID of the (new) set, which can be useful to continue working with that set.
+
+The following code adds all articles mentioning a tyrant word to a new set in project 429 
+(which is a test project in which anyone can write):
+
+```{r}
+articles = h$id[h$query == "tyrant"]
+setid = amcat.add.articles.to.set(conn, project=429, articles=articles, articleset.name="New set from howto")
+```
+
+It created a new article set and hopefully added those articles. 
+Let's retrieve the set metadata to find out:
+
+```{r, message=FALSE}
+amcat.getarticlemeta(conn, set=setid)
+```
+
+So, as expected there are only 2 articles in the new set. 
+You can also add articles to an existing set.
+The following code adds the 'saddam' articles to the set:
+
+```{r, message=FALSE}
+articles = h$id[h$query == "saddam"]
+setid = amcat.add.articles.to.set(conn, project=429, articles=articles, articleset=setid)
+meta = amcat.getarticlemeta(conn, set=setid)
+nrow(meta)
+```
+
+Note that the set now contains 95 articles, not 95+2. 
+This is because the two 'tyrant' articles also mentioned saddam. 
+Any articles that are already contained in that set are skipped.
 
 Adding metadata
 ---------------
