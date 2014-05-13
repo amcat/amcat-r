@@ -32,9 +32,34 @@ amcat.gettokens <- function(conn, project, articleset, module="corenlp_lemmatize
   result
 } 
 
+#' Cast data.frame to sparse matrix
+#' 
+#' Create a sparse matrix from matching vectors of row indices, column indices and values
+#' 
+#' @param rows a vector of row indices: [i,]
+#' @param columns a vector of column indices: [,j]
+#' @param values a vector of the values for each (non-zero) cell: [i,j] = value
+#' @return a sparse matrix of the dgTMatrix class (\code{\link{Matrix}} package) 
+#' @export
+amcat.cast.sparse.matrix <- function(rows, columns, values) {
+  if(is.null(values)) values = rep(1, length(rows))
+  d = data.frame(rows=rows, columns=columns, values=values)  
+  if(nrow(unique(d[,c('rows','columns')])) < nrow(d[,c('rows','columns')])){
+    warning('Duplicate column indices within row indices occured. Values of duplicates are summed.')
+    d = aggregate(values ~ rows + columns, d, FUN='sum')
+  } 
+  unit_index = unique(d$rows)
+  char_index = unique(d$columns)
+  sm = spMatrix(nrow=length(unit_index), ncol=length(char_index),
+                match(d$rows, unit_index), match(d$columns, char_index), d$values)
+  rownames(sm) = unit_index
+  colnames(sm) = char_index
+  sm
+}
+
 #' Create a document term matrix from a list of tokens
 #' 
-#' Create a document-term matrix (dtm) from a list of ids, terms, and frequencies
+#' Create a \code{\link{DocumentTermMatrix}} from a list of ids, terms, and frequencies. 
 #' 
 #' @param ids a vector of document ids
 #' @param terms a vector of words of the same length as ids
@@ -42,23 +67,8 @@ amcat.gettokens <- function(conn, project, articleset, module="corenlp_lemmatize
 #' @return a document-term matrix  \code{\link{DocumentTermMatrix}}
 #' @export
 amcat.dtm.create <- function(ids, terms, freqs) {
-    d = data.frame(ids=ids, terms=terms, freqs=freqs)  
-    # remove NA terms
-    if (sum(is.na(d$terms)) > 0) {
-      warning("Removing ", sum(is.na(d$terms)), "rows with missing term names")
-      d = d[!is.na(d$terms), ]
-    }
-    if(nrow(unique(d[,c('ids','terms')])) < nrow(d[,c('ids','terms')])){
-      warning('Duplicate terms within articles occured. Frequencies of duplicates are summed.')
-      d = aggregate(freqs ~ ids + terms, d, FUN='sum')
-    } 
-    documents = unique(d$ids)
-    vocabulary = unique(d$terms)
-    m = simple_triplet_matrix(match(d$ids, documents), 
-                              match(d$terms, vocabulary), 
-                              d$freqs, 
-                              dimnames=list(documents=as.character(documents), words=as.character(vocabulary)))
-    as.DocumentTermMatrix(m, weighting=weightTf)
+  sparsemat = amcat.cast.sparse.matrix(ids, terms, freqs)
+  as.DocumentTermMatrix(sparsemat, weighting=weightTf)
 }
 
 #' Estimate a topic model using the lda package
@@ -67,7 +77,7 @@ amcat.dtm.create <- function(ids, terms, freqs) {
 #' The parameters other than dtm are simply passed to the sampler but provide a workable default.
 #' See the description of that function for more information
 #' 
-#' @param dtm a document term matrix (e.g. the output of \code{\link{amcat.createDTM}})
+#' @param dtm a document term matrix (e.g. the output of \code{\link{amcat.dtm.create}})
 #' @param K the number of clusters
 #' @param num.iterations the number of iterations
 #' @param alpha the alpha parameter
@@ -83,12 +93,11 @@ amcat.lda.fit <- function(dtm, K=50, num.iterations=100, alpha=50/K, eta=.01, bu
   m
 }
 
-
 #' Compute some useful corpus statistics for a dtm
 #' 
 #' Compute a number of useful statistics for filtering words: term frequency, idf, etc.
 #' 
-#' @param dtm a document term matrix (e.g. the output of \code{\link{amcat.createDTM}})
+#' @param dtm a document term matrix (e.g. the output of \code{\link{amcat.dtm.create}})
 #' @return A data frame with rows corresponding to the terms in dtm and the statistics in the columns
 #' @export
 amcat.term.statistics <- function(dtm) {
@@ -108,7 +117,7 @@ amcat.term.statistics <- function(dtm) {
 #' 
 #' Return a data frame containing article metadata and topic occurence per document
 #' 
-#' @param dtm a document term matrix (e.g. the output of \code{\link{amcat.createDTM}})
+#' @param dtm a document term matrix (e.g. the output of \code{\link{amcat.dtm.create}})
 #' @return A data frame with rows corresponding to the terms in dtm and the statistics in the columns
 #' @export
 amcat.lda.topics.per.document <- function(topics) {
