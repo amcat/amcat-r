@@ -41,17 +41,12 @@ amcat.gettokens <- function(conn, project, articleset, module="corenlp_lemmatize
 #' @param values a vector of the values for each (non-zero) cell: [i,j] = value
 #' @return a sparse matrix of the dgTMatrix class (\code{\link{Matrix}} package) 
 #' @export
-amcat.cast.sparse.matrix <- function(rows, columns, values) {
+amcat.cast.sparse.matrix <- function(rows, columns, values=NULL) {
   if(is.null(values)) values = rep(1, length(rows))
-  d = data.frame(rows=rows, columns=columns, values=values)  
-  if(nrow(unique(d[,c('rows','columns')])) < nrow(d[,c('rows','columns')])){
-    warning('Duplicate column indices within row indices occured. Values of duplicates are summed.')
-    d = aggregate(values ~ rows + columns, d, FUN='sum')
-  } 
-  unit_index = unique(d$rows)
-  char_index = unique(d$columns)
+  unit_index = unique(rows)
+  char_index = unique(columns)
   sm = spMatrix(nrow=length(unit_index), ncol=length(char_index),
-                match(d$rows, unit_index), match(d$columns, char_index), d$values)
+                match(rows, unit_index), match(columns, char_index), values)
   rownames(sm) = unit_index
   colnames(sm) = char_index
   sm
@@ -67,7 +62,13 @@ amcat.cast.sparse.matrix <- function(rows, columns, values) {
 #' @return a document-term matrix  \code{\link{DocumentTermMatrix}}
 #' @export
 amcat.dtm.create <- function(ids, terms, freqs) {
-  sparsemat = amcat.cast.sparse.matrix(ids, terms, freqs)
+  # remove NA terms
+  d = data.frame(ids=ids, terms=terms, freqs=freqs)
+  if (sum(is.na(d$terms)) > 0) {
+    warning("Removing ", sum(is.na(d$terms)), "rows with missing term names")
+    d = d[!is.na(d$terms), ]
+  }
+  sparsemat = amcat.cast.sparse.matrix(d$ids, d$terms, d$freqs)
   as.DocumentTermMatrix(sparsemat, weighting=weightTf)
 }
 
