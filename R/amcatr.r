@@ -66,6 +66,7 @@ amcat.connect <- function(host, username=NULL, passwd=NULL, token=NULL, disable_
 #' @param filters a named vector of filters, e.g. c(project=2, articleset=3)
 #' @param post use HTTP POST instead of GET
 #' @return the raw result
+#' @export
 amcat.getURL <- function(conn, path, filters=NULL, post=FALSE, post_options=list()) {
   httpheader = c(Authorization=paste("Token", conn$token))
   url = paste(conn$host, path, sep="/")

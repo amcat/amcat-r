@@ -11,6 +11,7 @@
 
 
 .Rproj.user
+.RData
 
 # Knitr meuk
 howto/cache
