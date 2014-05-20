@@ -43,10 +43,15 @@ amcat.gettokens <- function(conn, project, articleset, module="corenlp_lemmatize
 #' @export
 amcat.cast.sparse.matrix <- function(rows, columns, values=NULL) {
   if(is.null(values)) values = rep(1, length(rows))
-  unit_index = unique(rows)
-  char_index = unique(columns)
+  d = data.frame(rows=rows, columns=columns, values=values)
+  if(nrow(d) > nrow(unique(d[,c('rows','columns')]))){
+    warning('Duplicate row-column matches occured. Values of duplicates are summed')
+    d = aggregate(values ~ rows + columns, d, FUN='sum')
+  }
+  unit_index = unique(d$rows)
+  char_index = unique(d$columns)
   sm = spMatrix(nrow=length(unit_index), ncol=length(char_index),
-                match(rows, unit_index), match(columns, char_index), values)
+                match(d$rows, unit_index), match(d$columns, char_index), d$values)
   rownames(sm) = unit_index
   colnames(sm) = char_index
   sm
@@ -162,6 +167,4 @@ amcat.compare.corpora <- function(dtm.x, dtm.y, smooth=.001) {
   f$chi = chi2(f$termfreq.x, f$termfreq.y, sum(f$termfreq.x) - f$termfreq.x, sum(f$termfreq.y) - f$termfreq.y)
   f
 }
-
-
 

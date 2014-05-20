@@ -3,7 +3,7 @@
 \alias{amcat.cast.sparse.matrix}
 \title{Cast data.frame to sparse matrix}
 \usage{
-amcat.cast.sparse.matrix(rows, columns, values)
+amcat.cast.sparse.matrix(rows, columns, values = NULL)
 }
 \arguments{
 \item{rows}{a vector of row indices: [i,]}
