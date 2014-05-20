@@ -12,8 +12,7 @@ Depends:
     slam,
     lda,
     topicmodels,
-    Matrix,
-    igraph
+    Matrix
 Description: Functions to call the AmCAT API
 License: MIT
 URL: http://github.com/amcat/amcat
