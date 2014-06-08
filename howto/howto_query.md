@@ -16,13 +16,12 @@ Example:
 
 
 ```r
-2 + 2
+2+2
 ```
 
 ```
 ## [1] 4
 ```
-
 
 Getting started: installing, connecting and accessing the API
 ==============
@@ -36,7 +35,6 @@ if (!require(devtools)) {install.packages("devtools"); library(devtools)}
 install_github(repo="amcat-r", username="amcat")
 ```
 
-
 Note: Every time you run the `install_github` command, 
 the latest version of the package is automatically installed from `github`. 
 
@@ -49,9 +47,8 @@ This requests an authentication token from the specified AmCAT server and stores
 
 ```r
 library(amcatr)
-conn = amcat.connect("http://amcat.nl", username = "example", passwd = "secret")
+conn = amcat.connect("http://amcat.nl", username='example', passwd='secret')
 ```
-
 
 If you don't specify a username or password,
 it will use the name of the logged in user and search for a password in a file `.amcatauth` in your home directory.
@@ -65,7 +62,6 @@ When this is in place, you can connect without having to type the password every
 library(amcatr)
 conn = amcat.connect("http://amcat.nl")
 ```
-
 
 Retrieving information from AmCAT
 ---------------------------------
@@ -97,7 +93,6 @@ head(projects[, c("id", "name")])
 ## 6  50   AUTNES Media side
 ```
 
-
 As you can see, the `amcat.getobjects` call is translated into an `HTTP GET` request to the `api/v4/projects` address.
 The resource is often specified hierarchically, so the list of sets in project 442 
 (a publicly accessible project containing articles from wikinews)
@@ -109,12 +104,11 @@ amcat.getobjects(conn, c("projects", 442, "articlesets"))
 ```
 
 ```
-##   articles favourite    id                   name project
-## 1      674      True 10271 Wikinews articles Iraq     442
+##   favourite articles    id                   name project
+## 1      True      674 10271 Wikinews articles Iraq     442
 ##                                            provenance
 ## 1 Scraped from wikinews on 2014-04-19T02:35:27.840921
 ```
-
 
 Note that the slash at the end is required for most resources, 
 but it is automatically appended if you specify a hierarchical resource such as above. 
@@ -141,8 +135,9 @@ For example, the code below gets the amount of articles for Obama, Bush and the 
 
 
 ```r
-a = amcat.aggregate(conn, sets = 10271, axis1 = "year", queries = c("*", "obama", 
-    "bush"), labels = c("Total", "Obama", "Bush"))
+a = amcat.aggregate(conn, sets=10271, axis1="year",
+                    queries=c("*", "obama", "bush"), 
+                    labels=c("Total", "Obama", "Bush"))
 ```
 
 ```
@@ -165,21 +160,19 @@ head(a)
 ## 6    70 2012-01-01 Total
 ```
 
-
 This can be transformed from 'long' to 'wide' format using the `cast` function (from the `reshape` package) and plotted:
 
 
 ```r
 library(reshape)
-wide = cast(a, year ~ query, value = "count")
-plot(wide$year, wide$Bush/wide$Total, type = "l", frame.plot = F, ylim = c(0, 
-    0.4), col = "red", xlab = "Year", ylab = "% of Articles", main = "Percentage of articles mentioning US Presidents")
-lines(wide$year, wide$Obama/wide$Total, col = "blue")
-legend("top", legend = c("Bush", "Obama"), col = c("red", "blue"), lty = 1)
+wide = cast(a, year~query, value="count")
+plot(wide$year, wide$Bush / wide$Total, type='l', frame.plot=F, ylim = c(0, 0.4), col="red",
+     xlab="Year", ylab="% of Articles", main="Percentage of articles mentioning US Presidents")
+lines(wide$year, wide$Obama / wide$Total, col="blue")
+legend("top",legend=c("Bush", "Obama"), col=c("red", "blue"), lty=1)
 ```
 
 ![plot of chunk query-presidents](figure/query-presidents.png) 
-
 
 
 Getting hits per article
@@ -194,15 +187,14 @@ For example, to search for all articles containing the term 'tyrant' in this set
 
 
 ```r
-amcat.hits(conn, queries = "tyrant", sets = 10271)
+amcat.hits(conn, queries="tyrant", sets=10271)
 ```
 
 ```
-##   count       id  query
-## 1     1 81112879 tyrant
-## 2     1 81113124 tyrant
+##         id count  query
+## 1 81112879     1 tyrant
+## 2 81113124     1 tyrant
 ```
-
 
 So, this query could be found in two documents, occurring exactly once in each document. 
 We can also search for multiple queries simultaneously by specifying a vector of queries,
@@ -210,19 +202,18 @@ and we can use the `labels=` argument to specify the result name:
 
 
 ```r
-h = amcat.hits(conn, queries = c("tyrant OR brute", "saddam"), labels = c("tyrant", 
-    "saddam"), sets = 10271)
+h = amcat.hits(conn, queries=c("tyrant OR brute", "saddam"), labels=c("tyrant", "saddam"), sets=10271)
 head(h)
 ```
 
 ```
-##   count       id  query
-## 1     1 81112879 tyrant
-## 2     1 81113124 tyrant
-## 3     1 81112701 saddam
-## 4     1 81112708 saddam
-## 5     2 81112721 saddam
-## 6     1 81112728 saddam
+##         id count  query
+## 1 81112879     1 tyrant
+## 2 81113124     1 tyrant
+## 3 81112701     1 saddam
+## 4 81112708     1 saddam
+## 5 81112721     2 saddam
+## 6 81112728     1 saddam
 ```
 
 ```r
@@ -234,7 +225,6 @@ table(h$query)
 ## saddam tyrant 
 ##     95      2
 ```
-
 
 As you can see, the `query` column contains the label as specified in the `labels=` argument. 
 In total, 95 articles mentioned Saddam, while 2 articles mentioned a tyrant word.
@@ -255,21 +245,19 @@ The following code adds all articles mentioning a tyrant word to a new set in pr
 
 ```r
 articles = h$id[h$query == "tyrant"]
-setid = amcat.add.articles.to.set(conn, project = 429, articles = articles, 
-    articleset.name = "New set from howto")
+setid = amcat.add.articles.to.set(conn, project=429, articles=articles, articleset.name="New set from howto")
 ```
 
 ```
-## Created articleset 10320: New set from howto in project 429
+## Created articleset 11778: New set from howto in project 429
 ```
-
 
 It created a new article set and hopefully added those articles. 
 Let's retrieve the set metadata to find out:
 
 
 ```r
-amcat.getarticlemeta(conn, set = setid)
+amcat.getarticlemeta(conn, set=setid)
 ```
 
 ```
@@ -278,7 +266,6 @@ amcat.getarticlemeta(conn, set = setid)
 ## 2 81113124 2013-09-16 Wikinews    353
 ```
 
-
 So, as expected there are only 2 articles in the new set. 
 You can also add articles to an existing set.
 The following code adds the 'saddam' articles to the set:
@@ -286,16 +273,14 @@ The following code adds the 'saddam' articles to the set:
 
 ```r
 articles = h$id[h$query == "saddam"]
-setid = amcat.add.articles.to.set(conn, project = 429, articles = articles, 
-    articleset = setid)
-meta = amcat.getarticlemeta(conn, set = setid)
+setid = amcat.add.articles.to.set(conn, project=429, articles=articles, articleset=setid)
+meta = amcat.getarticlemeta(conn, set=setid)
 nrow(meta)
 ```
 
 ```
 ## [1] 95
 ```
-
 
 Note that the set now contains 95 articles, not 95+2. 
 This is because the two 'tyrant' articles also mentioned saddam. 
@@ -309,7 +294,7 @@ The following code retrieves the metadata for set 10271 and adds it to the queri
 
 
 ```r
-meta = amcat.getarticlemeta(conn, set = 10271, dateparts = TRUE)
+meta = amcat.getarticlemeta(conn, set=10271, dateparts=TRUE)
 head(meta)
 ```
 
@@ -324,7 +309,7 @@ head(meta)
 ```
 
 ```r
-h = merge(h, meta, all.x = TRUE)
+h = merge(h, meta, all.x=TRUE)
 head(h)
 ```
 
@@ -345,18 +330,16 @@ head(h)
 ## 6 2013-09-16
 ```
 
-
 Now, we can plot the results over time, e.g. per year:
 
 
 ```r
-peryear = cast(h, year ~ query, value = "count", fun.aggregate = sum)
-plot(peryear$year, peryear$saddam, type = "l", frame.plot = F, xlab = "Year", 
-    ylab = "Articles", main = "Articles mentioning Saddam")
+peryear = cast(h, year ~ query, value="count", fun.aggregate=sum)
+plot(peryear$year, peryear$saddam, type='l', frame.plot=F, 
+     xlab="Year", ylab="Articles", main="Articles mentioning Saddam")
 ```
 
 ![plot of chunk query-saddam](figure/query-saddam.png) 
-
 
 The large number of articles in 2013 is most likely caused by wikinews containing more articles that year
 rather than by Saddam being more salient in that year rather than earlier. 
@@ -365,15 +348,14 @@ and plot the percentage rather than the absolute number of articles:
 
 
 ```r
-total = aggregate(meta$id, by = list(meta$year), FUN = length)
+total = aggregate(meta$id, by=list(meta$year), FUN=length)
 colnames(total) = c("year", "total")
 peryear = merge(peryear, total)
-plot(peryear$year, peryear$saddam/peryear$total, type = "l", frame.plot = F, 
-    xlab = "Year", ylab = "% of Articles", main = "Percentage of articles mentioning Saddam")
+plot(peryear$year, peryear$saddam / peryear$total, type='l', frame.plot=F, 
+     xlab="Year", ylab="% of Articles", main="Percentage of articles mentioning Saddam")
 ```
 
 ![plot of chunk query-saddam-relative](figure/query-saddam-relative.png) 
-
 
 So, quite interestingly it seems that on wikinews, 
 Saddam was mentioned more often in 2013, even relative to the total amount of articles.
