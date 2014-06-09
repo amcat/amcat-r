@@ -64,7 +64,26 @@ The token data as imported above can easily be transformed into a dtm with the `
 The input of the function is a vector for the tokens (terms), together with a vector indicating in which documents the token occured (ids) and how often (freqs).
 
 ```{r, message=F}
-library(corpustools)
 dtm = amcat.dtm.create(ids=t$aid, terms=t$lemma, freqs=t$freq)
 dtm
 ```
+
+Match document meta
+--------------------
+
+For many purposes it is usefull to include the document meta, 
+such as the medium in which an article was published and the date at which it was published. 
+
+The document meta can be imported from amcat with the `amcat.getarticlemeta` function. 
+
+```{r}
+meta = amcat.getarticlemeta(conn, set=10271, dateparts=T)
+head(meta)
+```
+
+```{r}
+meta = meta[match(rownames(dtm), meta$id),]
+dim(dtm)
+dim(meta)
+```
+

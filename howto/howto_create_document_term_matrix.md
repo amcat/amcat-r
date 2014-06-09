@@ -97,7 +97,6 @@ The input of the function is a vector for the tokens (terms), together with a ve
 
 
 ```r
-library(corpustools)
 dtm = amcat.dtm.create(ids = t$aid, terms = t$lemma, freqs = t$freq)
 dtm
 ```
@@ -110,4 +109,57 @@ dtm
 ## Maximal term length: 369 
 ## Weighting          : term frequency (tf)
 ```
+
+
+Match document meta
+--------------------
+
+For many purposes it is usefull to include the document meta, 
+such as the medium in which an article was published and the date at which it was published. 
+
+The document meta can be imported from amcat with the `amcat.getarticlemeta` function. 
+
+
+```r
+meta = amcat.getarticlemeta(conn, set = 10271, dateparts = T)
+```
+
+```
+## GET http://preview.amcat.nl/api/v4/articlemeta?articleset=10271&page_size=1000&format=csv&page=1
+## GET http://preview.amcat.nl/api/v4/medium?pk=989907784&page_size=1000&format=csv&page=1
+```
+
+```r
+head(meta)
+```
+
+```
+##         id       date   medium length       year      month       week
+## 1 81112681 2013-08-29 Wikinews    406 2013-01-01 2013-08-01 2013-08-26
+## 2 81112682 2012-01-20 Wikinews    149 2012-01-01 2012-01-01 2012-01-16
+## 3 81112683 2011-02-06 Wikinews    486 2011-01-01 2011-02-01 2011-01-31
+## 4 81112684 2010-09-23 Wikinews    314 2010-01-01 2010-09-01 2010-09-20
+## 5 81112685 2013-08-30 Wikinews    394 2013-01-01 2013-08-01 2013-08-26
+## 6 81112686 2009-08-12 Wikinews    244 2009-01-01 2009-08-01 2009-08-10
+```
+
+
+
+```r
+meta = meta[match(rownames(dtm), meta$id), ]
+dim(dtm)
+```
+
+```
+## [1]   674 10707
+```
+
+```r
+dim(meta)
+```
+
+```
+## [1] 674   7
+```
+
 
