@@ -45,7 +45,7 @@ amcat.cast.sparse.matrix <- function(rows, columns, values=NULL) {
   if(is.null(values)) values = rep(1, length(rows))
   d = data.frame(rows=rows, columns=columns, values=values)
   if(nrow(d) > nrow(unique(d[,c('rows','columns')]))){
-    warning('Duplicate row-column matches occured. Values of duplicates are summed')
+    message('(Duplicate row-column matches occured. Values of duplicates are added up)')
     d = aggregate(values ~ rows + columns, d, FUN='sum')
   }
   unit_index = unique(d$rows)
@@ -56,6 +56,7 @@ amcat.cast.sparse.matrix <- function(rows, columns, values=NULL) {
   colnames(sm) = char_index
   sm
 }
+  
 
 #' Create a document term matrix from a list of tokens
 #' 
