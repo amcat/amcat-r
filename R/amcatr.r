@@ -92,11 +92,16 @@ amcat.getURL <- function(conn, path, filters=NULL, post=FALSE, post_options=list
 #' @param path the path of the url to retrieve (using the host from conn)
 #' @param filters: a named vector of filters, e.g. c(project=2, articleset=3)
 #' @param post use HTTP POST instead of GET
+#' @param page: the page number to start retrieving
+#' @param page_size: the number of rows per page
+#' @param max_page: the page number to stop retrieving at, if given
 #' @return dataframe 
-amcat.getpages <- function(conn, path, format='csv', page=1, page_size=1000, filters=NULL, post=FALSE) {
+#' @export
+amcat.getpages <- function(conn, path, format='csv', page=1, page_size=1000, filters=NULL, post=FALSE, max_page=NULL) {
   filters = c(filters, page_size=page_size, format=format)
   result = data.frame()
-  while(TRUE){
+  while (TRUE) {
+    if (!is.null(max_page)) if (page > max_page) break
     page_filters = c(filters, page=page)
     subresult = amcat.getURL(conn, path, page_filters, post=post)
     if (subresult == "") break
@@ -177,11 +182,12 @@ amcat.runaction <- function(conn, action, format='csv', ...) {
 #' @param time if true, parse the date as POSIXct datetime instead of Date
 #' @param dateparts if true, add date parts (year, month, week)
 #' @param medium_names if true, retrieve medium names and turn medium column into a factor
+#' @param ... additional arguments are passed to \code{\link{amcat.getpages}}. Useful arguments include page_size, page (starting page) and maxpage (end page)
 #' @return A dataframe containing the articles and the selected columns
 #' @export
-amcat.getarticlemeta <- function(conn, set, filters=list(), columns=c('id','date','medium','length'), time=F, dateparts=F, medium_names=T){
+amcat.getarticlemeta <- function(conn, set, filters=list(), columns=c('id','date','medium','length'), time=F, dateparts=F, medium_names=T, ...){
   filters[['articleset']] = set 
-  result = amcat.getobjects(conn, "articlemeta", filters=filters)
+  result = amcat.getobjects(conn, "articlemeta", filters=filters, ...)
   if(length(columns > 0)) result = result[,columns]
   if ("date" %in% names(result)) {
     result$date = (if(time == T) as.POSIXct(result$date, format='%Y-%m-%d %H:%M:%S') 
