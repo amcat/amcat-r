@@ -234,9 +234,11 @@ amcat.add.articles.to.set <- function(conn, project, articles, articleset=NULL,
     articleset = fromJSON(r)$id
     message("Created articleset ", articleset, ": ", articleset.name," in project ", project)
   }
-  idlist = lapply(articles, function(x) list(id=x))
-  path = paste("", "api", "v4", "projects",project, "articlesets", articleset, "articles", "", sep="/")
-  .amcat.post(conn, path, toJSON(idlist))
+  if (!is.null(articles)) {
+    idlist = lapply(articles, function(x) list(id=x))
+    path = paste("", "api", "v4", "projects",project, "articlesets", articleset, "articles", "", sep="/")
+    .amcat.post(conn, path, toJSON(idlist))
+  }
   articleset
 }
 
@@ -285,4 +287,33 @@ amcat.add.articles.to.set <- function(conn, project, articles, articleset=NULL,
     }
   }
   return(output)
+}
+
+
+#' Upload new articles to AmCAT
+#' 
+#' Upload articles into a given project and article set
+#' 
+#' @param conn the connection object from \code{\link{amcat.connect}}
+#' @param project the project to add the articles to
+#' @param articleset the article set id of an existing set. You can use \code{\link{amcat.add.articles.to.set}} 
+#'        to create a new articleset (with articles=NULL)
+#' @param headline the headlines of the articles to upload
+#' @param text the text of the articles to upload
+#' @param medium the medium of the articles to upload. Can be either of length 1 or of same length as headlines
+#' @param ... and additional fields to upload, e.g. author, byline etc.
+#' @export
+amcat.upload.articles <- function(conn, project, articleset, headline, text, date, medium, ...) {
+  path = paste("", "api", "v4", "projects",project, "articlesets", articleset, "articles", "", sep="/")
+  if (length(medium) == 1) medium = rep(medium, length(headline))
+  # not very efficient, but probably not the bottleneck
+  fields = list(...)
+  json_data = list()
+  json_data = vector("list", length(headline))
+  for (i in 1:length(json_data)) {
+    extra = unlist(lapply(fields, function(x) x[i]))
+    json_data[[i]] = c(headline=headline[i], text=text[i], date=date[i], medium=medium[i], extra)
+  }
+  json_data = toJSON(json_data)
+  invisible(.amcat.post(conn, path, data=json_data))
 }
