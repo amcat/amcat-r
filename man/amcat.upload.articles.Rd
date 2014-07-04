@@ -3,26 +3,32 @@
 \alias{amcat.upload.articles}
 \title{Upload new articles to AmCAT}
 \usage{
-amcat.upload.articles(conn, project, articleset, headline, text, date, medium,
-  ...)
+amcat.upload.articles(conn, project, articleset, text, headline, date, medium,
+  provenance = NULL, ...)
 }
 \arguments{
 \item{conn}{the connection object from \code{\link{amcat.connect}}}
 
 \item{project}{the project to add the articles to}
 
-\item{articleset}{the article set id of an existing set. You can use \code{\link{amcat.add.articles.to.set}}
-to create a new articleset (with articles=NULL)}
-
-\item{headline}{the headlines of the articles to upload}
+\item{articleset}{the article set id of an existing set, or the name of a new set to create}
 
 \item{text}{the text of the articles to upload}
 
-\item{medium}{the medium of the articles to upload. Can be either of length 1 or of same length as headlines}
+\item{headline}{the headlines of the articles to upload}
+
+\item{medium}{the medium of the articles to upload.}
+
+\item{provenance}{if articleset is character, an optional provenance string to store with the new set}
 
 \item{...}{and additional fields to upload, e.g. author, byline etc.}
 }
 \description{
-Upload articles into a given project and article set
+Upload articles into a given project and article set, or into a new article set if the articleset argument is character
+All arguments headline, medium etc. should be either of the same length as text, or of length 1
+All factor arguments will be converted to character using as.character
+For date, please provide either a string in ISO notatoin (i.e. "2010-12-31" or "2010-12-31T23:59:00")
+or a variable that can be converted to string using format(), e.g. Date, POSIXct or POSIXlt.
+The articles will be uploaded in batches of 100.
 }
 

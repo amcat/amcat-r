@@ -292,28 +292,49 @@ amcat.add.articles.to.set <- function(conn, project, articles, articleset=NULL,
 
 #' Upload new articles to AmCAT
 #' 
-#' Upload articles into a given project and article set
+#' Upload articles into a given project and article set, or into a new article set if the articleset argument is character
+#' All arguments headline, medium etc. should be either of the same length as text, or of length 1
+#' All factor arguments will be converted to character using as.character
+#' For date, please provide either a string in ISO notatoin (i.e. "2010-12-31" or "2010-12-31T23:59:00")
+#' or a variable that can be converted to string using format(), e.g. Date, POSIXct or POSIXlt. 
+#' The articles will be uploaded in batches of 100. 
 #' 
 #' @param conn the connection object from \code{\link{amcat.connect}}
 #' @param project the project to add the articles to
-#' @param articleset the article set id of an existing set. You can use \code{\link{amcat.add.articles.to.set}} 
-#'        to create a new articleset (with articles=NULL)
-#' @param headline the headlines of the articles to upload
+#' @param articleset the article set id of an existing set, or the name of a new set to create
 #' @param text the text of the articles to upload
-#' @param medium the medium of the articles to upload. Can be either of length 1 or of same length as headlines
-#' @param ... and additional fields to upload, e.g. author, byline etc.
+#' @param headline the headlines of the articles to upload
+#' @param medium the medium of the articles to upload. 
+#' @param provenance if articleset is character, an optional provenance string to store with the new set
+#' @param ... and additional fields to upload, e.g. author, byline etc. 
 #' @export
-amcat.upload.articles <- function(conn, project, articleset, headline, text, date, medium, ...) {
-  path = paste("", "api", "v4", "projects",project, "articlesets", articleset, "articles", "", sep="/")
-  if (length(medium) == 1) medium = rep(medium, length(headline))
-  # not very efficient, but probably not the bottleneck
-  fields = list(...)
-  json_data = list()
-  json_data = vector("list", length(headline))
-  for (i in 1:length(json_data)) {
-    extra = unlist(lapply(fields, function(x) x[i]))
-    json_data[[i]] = c(headline=headline[i], text=text[i], date=date[i], medium=medium[i], extra)
+amcat.upload.articles <- function(conn, project, articleset, text, headline, date, medium, provenance=NULL, ...) {
+  
+  n = length(text)
+  if (is.character(articleset)) {
+    if (is.null(provenance)) provenance=paste("Uploaded", n, "articles using R function amcat.upload.articles")
+    articleset = amcat.add.articles.to.set(conn, project, articles=NULL, articleset.name=articleset, articleset.provenance=provenance) 
   }
-  json_data = toJSON(json_data)
-  invisible(.amcat.post(conn, path, data=json_data))
+  path = paste("", "api", "v4", "projects",project, "articlesets", articleset, "articles", "", sep="/")
+  
+  if (!is.character(date)) date = format(date, "%Y-%m-%dT%H:%M:%S")
+  fields = data.frame(headline=headline, text=text, date=date, medium=medium, ...)
+  # make sure all fields have correct length
+  for (f in names(fields)) {
+    if (is.factor(fields[[f]])) fields[[f]] = as.character(fields[[f]])
+    if (length(fields[[f]]) == 1) fields[[f]] = rep(fields[[f]], n)
+    if (length(fields[[f]]) != n) stop(paste("Field", f, "has incorrect length:", length(fields[[f]]), "should be 1 or ", n))
+  }
+  
+  # not very efficient, but probably not the bottleneck
+  chunks = split(fields, ceiling((1:n)/100))
+  for(chunk in chunks) {
+    json_data = vector("list", nrow(chunk))
+    for (i in seq_along(json_data)) {
+      json_data[[i]] = unlist(lapply(chunk, function(x) x[i]))
+    }
+    json_data = toJSON(json_data)
+    message("Uploading ", nrow(chunk), " articles to set ", articleset)
+    .amcat.post(conn, path, data=json_data)
+  }
 }
