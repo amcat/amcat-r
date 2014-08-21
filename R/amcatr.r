@@ -138,7 +138,7 @@ amcat.getobjects <- function(conn, resource, ...) {
   } else  if (format == 'csv') {
     con <- textConnection(result)
     result = tryCatch(read.csv(con), 
-                      error=function(e) {warning(e); data.frame()})
+                      error=function(e) data.frame())
   }
   result
 }
