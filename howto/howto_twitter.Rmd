@@ -26,7 +26,8 @@ library("amcatr")
 Connecting to Twitter
 ----
 
-First, you need to get a number of tokens (a kind of passwords) from twitter.
+First, you need to get a number of tokens (a kind of passwords) from twitter:
+
 1. Sign in to twitter at http://twitter.com
 2. Go to https://apps.twitter.com/ and 'create a new app'
 3. After filling in the required information, go to 'keys and access tokens'

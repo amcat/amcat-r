@@ -27,7 +27,8 @@ library("amcatr")
 Connecting to Twitter
 ----
 
-First, you need to get a number of tokens (a kind of passwords) from twitter.
+First, you need to get a number of tokens (a kind of passwords) from twitter:
+
 1. Sign in to twitter at http://twitter.com
 2. Go to https://apps.twitter.com/ and 'create a new app'
 3. After filling in the required information, go to 'keys and access tokens'
@@ -68,7 +69,7 @@ tweets[[1]]
 ```
 
 ```
-## [1] "fonzwenehenubun: mag van Allah en alle PVDA, VVD groenlinks en CU stemmers anders ben je een racist zeg men....... http://t.co/wHd1rwTRon"
+## [1] "Zarroy: RT @Paul_van_Meenen: Ja, leerlingen toelaten; het is wat! RT @michelrog: Scholen 'moeten' weer wat van de PvdA. Het CDA ... http://t.co/euk…"
 ```
 
 ```r
@@ -86,7 +87,7 @@ tweets[[1]]$text
 ```
 
 ```
-## [1] "mag van Allah en alle PVDA, VVD groenlinks en CU stemmers anders ben je een racist zeg men....... http://t.co/wHd1rwTRon"
+## [1] "RT @Paul_van_Meenen: Ja, leerlingen toelaten; het is wat! RT @michelrog: Scholen 'moeten' weer wat van de PvdA. Het CDA ... http://t.co/euk…"
 ```
 
 To make it easier to manipulate the tweets, we can convert them from a list of `status` objects to a data.frame, for which we use the `ldply` (list-dataframe-ply) function from the plyr package, taking advantage of the fact that `as.data.frame` works on a single status object:
@@ -117,7 +118,7 @@ set = amcat.add.articles.to.set(conn, project=project, articleset.name="Tweets",
 ```
 
 ```
-## Created articleset 15597: Tweets in project 1
+## Created articleset 15598: Tweets in project 1
 ```
 
 ```r
@@ -128,7 +129,7 @@ amcat.upload.articles(conn, project=project, articleset=set, medium="twitter",
 ```
 
 ```
-## Uploading 25 articles to set 15597
+## Uploading 25 articles to set 15598
 ```
 
 Now we can inspect our articleset on the AmCAT web site, or do a query from r, e.g.:
@@ -139,12 +140,13 @@ amcat.hits(conn, sets=set, queries="vvd")
 ```
 
 ```
-## GET http://amcat.vu.nl/api/v4/search?q=count%23vvd&col=hits&sets=15597&minimal=TRUE&page_size=1000&format=csv&page=1
+## GET http://amcat.vu.nl/api/v4/search?q=count%23vvd&col=hits&sets=15598&minimal=TRUE&page_size=1000&format=csv&page=1
 ```
 
 ```
-##          id count query
-## 1 111636977     2   vvd
-## 2 111636994     2   vvd
-## 3 111637007     2   vvd
+## Warning: Query vvd produced no results
+```
+
+```
+## NULL
 ```
