@@ -4,31 +4,40 @@
 #' 
 #' @param conn the connection object from \code{\link{amcat.connect}}
 #' @param project id of the project containing the tokens
-#' @param articleset id of the articleset to get features from
+#' @param articleset id of the articleset to get features from. If not specified, specify sentence for 'ad hoc' parsing
 #' @param module the NLP preprocessing module to get the tokens from
 #' @param keep an optional list of attributes to keep (and aggregate on), e.g. c("lemma", "pos1")
 #' @param drop an optional list of attributes to drop, default (token)id and sentence. If keep is given, drop is ignored. 
 #' @param filters Additional filters, ie c(pos1="V", pos1="A") to select only verbs and adjectives 
 #' @param page_size the number of features (articles?) to include per call
+#' @param sentence a sentence (string) to be parsed if articleset id is not given
 #' @return A data frame of tokens
 #' @export
-amcat.gettokens <- function(conn, project, articleset, module="corenlp_lemmatize", keep=NULL, drop=c("id", "sentence", "offset"), filters=NULL, page_size=1, page=1, npages=NULL) {
-  filters = c(module=module, page_size=page_size, format='csv', filters)
-  path = paste("api", "v4", "projects", project, "articlesets", articleset, "tokens", "", sep="/")
-  result = NULL
-  while (TRUE) {
-    page_filters = c(page=page, filters)
-    t = amcat.getURL(conn, path, page_filters)
-    if (t == "") break
-    
-    t = .amcat.readoutput(t, format='csv')
-    if (is.null(keep)) keep = colnames(t)[!colnames(t) %in% drop]
-    freqs = count(t[, keep])
-    result = rbind(result, freqs)
-    
-    if (!is.null(npages)) if (npages <= page) break
-    page = page + 1
-  }
+amcat.gettokens <- function(conn, project=NULL, articleset=NULL, module="corenlp_lemmatize", keep=NULL, drop=c("id", "sentence", "offset"), filters=NULL, page_size=1, page=1, npages=NULL, sentence=NULL) {
+  # TODO: now do adhoc / articleset as completely different paths, converge?
+  if (!is.null(articleset) & !is.null(project)) {
+    filters = c(module=module, page_size=page_size, format='csv', filters)
+    path = paste("api", "v4", "projects", project, "articlesets", articleset, "tokens", "", sep="/")
+    result = NULL
+    while (TRUE) {
+      page_filters = c(page=page, filters)
+      t = amcat.getURL(conn, path, page_filters)
+      if (t == "") break
+      
+      t = .amcat.readoutput(t, format='csv')
+      if (is.null(keep)) keep = colnames(t)[!colnames(t) %in% drop]
+      freqs = count(t[, keep])
+      result = rbind(result, freqs)
+      
+      if (!is.null(npages)) if (npages <= page) break
+      page = page + 1
+    }
+  } else if (!is.null(sentence)) {
+    filters = c(module=module, page_size=page_size, format='csv', sentence=sentence, filters)
+    path = paste("api", "v4", "tokens", "", sep="/")
+    t = amcat.getURL(conn, path, filters)
+    result = .amcat.readoutput(t, format='csv')
+  } else stop("Please provide articleset or sentence")
   result
 } 
 
