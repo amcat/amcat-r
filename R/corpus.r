@@ -8,38 +8,53 @@
 #' @param module the NLP preprocessing module to get the tokens from
 #' @param keep an optional list of attributes to keep (and aggregate on), e.g. c("lemma", "pos1")
 #' @param drop an optional list of attributes to drop, default (token)id and sentence. If keep is given, drop is ignored. 
+#' @param count if true, tokens will be made unique and a 'freq' column will be added
 #' @param filters Additional filters, ie c(pos1="V", pos1="A") to select only verbs and adjectives 
 #' @param page_size the number of features (articles?) to include per call
 #' @param sentence a sentence (string) to be parsed if articleset id is not given
 #' @return A data frame of tokens
 #' @export
-amcat.gettokens <- function(conn, project=NULL, articleset=NULL, module="corenlp_lemmatize", keep=NULL, drop=c("id", "sentence", "offset"), filters=NULL, page_size=1, page=1, npages=NULL, sentence=NULL) {
+amcat.gettokens <- function(conn, project=NULL, articleset=NULL, module="corenlp_lemmatize", 
+                            keep=NULL, drop=c("id", "sentence", "offset"), count=TRUE, filters=NULL, 
+                            page_size=1, page=1, npages=NULL, 
+                            sentence=NULL) {
   # TODO: now do adhoc / articleset as completely different paths, converge?
   if (!is.null(articleset) & !is.null(project)) {
     filters = c(module=module, page_size=page_size, format='csv', filters)
     path = paste("api", "v4", "projects", project, "articlesets", articleset, "tokens", "", sep="/")
-    result = NULL
+    result = list()
     while (TRUE) {
       page_filters = c(page=page, filters)
       t = amcat.getURL(conn, path, page_filters)
       if (t == "") break
       
       t = .amcat.readoutput(t, format='csv')
-      if (is.null(keep)) keep = colnames(t)[!colnames(t) %in% drop]
-      freqs = count(t[, keep])
-      result = rbind(result, freqs)
-      
+      # slightly memory inefficient 
+      # we could filter keep/drop before appending but we might not know all column names yet
+      result = c(result, list(t))
       if (!is.null(npages)) if (npages <= page) break
       page = page + 1
     }
+    # which columns to use?
+    if (is.null(keep)) {
+      keep = unique(unlist(lapply(result, colnames)))
+      if (!is.null(drop)) keep=setdiff(keep, drop)
+    }
+    result = lapply(result, function(x) {x = .select.columns(x, columns=keep); if (count) count(x) else x})
+    do.call(rbind, result)
   } else if (!is.null(sentence)) {
     filters = c(module=module, page_size=page_size, format='csv', sentence=sentence, filters)
     path = paste("api", "v4", "tokens", "", sep="/")
     t = amcat.getURL(conn, path, filters)
-    result = .amcat.readoutput(t, format='csv')
-  } else stop("Please provide articleset or sentence")
-  result
+    .amcat.readoutput(t, format='csv')
+  } else stop("Please provide project+articleset or sentence")
 } 
+
+#' Select given columns on the dataframe, adding NA columns if needed
+.select.columns <- function(df, columns, count=TRUE) {
+  for (col in columns) if (!(col %in% colnames(df))) df[col] = rep(NA, nrow(df))
+  df[columns]
+}
 
 #' Cast data.frame to sparse matrix
 #' 
