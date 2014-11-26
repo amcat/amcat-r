@@ -12,7 +12,8 @@ Depends:
     slam,
     lda,
     topicmodels,
-    Matrix
+    Matrix,
+    httr
 Description: Functions to call the AmCAT API
 License: MIT
 URL: http://github.com/amcat/amcat

@@ -69,20 +69,22 @@ amcat.connect <- function(host, username=NULL, passwd=NULL, token=NULL, disable_
 #' @export
 amcat.getURL <- function(conn, path, filters=NULL, post=FALSE, post_options=list()) {
   httpheader = c(Authorization=paste("Token", conn$token))
-  url = paste(conn$host, path, sep="/")
+  url = parse_url(conn$host)
+  url$path = paste(path, sep="/")
   # strip NULL filters
   for (n in names(filters)) if (is.null(filters[[n]])) filters[[n]] <- NULL
   if (!post) {
+    # convert list(a=c(1,2)) to list(a=1, a=2). From: http://stackoverflow.com/a/22346656
+    url$query = structure(do.call(c, lapply(filters, function(z) as.list(z))), names=rep(names(filters), sapply(filters, length)))
     
     # build GET url query
-    filters = sapply(1:length(filters), function(i) paste(names(filters)[i], curlEscape(filters[i]), sep="="))
-    url = paste(url, paste(filters, collapse="&"), sep="?")
+    url = build_url(url)
     message("GET ", url)
     getURL(url, httpheader=httpheader, .opts=conn$opts)
   } else {  
     post_opts = modifyList(conn$opts, list(httpheader=httpheader))
     post_opts = modifyList(post_opts, post_options)
-    postForm(url, .params=filters, .opts=post_opts)
+    postForm(build_url(url), .params=filters, .opts=post_opts)
   }
 }
 
