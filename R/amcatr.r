@@ -71,6 +71,7 @@ amcat.getURL <- function(conn, path, filters=NULL, post=FALSE, post_options=list
   httpheader = c(Authorization=paste("Token", conn$token))
   url = parse_url(conn$host)
   url$path = paste(path, sep="/")
+  h = getCurlHandle()
   # strip NULL filters
   for (n in names(filters)) if (is.null(filters[[n]])) filters[[n]] <- NULL
   if (!post) {
@@ -80,7 +81,10 @@ amcat.getURL <- function(conn, path, filters=NULL, post=FALSE, post_options=list
     # build GET url query
     url = build_url(url)
     message("GET ", url)
-    getURL(url, httpheader=httpheader, .opts=conn$opts)
+    result = getURL(url, httpheader=httpheader, .opts=conn$opts, curl=h)
+    if (getCurlInfo(h)$response.code != 200)
+      stop("Unexpected Response Code ", getCurlInfo(h)$response.code, "\n", result)
+    result
   } else {  
     post_opts = modifyList(conn$opts, list(httpheader=httpheader))
     post_opts = modifyList(post_opts, post_options)
