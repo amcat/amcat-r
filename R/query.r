@@ -17,7 +17,10 @@ amcat.aggregate <- function(conn, queries, labels=queries, sets, axis1=NULL, axi
   queries = as.character(queries)
   for (i in 1:length(queries)) {
     if (!is.na(queries[i])) {
-      r = amcat.getobjects(conn,"aggregate", filters=list(q=queries[i], sets=sets, axis1=axis1, axis2=axis2, ...))
+      
+      r = tryCatch(amcat.getobjects(conn,"aggregate", filters=list(q=queries[i], sets=sets, axis1=axis1, axis2=axis2, ...)),
+                   error=function(e) {warning("Error on querying '", labels[i], "': ", e$message); NULL})
+      if (is.null(r)) next
       if (nrow(r) > 0) {
         if (names(r)[1] == "count") {
           r$query = labels[i]
