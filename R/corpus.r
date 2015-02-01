@@ -25,8 +25,8 @@ amcat.gettokens <- function(conn, project=NULL, articleset=NULL, module="corenlp
     result = list()
     while (TRUE) {
       page_filters = c(page=page, filters)
-      t = amcat.getURL(conn, path, page_filters)
-      if (t == "") break
+      t = amcat.getURL(conn, path, page_filters, error_unless_200=FALSE)
+      if (is.null(t)) break
       
       t = .amcat.readoutput(t, format='csv')
       # slightly memory inefficient 

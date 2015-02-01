@@ -67,7 +67,7 @@ amcat.connect <- function(host, username=NULL, passwd=NULL, token=NULL, disable_
 #' @param post use HTTP POST instead of GET
 #' @return the raw result
 #' @export
-amcat.getURL <- function(conn, path, filters=NULL, post=FALSE, post_options=list()) {
+amcat.getURL <- function(conn, path, filters=NULL, post=FALSE, post_options=list(), error_unless_200=TRUE) {
   httpheader = c(Authorization=paste("Token", conn$token))
   url = parse_url(conn$host)
   url$path = paste(path, sep="/")
@@ -82,8 +82,10 @@ amcat.getURL <- function(conn, path, filters=NULL, post=FALSE, post_options=list
     url = build_url(url)
     message("GET ", url)
     result = getURL(url, httpheader=httpheader, .opts=conn$opts, curl=h)
-    if (getCurlInfo(h)$response.code != 200)
-      stop("Unexpected Response Code ", getCurlInfo(h)$response.code, "\n", result)
+    if (getCurlInfo(h)$response.code != 200){
+      if (error_unless_200) stop("Unexpected Response Code ", getCurlInfo(h)$response.code, "\n", result)
+      return(NULL)
+    }
     result
   } else {  
     post_opts = modifyList(conn$opts, list(httpheader=httpheader))
@@ -343,4 +345,5 @@ amcat.upload.articles <- function(conn, project, articleset, text, headline, dat
     message("Uploading ", nrow(chunk), " articles to set ", articleset)
     .amcat.post(conn, path, data=json_data)
   }
+  invisible(articleset)
 }
