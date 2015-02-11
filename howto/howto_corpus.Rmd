@@ -27,7 +27,7 @@ Therefore, this howto connects to that server rather than the default server:
 
 ```{r message=FALSE}
 library(amcatr)
-conn = amcat.connect("http://preview.amcat.nl")
+conn = amcat.connect("https://amcat.nl")
 t = amcat.gettokens(conn, project=442, articleset=10271, module="corenlp_lemmatize",
                     page_size=1, npages=1)              
 tail(t, n=10)

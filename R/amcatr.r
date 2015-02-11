@@ -88,6 +88,7 @@ amcat.getURL <- function(conn, path, filters=NULL, post=FALSE, post_options=list
     }
     result
   } else {  
+    
     post_opts = modifyList(conn$opts, list(httpheader=httpheader))
     post_opts = modifyList(post_opts, post_options)
     postForm(build_url(url), .params=filters, .opts=post_opts)
@@ -244,59 +245,14 @@ amcat.add.articles.to.set <- function(conn, project, articles, articleset=NULL,
   }
   if (!is.null(articles)) {
     idlist = lapply(articles, function(x) list(id=x))
-    path = paste("", "api", "v4", "projects",project, "articlesets", articleset, "articles", "", sep="/")
-    .amcat.post(conn, path, toJSON(idlist))
+    url = paste(conn$host, "api", "v4", "projects",project, "articlesets", articleset, "articles", "", sep="/")
+    
+    resp = POST(url, body=toJSON(idlist), content_type_json(), accept_json(), add_headers(Authorization=paste("Token", conn$token)))
+    if (resp$status_code != 201) stop("Unexpected status: ", resp$status_code, "\n", content(resp, type="text/plain"))
+    content(resp)
   }
   articleset
 }
-
-
-#' Unfortunately, rcurl postform does not allow us to specify the json content-type
-#' so we need to use a raw call using make.socket
-#' Inspired by httprequest, but its functions don't allow us to specify authentication header :-(
-.amcat.post <- function (conn, path, data, expect.status=201) {
-  if (grepl(":\\d+$", conn$host)) {
-    port = as.numeric(sub(".*:(\\d+)$", "\\1", conn$host))
-    host = sub(":\\d+", "", conn$host)
-  } else {
-    port = 80
-    host = conn$host
-  }
-  # strip http:
-  host = sub("^http://", "", host)
-  lengthdata <- length(strsplit(data, "")[[1]])
-  
-  header <- paste("POST ", path, " HTTP/1.1\n", sep = "")
-  header <- c(header, paste("Host: ", host, "\n", sep = ""))
-  header <- c(header, "Accept: application/json\n")
-  header <- c(header, "Content-Type: application/json\n")
-  header <- c(header, paste("Authorization: Token ", conn$token, "\n", sep=""))
-  header <- c(header, paste("Content-Length: ", lengthdata, "\n"))
-  header <- c(header, "Connection: Keep-Alive")
-  tosend  <- paste(c(header, "\n\n", data, "\n"), collapse = "")
-  fp <- make.socket(host = host, port = port, server = FALSE)
-  write.socket(fp, tosend)
-  output <- character(0)
-  repeat {
-    ss <- read.socket(fp, loop = FALSE)
-    output <- paste(output, ss, sep = "")
-    if (regexpr("\r\n0\r\n\r\n", ss) > -1) 
-      (break)()
-    if (ss == "") 
-      (break)()
-  }
-  close.socket(fp)
-  if (!is.null(expect.status)) {
-    # try to interpret output, no idea how robus this really is
-    tokens = strsplit(output, "\\s+")[[1]]
-    if (expect.status != as.numeric(tokens[2])) {
-      status = paste(tokens[1:3], collapse=" ")
-      stop(paste("Server returned '", status, "', expected status ", expect.status, sep=""))
-    }
-  }
-  return(output)
-}
-
 
 #' Upload new articles to AmCAT
 #' 
@@ -323,7 +279,6 @@ amcat.upload.articles <- function(conn, project, articleset, text, headline, dat
     if (is.null(provenance)) provenance=paste("Uploaded", n, "articles using R function amcat.upload.articles")
     articleset = amcat.add.articles.to.set(conn, project, articles=NULL, articleset.name=articleset, articleset.provenance=provenance) 
   }
-  path = paste("", "api", "v4", "projects",project, "articlesets", articleset, "articles", "", sep="/")
   
   if (!is.character(date)) date = format(date, "%Y-%m-%dT%H:%M:%S")
   fields = data.frame(headline=headline, text=text, date=date, medium=medium, ...)
@@ -343,7 +298,11 @@ amcat.upload.articles <- function(conn, project, articleset, text, headline, dat
     }
     json_data = toJSON(json_data)
     message("Uploading ", nrow(chunk), " articles to set ", articleset)
-    .amcat.post(conn, path, data=json_data)
+    
+    url = paste(conn$host, "api", "v4", "projects",project, "articlesets", articleset, "articles", "", sep="/")
+    
+    resp = POST(url, body=json_data, content_type_json(), accept_json(), add_headers(Authorization=paste("Token", conn$token)))
+    if (resp$status_code != 201) stop("Unexpected status: ", resp$status_code, "\n", content(resp, type="text/plain"))
   }
   invisible(articleset)
 }

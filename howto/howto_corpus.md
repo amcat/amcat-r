@@ -28,26 +28,25 @@ Therefore, this howto connects to that server rather than the default server:
 
 ```r
 library(amcatr)
-conn = amcat.connect("http://preview.amcat.nl")
-t = amcat.gettokens(conn, project = 442, articleset = 10271, module = "corenlp_lemmatize", 
-    page_size = 1, npages = 1)
-tail(t, n = 10)
+conn = amcat.connect("https://amcat.nl")
+t = amcat.gettokens(conn, project=442, articleset=10271, module="corenlp_lemmatize",
+                    page_size=1, npages=1)              
+tail(t, n=10)
 ```
 
 ```
-##          aid   lemma  pos pos1    word freq
-## 233 81112681 website   NN    N website    1
-## 234 81112681   which  WDT    D   which    2
-## 235 81112681   White  NNP    M   White    2
-## 236 81112681     who   WP    O     who    3
-## 237 81112681    will   MD    V    will    1
-## 238 81112681    with   IN    P    with    1
-## 239 81112681     WMD  NNP    M     WMD    2
-## 240 81112681   world   NN    N   world    1
-## 241 81112681     you  PRP    O     you    1
-## 242 81112681     you PRP$    O    your    2
+##      word  pos lemma      aid pos1 freq
+## 233  were  VBD    be 81112681    V    4
+## 234 which  WDT which 81112681    D    2
+## 235 White  NNP White 81112681    M    2
+## 236   who   WP   who 81112681    O    3
+## 237  will   MD  will 81112681    V    1
+## 238  with   IN  with 81112681    P    1
+## 239   WMD  NNP   WMD 81112681    M    2
+## 240 world   NN world 81112681    N    1
+## 241   you  PRP   you 81112681    O    1
+## 242  your PRP$   you 81112681    O    2
 ```
-
 
 The command displayed above requests the tokens for a single article by setting `page_size` to 1 and requesting only a single page.
 In the output you can see that it gives the frequency per word per article, and gives lemma and pos information. 
@@ -63,10 +62,10 @@ and only downloads the lemma per article:
 
 
 ```r
-t = amcat.gettokens(conn, project = 442, articleset = 10271, module = "corenlp_lemmatize", 
-    page_size = 100, keep = c("aid", "lemma"), filters = c(pos1 = "N", pos1 = "M", 
-        pos1 = "V", pos1 = "M"))
-head(t, n = 10)
+t = amcat.gettokens(conn, project=442, articleset=10271, module="corenlp_lemmatize", 
+                    page_size=100, keep=c("aid", "lemma"),
+                    filters=c(pos1="N", pos1="M", pos1="V", pos1="M"))
+head(t, n=10)
 ```
 
 ```
@@ -83,7 +82,6 @@ head(t, n = 10)
 ## 10 81112681            can    1
 ```
 
-
 Term-document matrix
 --------------------
 
@@ -92,7 +90,7 @@ for example by listing the most frequent words:
 
 
 ```r
-wordfreqs = aggregate(t$freq, by = list(word = t$lemma), FUN = sum)
+wordfreqs = aggregate(t$freq, by=list(word=t$lemma), FUN=sum)
 wordfreqs = wordfreqs[order(-wordfreqs$x), ]
 head(wordfreqs)
 ```
@@ -107,14 +105,12 @@ head(wordfreqs)
 ## 3255   United  707
 ```
 
-
 However, for most purposes it is better to first create a document-term matrix of the standard form defined in the `tm` package:
 
 
 ```r
 dtm = amcat.dtm.create(t$aid, t$lemma, t$freq)
 ```
-
 
 Since the resulting document-term matrix object is defined in the widely used `tm` package, 
 a large number of existing packages and functions can be used to analyse it. 
@@ -128,7 +124,7 @@ we created a function to calculate a number of useful term statistics on a dtm o
 
 ```r
 terms = amcat.term.statistics(dtm)
-head(terms, n = 10)
+head(terms, n=10)
 ```
 
 ```
@@ -156,7 +152,6 @@ head(terms, n = 10)
 ## can              0.172107 0.017838
 ```
 
-
 For every term, the term frequency, document frequency, and tf-idf is given. 
 Moreover, the number of characters in the word is given and whether the word contains a number or non-alphanumeric character.
 These latter variables are useful to filter out nonsense terms, such as the %-sign in the list above.
@@ -165,10 +160,9 @@ with a term frequency of at least 10, and sorts them by td-idf:
 
 
 ```r
-voca = terms[!terms$number & !terms$nonalpha & terms$termfreq > 10 & terms$characters >= 
-    3, ]
+voca = terms[!terms$number & !terms$nonalpha & terms$termfreq > 10 & terms$characters >= 3, ]
 voca = voca[order(voca$tfidf), ]
-head(voca, n = 10)
+head(voca, n=10)
 ```
 
 ```
@@ -196,7 +190,6 @@ head(voca, n = 10)
 ## say      0.008674
 ```
 
-
 These terms are presumably the more 'informative' terms in the vocabulary.
 
 Comparing corpora
@@ -215,11 +208,10 @@ ncol(dtm)
 ```
 
 ```r
-w = as.matrix(dtm[, "Bush"])
-dtm.bush = dtm[w > 0, ]
-dtm.rest = dtm[w == 0, ]
+w = as.matrix(dtm[,"Bush"])
+dtm.bush = dtm[w>0, ]
+dtm.rest = dtm[w==0, ]
 ```
-
 
 
 Now, we can compute and compare the term frequencies for both:
@@ -229,7 +221,7 @@ Now, we can compute and compare the term frequencies for both:
 terms.bush = amcat.term.statistics(dtm.bush)
 terms.rest = amcat.term.statistics(dtm.rest)
 freqs.rest = terms.rest[, c("term", "termfreq")]
-terms.bush = merge(terms.bush, freqs.rest, all.x = TRUE, by = "term")
+terms.bush = merge(terms.bush, freqs.rest, all.x=TRUE, by="term")
 terms.bush[is.na(terms.bush)] = 0
 head(terms.bush)
 ```
@@ -251,18 +243,17 @@ head(terms.bush)
 ## 6         98
 ```
 
-
 `terms.bush` now contains the term statistics in the articles mentioning bush, 
 as well as the frequency in the reference corpus consisting of the other articles.
 We can now compute and sort by the overrepresentation of terms:
 
 
 ```r
-terms.bush$relfreq.x = terms.bush$termfreq.x/sum(terms.bush$termfreq.x)
-terms.bush$relfreq.y = terms.bush$termfreq.y/sum(terms.rest$termfreq)
-terms.bush$over = terms.bush$relfreq.x/(terms.bush$relfreq.y + 0.001)
+terms.bush$relfreq.x = terms.bush$termfreq.x / sum(terms.bush$termfreq.x)
+terms.bush$relfreq.y = terms.bush$termfreq.y / sum(terms.rest$termfreq)
+terms.bush$over = terms.bush$relfreq.x / (terms.bush$relfreq.y + .001)
 terms.bush = terms.bush[order(-terms.bush$over), ]
-head(terms.bush, n = 10)
+head(terms.bush, n=10)
 ```
 
 ```
@@ -290,7 +281,6 @@ head(terms.bush, n = 10)
 ## 3983     0.2522 0.016142         19  0.002212 0.0002265  1.803
 ```
 
-
 This gives a list of the words that occur 'too much' in the articles mentioning Bush,
 or in other words the collocates of the word 'Bush'.
 To make this easier, and to also provide statistical association measures such as chi-squared,
@@ -302,7 +292,7 @@ and sorts them by chi-squared:
 ```r
 terms = amcat.compare.corpora(dtm.bush, dtm.rest)
 terms = terms[terms$over < 1, ]
-terms = terms[order(-terms$chi), ]
+terms = terms[order(-terms$chi),]
 head(terms)
 ```
 
@@ -316,7 +306,6 @@ head(terms)
 ## 643   charge          7        148 0.0002977  0.001764 0.4695 27.41
 ```
 
-
 What can be seen from these two word lists is that the articles mentioning Bush are more political in nature,
 while the other articles describe more (military) action. 
 
@@ -327,12 +316,12 @@ so by matching the ids in the meta file with the (numeric) row names we can put 
 
 
 ```r
-meta = amcat.getarticlemeta(conn, set = 10271, dateparts = T)
+meta = amcat.getarticlemeta(conn, set=10271, dateparts=T)
 years = meta$year[match(as.numeric(rownames(dtm)), meta$id)]
-dtm.before = dtm[years < as.Date("2012-01-01"), ]
-dtm.after = dtm[years >= as.Date("2012-01-01"), ]
+dtm.before = dtm[years < as.Date('2012-01-01'),]
+dtm.after = dtm[years >= as.Date('2012-01-01'),]
 terms = amcat.compare.corpora(dtm.after, dtm.before)
-terms = terms[order(-terms$chi), ]
+terms = terms[order(-terms$chi),]
 head(terms[terms$over > 1, ])
 ```
 
@@ -360,7 +349,6 @@ head(terms[terms$over < 1, ])
 ## 3604   incident         41         88 6.611e-04 0.0019388 0.5652 35.67
 ```
 
-
 So, the later articles mention the scandals with Abu Ghraib and phosphorus munition more frequently, 
 while the earlier articles metion the constitution and refugees. 
 
@@ -377,12 +365,10 @@ Then, we can fit a topic model using the `amcatr.lda.fit` function, which requir
 
 ```r
 terms = amcat.term.statistics(dtm)
-voca = terms[!terms$number & !terms$nonalpha & terms$termfreq > 10 & terms$characters >= 
-    3 & terms$tfidf > 0.05, ]
+voca = terms[!terms$number & !terms$nonalpha & terms$termfreq > 10 & terms$characters >= 3 & terms$tfidf > .05, ]
 dtm = dtm[, colnames(dtm) %in% voca$term]
 m = amcat.lda.fit(dtm, 5)
 ```
-
 
 The `m` object is the standard object returned by the `lda` package, 
 which also provides functions for inspecting its contents:
@@ -393,29 +379,49 @@ top.topic.words(m$topics)
 ```
 
 ```
-##       [,1]         [,2]         [,3]           [,4]         [,5]        
-##  [1,] "Abu"        "election"   "category"     "journalist" "Iran"      
-##  [2,] "abuse"      "vote"       "execution"    "helicopter" "oil"       
-##  [3,] "blast"      "Blair"      "constitution" "video"      "poll"      
-##  [4,] "Ghraib"     "Turkey"     "accident"     "Green"      "Syria"     
-##  [5,] "resolution" "Basra"      "sailor"       "crash"      "hostage"   
-##  [6,] "figure"     "center"     "Obama"        "Romania"    "bill"      
-##  [7,] "company"    "memo"       "count"        "Australia"  "truck"     
-##  [8,] "raid"       "Kurdistan"  "Senator"      "Mosul"      "Annan"     
-##  [9,] "Brown"      "CIA"        "Royal"        "Fallujah"   "marine"    
-## [10,] "Ford"       "gunman"     "Muslims"      "Nay"        "mosque"    
-## [11,] "Rumsfeld"   "Reid"       "flag"         "Air"        "shooting"  
-## [12,] "Sadr"       "Human"      "Group"        "rape"       "seat"      
-## [13,] "Rights"     "Carroll"    "Sgrena"       "Talabani"   "Harry"     
-## [14,] "convoy"     "align"      "son"          "Diyala"     "PKK"       
-## [15,] "device"     "jail"       "Italy"        "Marines"    "Workers"   
-## [16,] "Jordan"     "Muqtada"    "voter"        "Gates"      "China"     
-## [17,] "City"       "referendum" "brigade"      "policeman"  "flight"    
-## [18,] "embassy"    "style"      "Zone"         "Donald"     "Health"    
-## [19,] "roadside"   "Cheney"     "Howard"       "WikiNews"   "Rice"      
-## [20,] "Petraeus"   "abducted"   "draft"        "crew"       "restaurant"
+##       [,1]              [,2]        [,3]           [,4]        
+##  [1,] "Iran"            "Turkey"    "election"     "journalist"
+##  [2,] "oil"             "blast"     "vote"         "video"     
+##  [3,] "poll"            "memo"      "constitution" "Blair"     
+##  [4,] "Romania"         "Australia" "accident"     "Basra"     
+##  [5,] "Obama"           "Ford"      "sailor"       "category"  
+##  [6,] "figure"          "Nay"       "Mosul"        "execution" 
+##  [7,] "bill"            "gunman"    "raid"         "Syria"     
+##  [8,] "truck"           "marine"    "Fallujah"     "hostage"   
+##  [9,] "Senator"         "Reid"      "count"        "Brown"     
+## [10,] "Royal"           "Muslims"   "Talabani"     "Kurdistan" 
+## [11,] "girl"            "Marines"   "seat"         "Annan"     
+## [12,] "son"             "flag"      "voter"        "Sadr"      
+## [13,] "convoy"          "mosque"    "align"        "shooting"  
+## [14,] "Goldsmith"       "Human"     "Gates"        "Sgrena"    
+## [15,] "Allawi"          "Rumsfeld"  "commission"   "Rights"    
+## [16,] "fund"            "Harry"     "China"        "Carroll"   
+## [17,] "throw"           "embassy"   "flight"       "Jordan"    
+## [18,] "contractor"      "roadside"  "referendum"   "City"      
+## [19,] "Representatives" "WikiNews"  "Ahmadinejad"  "Workers"   
+## [20,] "rally"           "brigade"   "Cheney"       "crew"      
+##       [,5]        
+##  [1,] "Abu"       
+##  [2,] "helicopter"
+##  [3,] "abuse"     
+##  [4,] "Ghraib"    
+##  [5,] "resolution"
+##  [6,] "Green"     
+##  [7,] "crash"     
+##  [8,] "center"    
+##  [9,] "company"   
+## [10,] "CIA"       
+## [11,] "Air"       
+## [12,] "rape"      
+## [13,] "Diyala"    
+## [14,] "Group"     
+## [15,] "policeman" 
+## [16,] "jail"      
+## [17,] "Donald"    
+## [18,] "yea"       
+## [19,] "Wikileaks" 
+## [20,] "Yea"
 ```
-
 
 A final function provided by the `amcatr` package is the `amcat.lda.topics.per.document`,
 which gives a data frame containing all articles and the topics occurring in each article.
@@ -424,43 +430,41 @@ By merging this with the metadata we can see which articles contained each topic
 
 ```r
 docs = amcat.lda.topics.per.document(m)
-meta = amcat.getarticlemeta(conn, set = 10271, dateparts = T)
-docs = merge(meta, docs, all.y = T)
+meta = amcat.getarticlemeta(conn, set=10271, dateparts=T)
+docs = merge(meta, docs, all.y=T)
 head(docs)
 ```
 
 ```
 ##         id       date   medium length       year      month       week X1
 ## 1 81112681 2013-08-29 Wikinews    406 2013-01-01 2013-08-01 2013-08-26  0
-## 2 81112682 2012-01-20 Wikinews    149 2012-01-01 2012-01-01 2012-01-16  1
+## 2 81112682 2012-01-20 Wikinews    149 2012-01-01 2012-01-01 2012-01-16 11
 ## 3 81112683 2011-02-06 Wikinews    486 2011-01-01 2011-02-01 2011-01-31  0
 ## 4 81112684 2010-09-23 Wikinews    314 2010-01-01 2010-09-01 2010-09-20  0
 ## 5 81112685 2013-08-30 Wikinews    394 2013-01-01 2013-08-01 2013-08-26  3
 ## 6 81112686 2009-08-12 Wikinews    244 2009-01-01 2009-08-01 2009-08-10  0
 ##   X2 X3 X4 X5
-## 1  5  0  1  1
-## 2  2  5  1  5
-## 3  0  4  2  0
-## 4  0  3  4  0
-## 5  3  1  4  1
-## 6  0  2 15  0
+## 1  2  2  2  1
+## 2  0  1  1  1
+## 3  3  0  1  2
+## 4  0  4  0  3
+## 5  2  1  3  3
+## 6  0  2  1 14
 ```
-
 
 And we can use this to e.g. plot the topic use over time:
 
 
 ```r
-topics.per.year = aggregate(docs[, c("X1", "X2", "X3", "X4", "X5")], by = list(year = docs$year), 
-    FUN = sum)
+topics.per.year = aggregate(docs[, c("X1","X2","X3","X4","X5")], by=list(year=docs$year), FUN=sum)
 topics.per.year$total = rowSums(topics.per.year[-1])
-rel = topics.per.year[2:6]/topics.per.year$total
+rel= topics.per.year[2:6] / topics.per.year$total
 
-plot(topics.per.year$year, topics.per.year$X1, type = "n", ylim = c(min(rel), 
-    max(rel)), ylab = "Topic frequency", xlab = "Year", frame.plot = F)
-for (i in 1:5) lines(topics.per.year$year, rel[, i], col = rainbow(5)[i])
-legend("topleft", legend = colnames(rel), lwd = 2, col = rainbow(5))
+plot(topics.per.year$year, topics.per.year$X1, type="n", ylim=c(min(rel), max(rel)),
+     ylab="Topic frequency",xlab="Year", frame.plot=F)
+for(i in 1:5) 
+  lines(topics.per.year$year, rel[, i], col=rainbow(5)[i])
+legend("topleft", legend=colnames(rel), lwd=2, col=rainbow(5))
 ```
 
 ![plot of chunk lda-plot](figure/lda-plot.png) 
-

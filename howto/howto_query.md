@@ -53,7 +53,7 @@ conn = amcat.connect("https://amcat.nl", username='example', passwd='secret')
 If you don't specify a username or password,
 it will use the name of the logged in user and search for a password in a file `.amcatauth` in your home directory.
 This file should be a csv file with one line per host, giving host, username, and password: 
-`https://amcat.nl,example,secret`. 
+`http://amcat.nl,example,secret`. 
 When this is in place, you can connect without having to type the password every time 
 (and without saving your password in a code file, which is usually a bad idea!): 
 
@@ -84,13 +84,13 @@ head(projects[, c("id", "name")])
 ```
 
 ```
-##    id                 name
-## 1 295            4.12.2013
-## 2 309                 agro
-## 3 297      amcat2 recovery
-## 4 118 Antwerp French Media
-## 5 119      Antwerp Le Soir
-## 6  50   AUTNES Media side
+##   id                     name
+## 1  1              Recycle bin
+## 2  2  Dutch newspaper archive
+## 3  3        Dutch Television 
+## 4  4                      ELI
+## 5  5 Twitter (dutch politics)
+## 6  6             Youp columns
 ```
 
 As you can see, the `amcat.getobjects` call is translated into an `HTTP GET` request to the `api/v4/projects` address.
@@ -141,9 +141,9 @@ a = amcat.aggregate(conn, sets=10271, axis1="year",
 ```
 
 ```
-## GET http://amcat.nl/api/v4/aggregate?q=%2A&sets=10271&axis1=year&page_size=1000&format=csv&page=1
-## GET http://amcat.nl/api/v4/aggregate?q=obama&sets=10271&axis1=year&page_size=1000&format=csv&page=1
-## GET http://amcat.nl/api/v4/aggregate?q=bush&sets=10271&axis1=year&page_size=1000&format=csv&page=1
+## GET https://amcat.nl/api/v4/aggregate?q=%2A&sets=10271&axis1=year&page_size=1000&format=csv&page=1
+## GET https://amcat.nl/api/v4/aggregate?q=obama&sets=10271&axis1=year&page_size=1000&format=csv&page=1
+## GET https://amcat.nl/api/v4/aggregate?q=bush&sets=10271&axis1=year&page_size=1000&format=csv&page=1
 ```
 
 ```r
@@ -249,7 +249,7 @@ setid = amcat.add.articles.to.set(conn, project=429, articles=articles, articles
 ```
 
 ```
-## Created articleset 11778: New set from howto in project 429
+## Created articleset 17626: New set from howto in project 429
 ```
 
 It created a new article set and hopefully added those articles. 
