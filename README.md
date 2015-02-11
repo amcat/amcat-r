@@ -27,7 +27,7 @@ This requests an authentication token from the specified AmCAT server and stores
 
 ```r
 library(amcatr)
-conn = amcat.connect("http://amcat.nl", username = "example", passwd = "secret")
+conn = amcat.connect("https://amcat.nl", username = "example", passwd = "secret")
 ```
 
 If you don't specify a username or password,
