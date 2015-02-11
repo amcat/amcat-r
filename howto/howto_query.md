@@ -47,20 +47,20 @@ This requests an authentication token from the specified AmCAT server and stores
 
 ```r
 library(amcatr)
-conn = amcat.connect("http://amcat.nl", username='example', passwd='secret')
+conn = amcat.connect("https://amcat.nl", username='example', passwd='secret')
 ```
 
 If you don't specify a username or password,
 it will use the name of the logged in user and search for a password in a file `.amcatauth` in your home directory.
 This file should be a csv file with one line per host, giving host, username, and password: 
-`http://amcat.nl,example,secret`. 
+`https://amcat.nl,example,secret`. 
 When this is in place, you can connect without having to type the password every time 
 (and without saving your password in a code file, which is usually a bad idea!): 
 
 
 ```r
 library(amcatr)
-conn = amcat.connect("http://amcat.nl")
+conn = amcat.connect("https://amcat.nl")
 ```
 
 Retrieving information from AmCAT
@@ -76,7 +76,7 @@ projects = amcat.getobjects(conn, "projects/")
 ```
 
 ```
-## GET http://amcat.nl/api/v4/projects/?page_size=1000&format=csv&page=1
+## GET https://amcat.nl/api/v4/projects/?page_size=1000&format=csv&page=1
 ```
 
 ```r
