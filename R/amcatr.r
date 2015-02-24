@@ -280,6 +280,7 @@ amcat.upload.articles <- function(conn, project, articleset, text, headline, dat
     articleset = amcat.add.articles.to.set(conn, project, articles=NULL, articleset.name=articleset, articleset.provenance=provenance) 
   }
   
+  if (is.factor(date)) date=as.character(date)
   if (!is.character(date)) date = format(date, "%Y-%m-%dT%H:%M:%S")
   fields = data.frame(headline=headline, text=text, date=date, medium=medium, ...)
   # make sure all fields have correct length
