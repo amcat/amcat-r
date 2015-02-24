@@ -41,7 +41,9 @@ amcat.gettokens <- function(conn, project=NULL, articleset=NULL, module="corenlp
       if (!is.null(drop)) keep=setdiff(keep, drop)
     }
     result = lapply(result, function(x) {x = .select.columns(x, columns=keep); if (count) count(x) else x})
-    do.call(rbind, result)
+    result = do.call(rbind, result)
+    result = amcat.tokens.unique_indices(result)
+    result
   } else if (!is.null(sentence)) {
     filters = c(module=module, page_size=page_size, format='csv', sentence=sentence, filters)
     path = paste("api", "v4", "tokens", "", sep="/")
@@ -49,6 +51,23 @@ amcat.gettokens <- function(conn, project=NULL, articleset=NULL, module="corenlp
     .amcat.readoutput(t, format='csv')
   } else stop("Please provide project+articleset or sentence")
 } 
+
+#' Create unique indices on the 
+#' 
+#' @param tokens a data frame with tokens, which should have an aid column
+#' @param context.column the column name with the document (context) identifier, default aid
+#' @param index.columns a vector of column names to be made globally unique
+#' @return the tokens data frame with the columns made unique
+#' @export
+amcat.tokens.unique_indices <- function(tokens, context.column="aid", 
+    index.columns = intersect(colnames(tokens), c("clause_id", "source_id", "coref"))) {
+  for (col in index.columns) {
+      values = interaction(tokens[[context.column]], tokens[[col]])
+      tokens[[col]] = match(values, na.omit(unique(values)))
+  }
+  tokens
+}
+
 
 #' Select given columns on the dataframe, adding NA columns if needed
 .select.columns <- function(df, columns, count=TRUE) {
