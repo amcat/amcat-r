@@ -15,8 +15,10 @@ library(RCurl)
 #' @param disable_ipv6. If True, only use ipv4 resolving (faster if ipv6 causes timeout). Defaults to true, but this may change in the future.
 #' @return A list with authentication information that is used by the other functions in this package
 #' @export
-amcat.connect <- function(host, username=NULL, passwd=NULL, token=NULL, disable_ipv6=TRUE) {
-  opts = if (disable_ipv6) list(ipresolve=1) else list()
+amcat.connect <- function(host, username=NULL, passwd=NULL, token=NULL, disable_ipv6=TRUE, ssl.verifypeer=FALSE) {
+  opts = list(ssl.verifypeer = ssl.verifypeer)
+  if (disable_ipv6) opts = c(opts, list(ipresolve=1))
+  
   
   if (is.null(token)) {
     if (is.null(passwd)) { # try amcatauth file
@@ -49,7 +51,7 @@ amcat.connect <- function(host, username=NULL, passwd=NULL, token=NULL, disable_
   list(host=host, token=token, opts=opts)
 }
 
-#' Get authentication info from ~/.amcatauth file
+#' Get authentication info for a host from ~/.amcatauth file
 .readauth <- function(host) {
   if (!file.exists("~/.amcatauth")) return()
   rows = read.csv("~/.amcatauth", header=F, stringsAsFactors=F)
@@ -58,6 +60,26 @@ amcat.connect <- function(host, username=NULL, passwd=NULL, token=NULL, disable_
   if (nrow(r) > 0) list(username=r$username[1], password=r$password[1]) 
 }
 
+#' Add or change an entry in the cached authentication file
+#' 
+#' amcat-r uses the file '~/.amcatauth' to read credentials for connecting to servers
+#' to prevent passwords from appearing in script files. This function will update
+#' the .amcatauth file (if present) to add or change the password for the given host
+#' 
+#' @param host the host, e.g. "https://amcat.nl"
+#' @param username the AmCAT username to use
+#' @param password the password for the AmCAT user
+#' @export
+amcat.save.password <- function(host, username, password) {
+  existing = if (file.exists("~/.amcatauth")) read.csv("~/.amcatauth", header=F, stringsAsFactors=F) else data.frame(V1=character(0),V2=character(0),V3=character(0))
+  if (host %in% existing$V1) {
+    existing$V2[existing$V1 == host] = username
+    existing$V3[existing$V1 == host] = password
+  } else {
+    existing = rbind(existing, data.frame(V1=host, V2=username, V3=password, stringsAsFactors = F))
+  }
+  write.table(existing, file="~/.amcatauth", sep=",",  col.names=FALSE, row.names=F)
+}
 
 #' Retrieve a single URL from AmCAT with authentication and specified filters (GET or POST) 
 #' 
