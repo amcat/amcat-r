@@ -4,47 +4,30 @@ library(RCurl)
 #' Connect to the AmCAT API
 #'
 #' Connect to the AmCAT API and requests a temporary (24h) authentication token that will be stored in the output
-#' If username and password are not given, a file ~/.amcatauth will be read, which should be a csv file with
-#' columns host (may be *), username, password. If the file cannot be read, username will be taken from $USER
-#' and the user will be prompted for the password.
+#' The host should be known in the ~/.amcatauth file, you can use amcat.save.password to add a password to this file
 #' 
 #' @param host the hostname, e.g. http://amcat.vu.nl or http://localhost:8000
-#' @param username the username to login with, e.g. 'amcat'. 
-#' @param passwd the password to login with, e.g. 'amcat'
 #' @param token an existing token to authenticate with. If given, username and password are not used and the token is not tested
 #' @param disable_ipv6. If True, only use ipv4 resolving (faster if ipv6 causes timeout). Defaults to true, but this may change in the future.
 #' @return A list with authentication information that is used by the other functions in this package
 #' @export
-amcat.connect <- function(host, username=NULL, passwd=NULL, token=NULL, disable_ipv6=TRUE, ssl.verifypeer=FALSE) {
+amcat.connect <- function(host,token=NULL, disable_ipv6=TRUE, ssl.verifypeer=FALSE) {
   opts = list(ssl.verifypeer = ssl.verifypeer)
   if (disable_ipv6) opts = c(opts, list(ipresolve=1))
   
   
   if (is.null(token)) {
-    if (is.null(passwd)) { # try amcatauth file
       a = tryCatch(.readauth(host), error=function(e) warning("Could not read ~/.amcatauth"))
-      if (!is.null(a)) {
-        username = a$username
-        passwd = a$password
-      }
-    }
-    if (is.null(username)) { # try USER variable
-      username = Sys.getenv("USER")
-      if (username == '') { # ask
-        cat(paste("Please enter the username for", host, "\n"))
-        username=readline()
-      }
-    }
-    if (is.null(passwd)) { #ask
-      cat(paste("Please enter the password for ",username,"@", host, " (or create a ~/.amcatauth file) \n", sep=""))
-      passwd=readline()
-    }
+      if (is.null(a)) stop("Cannot find password in ~/.amcatauth, please add an entry to this file by using amcat.save.password!")
+      username = a$username
+      passwd = a$password
+      
     # get auth token
     url = paste(host, '/api/v4/get_token', sep='')
     
     res = tryCatch(postForm(url, username=username, password=passwd, .checkParams=F, .opts=opts), 
                    error=function(e) stop(paste("Could not get token from ",
-                                                 username,":",passwd,"@", host,
+                                                 username,"@", host,
                                                  " please check host, username and password. Error: ", e, sep="")))
     token = fromJSON(res)$token
   }

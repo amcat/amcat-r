@@ -36,8 +36,6 @@ amcat.gethierarchy <- function(conn, codebook_id, languages=NULL) {
     
   }
   
-  
-  
   return(hierarchy)
 }
 
@@ -143,40 +141,30 @@ amcat.hierarchy.cats <- function(hierarchy, maxdepth=2) {
   return(x[match(hierarchy$code, anc$c)])
 }
 
-#' Add categories (ancestors) to a codebook 'hierarchy'
+#' Change a (simple) lucene query to a regular expression
 #' 
-#' Adds one or more categories to codebook codes. Suppose that you have a hierarchy like
+#' It is assumed that this will be used to filter single words/lemmata, so the query should only consist of a list of synonyms with optional wildcards.
+#' E.g. a query like (many* words*) is fine, but many AND words or "many words" will give an error.
 #' 
-#' code, parent
-#' issue, NA
-#' economy, issue
-#' unemployment, economy
-#' environment, issue
-#' 
-#' The first category or 'root' for all objects will be 'issue'. The second category would be
-#' 'economy' for economy and unemployment, and 'environment' for environment. For 'issue', the second
-#' category would simply be issue:
-#' 
-#' code, parent, cat1, cat2
-#' issue, NA, issue, issue
-#' economy, issue, issue, economy
-#' unemployment, economy, issue, economy
-#' environment, issue, issue, environment
-#' #' 
-#' @param hierarchy the hierarchy data frame from \code{\link{amcat.gethierarchy}}
-#' @param maxdepth the maxium number of ancestors per code
-#' @return The hierarchy data frame with a column added for each code
+#' @param queries a character vector containing the queries
+#' @param names an optional vector of the same length as queries containing names for the concepts
+#' @return a character vector of regular expressions, with names added if given
 #' @export
-amcat.hierarchy.cats <- function(hierarchy, maxdepth=2) {
-  for(depth in 0:maxdepth) {
-    target = paste("cat", (depth+1), sep=".")
-    hierarchy[, target] = .codebookcat(hierarchy, depth)  
-    if (depth > 0) {
-      fallback = paste("cat", (depth), sep=".")
-      hierarchy[is.na(hierarchy[,target]), target] = hierarchy[is.na(hierarchy[, target]), fallback]
-    }
-  }
-  # Thanks, http://stackoverflow.com/questions/16441952/sort-a-data-frame-by-multiple-columns-whose-names-are-contained-in-a-single-obje
-  sortnames = paste("cat", (0:maxdepth) + 1, sep=".")
-  hierarchy[do.call("order", hierarchy[, sortnames]),]
+lucene_to_re <- function(queries, names=NULL) {
+  # remove trailing/leading parens
+  queries = gsub("^\\s*\\(|\\)\\s*$", "", queries)
+  # check no weird syntax
+  if (any(grepl(' (OR|AND|NOT) |\\(|\\)|"', queries)))
+    stop("Queries should only contain disjunctions and wildcards")
+  # replace space by | and * by .*
+  queries = gsub("[, ]+", "|", queries)
+  queries = gsub("\\*", ".*", queries)
+  # add parens and initial/final bind and return
+  queries = paste("^(", queries, ")$", sep="")
+  if (!is.null(names))
+    names(queries) = names
+  queries
 }
+
+
+

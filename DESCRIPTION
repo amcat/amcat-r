@@ -7,12 +7,6 @@ Maintainer: Wouter van Atteveldt <wouter@vanatteveldt.com>
 Depends:
     rjson,
     RCurl,
-    plyr,
-    tm,
-    slam,
-    lda,
-    topicmodels,
-    Matrix,
     httr
 Description: Functions to call the AmCAT API
 License: MIT
