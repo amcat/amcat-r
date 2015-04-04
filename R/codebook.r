@@ -168,3 +168,19 @@ lucene_to_re <- function(queries, names=NULL) {
 
 
 
+#' Matches a regular expression pattern on multiple strings
+#' 
+#' This is intended as a 'drop-in' replacement for grepl and should give identical results
+#' This function first matches on the unique strings and then matches back to the original,
+#' so it will give a speedup iff length(unique(words)) << length(words)
+#' 
+#' @param pattern a regular expression pattern to use
+#' @param words a vector of words, this should probably be a factor to achieve speedup
+#' @param ignore.case passed to grepl, defaults to TRUE for this function
+#' @return a vector of booleans indicating which words matched the pattern
+#' @export
+match_words <- function(pattern, words, ignore.case=T) {
+  u = unique(words)
+  hits = u[grepl(pattern, u, ignore.case=ignore.case)]
+  words %in% hits
+}
