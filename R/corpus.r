@@ -60,7 +60,7 @@ amcat.gettokens <- function(conn, project=NULL, articleset=NULL, module="corenlp
         warning("Column ",col," not present in page ",i)
         next
       }
-      if (sum(!is.na(result[[i]]$coref)) == 0) {
+      if (sum(!is.na(result[[i]][[col]])) == 0) {
         warning("Column ",col," had no valid values for page ", i)
         next
       }
