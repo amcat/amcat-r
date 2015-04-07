@@ -21,21 +21,24 @@ the latest version of the package is automatically installed from `github`.
 Connecting
 ----
 
-Before you can use the AmCAT API, you need to connect to it using `amcat.connect`.
-This requests an authentication token from the specified AmCAT server and stores it for further commands.
-
+Before you can connect to the API, you need to store the password in a file "~/.amcatauth".
+This can be done from R by calling `amcat.save.password`:
 
 ```r
 library(amcatr)
-conn = amcat.connect("https://amcat.nl", username = "example", passwd = "secret")
+amcat.save.password("https://amcat.nl", username="example", password="secret")
 ```
 
-If you don't specify a username or password,
-it will use the name of the logged in user and search for a password in a file `.amcatauth` in your home directory.
-This file should be a csv file with one line per host, giving host, username, and password: 
-`http://amcat.nl,example,secret`. 
-When this is in place, you can connect without having to type the password every time 
-(and without saving your password in a code file, which is usually a bad idea!): 
+Note: You only need to run this line once per computer, so *do not save this line* in a script, and certainly do not publish or email it, to avoid compromising the security of your account!
+
+Now, you can connect to AmCAT using `amcat.connect`.
+This requests an authentication token from the specified AmCAT server and stores it for further commands.
+The resulting data (named `conn`, below) is then used every time you call the API. 
+
+```r
+library(amcatr)
+conn = amcat.connect("https://amcat.nl")
+```
 
 Usage
 -----
