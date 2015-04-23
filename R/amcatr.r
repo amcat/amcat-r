@@ -212,7 +212,7 @@ amcat.getarticlemeta <- function(conn, set, filters=list(), columns=c('id','date
     result$month = as.Date(format(result$date, '%Y-%m-1'))
     result$week = as.Date(paste(format(result$date, '%Y-%W'),1), '%Y-%W %u')
   }
-  if (medium_names) {
+  if (medium_names & "medium" %in% columns) {
     media = unique(result$medium)
     # make filter from names by adding names (pk=)
     names(media) = rep("pk", length(media))
