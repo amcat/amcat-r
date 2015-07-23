@@ -49,7 +49,7 @@ amcat.aggregate <- function(conn, queries, labels=queries, sets, axis1=NULL, axi
 #' @param ... additional arguments to pass to the AmCAT API, e.g. extra filters
 #' @return A data frame with hits per article
 #' @export
-amcat.hits <- function(conn, queries, labels=queries, sets, minimal=T, ...) {
+amcat.hits <- function(conn, queries, labels=queries, sets,  minimal=T, warn.no.result=T, ...) {
   result = NULL
   for (i in 1:length(queries)) {
     q = paste("count", queries[i], sep="#")
@@ -60,7 +60,7 @@ amcat.hits <- function(conn, queries, labels=queries, sets, minimal=T, ...) {
       r$query = labels[i]
       result = rbind(result, r)
     } else {
-      warning(paste("Query",labels[i]," produced no results"))
+      if (warn.no.result) warning(paste("Query",labels[i]," produced no results"))
     }
   }
   return(result)
