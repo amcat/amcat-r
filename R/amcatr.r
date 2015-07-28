@@ -63,7 +63,6 @@ amcat.save.password <- function(host, username, password) {
   }
   write.table(existing, file="~/.amcatauth", sep=",",  col.names=FALSE, row.names=F)
 }
-
 #' Retrieve a single URL from AmCAT with authentication and specified filters (GET or POST) 
 #' 
 #' @param conn the connection object from \code{\link{amcat.connect}}
@@ -94,11 +93,12 @@ amcat.getURL <- function(conn, path, filters=NULL, post=FALSE, post_options=list
     result
   } else {  
     
-    post_opts = modifyList(conn$opts, list(httpheader=httpheader))
+    post_opts = modifyList(conn$opts, list(httpheader=httpheader))    
     post_opts = modifyList(post_opts, post_options)
     postForm(build_url(url), .params=filters, .opts=post_opts)
   }
 }
+
 
 #' Get and rbind pages from the AmCAT API
 #' 
@@ -111,13 +111,13 @@ amcat.getURL <- function(conn, path, filters=NULL, post=FALSE, post_options=list
 #' @param max_page: the page number to stop retrieving at, if given
 #' @return dataframe 
 #' @export
-amcat.getpages <- function(conn, path, format='csv', page=1, page_size=1000, filters=NULL, post=FALSE, max_page=NULL) {
+amcat.getpages <- function(conn, path, format='csv', page=1, page_size=1000, filters=NULL, post=FALSE, post_options=list(), max_page=NULL) {
   filters = c(filters, page_size=page_size, format=format)
   result = data.frame()
   while (TRUE) {
     if (!is.null(max_page)) if (page > max_page) break
     page_filters = c(filters, page=page)
-    subresult = amcat.getURL(conn, path, page_filters, post=post)
+    subresult = amcat.getURL(conn, path, page_filters, post=post, post_options)
     if (subresult == "") break
     subresult = .amcat.readoutput(subresult, format=format)
     result = rbind(result, subresult)
@@ -191,6 +191,7 @@ amcat.runaction <- function(conn, action, format='csv', ...) {
 #'
 #' @param conn the connection object from \code{\link{amcat.connect}}
 #' @param set the article set id to retrieve
+#' @param article_ids the article ids to retrieve
 #' @param filters additional filters, e.g. list(medium=1)
 #' @param columns the names of columns to retrieve
 #' @param time if true, parse the date as POSIXct datetime instead of Date
@@ -199,9 +200,20 @@ amcat.runaction <- function(conn, action, format='csv', ...) {
 #' @param ... additional arguments are passed to \code{\link{amcat.getpages}}. Useful arguments include page_size, page (starting page) and maxpage (end page)
 #' @return A dataframe containing the articles and the selected columns
 #' @export
-amcat.getarticlemeta <- function(conn, set, filters=list(), columns=c('id','date','medium','length'), time=F, dateparts=F, medium_names=T, ...){
-  filters[['articleset']] = set 
-  result = amcat.getobjects(conn, "articlemeta", filters=filters, ...)
+amcat.getarticlemeta <- function(conn, set=NULL, article_ids=NULL, filters=list(), columns=c('id','date','medium','length'), time=F, dateparts=F, medium_names=T, ...){
+  if(is.null(set) & is.null(article_ids)) stop('"set" or "article_ids" not specified')
+  if(!is.null(set) & !is.null(article_ids)) stop('Either "set" OR "article_ids" has to be specified')
+  
+  if(!is.null(set)) {
+    filters[['articleset']] = set 
+    result = amcat.getobjects(conn, "articlemeta", filters=filters, ...)
+  }
+  if(!is.null(article_ids)) {
+    filters[['pk']] = article_ids 
+    result = amcat.getobjects(conn, "article", filters=filters, post=T, 
+                              post_options = list(httpheader = 'X-HTTP-Method-Override: GET'), ...)
+  }
+
   if(length(columns > 0)) result = result[,columns]
   if ("date" %in% names(result)) {
     result$date = (if(time == T) as.POSIXct(result$date, format='%Y-%m-%d %H:%M:%S') 
