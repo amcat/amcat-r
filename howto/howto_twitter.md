@@ -12,7 +12,6 @@ You can skip the 'install_github' steps after the first time.
 
 
 ```r
-options(repos=structure(c(CRAN="")))
 if (!require("devtools")) {install.packages("devtools"); library(devtools)}
 if (!require("plyr")) {install.packages("plyr"); library(plyr)}
 
