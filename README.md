@@ -11,7 +11,7 @@ You can install `amcatr` directly from this github repository uising devtools:
 
 ```
 if (!require(devtools)) {install.packages("devtools"); library(devtools)}
-install_github(repo="amcat-r", username="amcat")
+install_github("amcat/amcat-r")
 ```
 
 Note: Every time you run the `install_github` command, 

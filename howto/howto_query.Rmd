@@ -1,5 +1,7 @@
-Automatic Keyword Analysis with the AmCAT API in R
-==================================================
+---
+title: "Automatic Keyword Analysis with the AmCAT API in R"
+output: md_document
+---
 
 This document is an introduction to using the AmCAT API from R. 
 The API works using `HTTP GET` requests. 
@@ -26,32 +28,37 @@ You can install `amcatr` directly from the github repository using devtools:
 
 ```{r test, results='hide', tidy=FALSE, message=FALSE, warning=FALSE, cache=TRUE}
 if (!require(devtools)) {install.packages("devtools"); library(devtools)}
-install_github(repo="amcat-r", username="amcat")
+install_github(repo="amcat/amcat-r")
 ```
 
 Note: Every time you run the `install_github` command, 
 the latest version of the package is automatically installed from `github`. 
+Note also that on Windows machines you might get a warning when installing devtools, this does not seem to be a problem.
 
 Connecting to AmCAT
 -------------------
 
-Before you can use the AmCAT API, you need to connect to it using `amcat.connect`.
-This requests an authentication token from the specified AmCAT server and stores it for further commands.
+Before you can connect to the AmCAT API, you need to save your password for the server you are using:
 
 ```{r eval=FALSE}
 library(amcatr)
-conn = amcat.connect("https://amcat.nl", username='example', passwd='secret')
+conn = amcat.save.password("https://amcat.nl", username='example', passwd='secret')
 ```
 
-If you don't specify a username or password,
-it will use the name of the logged in user and search for a password in a file `.amcatauth` in your home directory.
-This file should be a csv file with one line per host, giving host, username, and password: 
-`http://amcat.nl,example,secret`. 
-When this is in place, you can connect without having to type the password every time 
-(and without saving your password in a code file, which is usually a bad idea!): 
+This stores the password in a hidden file in your home folder (`~/.amcatauth`).
+On a shared computer, please make sure that this file is not publicly readable.
 
-```{r, message=FALSE}
+Important: *Do not save this line in your script files!* 
+You only need to run it once per computer, so please run it directly in the console so the password is not accidentally saved. In no case email your password to anyone or post it anywhere.
+
+Now, you can connect to the API using `amcat.connect`. 
+This requests an authentication token from the specified AmCAT server and stores it for further commands.
+
+```{r, message=FALSE,echo=FALSE}
 library(amcatr)
+```
+
+```{r}
 conn = amcat.connect("https://amcat.nl")
 ```
 
@@ -106,11 +113,11 @@ a = amcat.aggregate(conn, sets=10271, axis1="year",
 head(a)
 ```
 
-This can be transformed from 'long' to 'wide' format using the `cast` function (from the `reshape` package) and plotted:
+This can be transformed from 'long' to 'wide' format using the `dcast` function (from the `reshape2` package) and plotted:
 
 ```{r query-presidents, message=FALSE}
-library(reshape)
-wide = cast(a, year~query, value="count")
+library(reshape2)
+wide = dcast(a, year~query, value.var="count")
 plot(wide$year, wide$Bush / wide$Total, type='l', frame.plot=F, ylim = c(0, 0.4), col="red",
      xlab="Year", ylab="% of Articles", main="Percentage of articles mentioning US Presidents")
 lines(wide$year, wide$Obama / wide$Total, col="blue")
@@ -201,7 +208,7 @@ head(h)
 Now, we can plot the results over time, e.g. per year:
 
 ```{r query-saddam, message=FALSE}
-peryear = cast(h, year ~ query, value="count", fun.aggregate=sum)
+peryear = dcast(h, year ~ query, value.var="count", fun.aggregate=sum)
 plot(peryear$year, peryear$saddam, type='l', frame.plot=F, 
      xlab="Year", ylab="Articles", main="Articles mentioning Saddam")
 ```
