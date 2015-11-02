@@ -317,7 +317,7 @@ amcat.upload.articles <- function(conn, project, articleset, text, headline, dat
     json_data = toJSON(json_data)
     message("Uploading ", nrow(chunk), " articles to set ", articleset)
     
-    url = paste(conn$host, "api", "v4", "projects",project, "articlesets", articleset, "articles", "", sep="/")
+    url = paste(conn$host, "api", "v4", "projects",project, "articlesets", articleset, "article-upload", "", sep="/")
     
     resp = POST(url, body=json_data, content_type_json(), accept_json(), add_headers(Authorization=paste("Token", conn$token)))
     if (resp$status_code != 201) stop("Unexpected status: ", resp$status_code, "\n", content(resp, type="text/plain"))
