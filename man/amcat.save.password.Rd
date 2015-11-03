@@ -4,7 +4,7 @@
 \alias{amcat.save.password}
 \title{Add or change an entry in the cached authentication file}
 \usage{
-amcat.save.password(host, username, password)
+amcat.save.password(host, username, password, passwordfile = "~/.amcatauth")
 }
 \arguments{
 \item{host}{the host, e.g. "https://amcat.nl"}
@@ -12,6 +12,8 @@ amcat.save.password(host, username, password)
 \item{username}{the AmCAT username to use}
 
 \item{password}{the password for the AmCAT user}
+
+\item{passwordfile}{optionally, specify a different password file}
 }
 \description{
 amcat-r uses the file '~/.amcatauth' to read credentials for connecting to servers

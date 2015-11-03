@@ -10,15 +10,16 @@ library(RCurl)
 #' @param token an existing token to authenticate with. If given, username and password are not used and the token is not tested
 #' @param disable_ipv6. If True, only use ipv4 resolving (faster if ipv6 causes timeout). Defaults to true, but this may change in the future.
 #' @return A list with authentication information that is used by the other functions in this package
+#' @param passwordfile optionally, specify a different password file
 #' @export
-amcat.connect <- function(host,token=NULL, disable_ipv6=TRUE, ssl.verifypeer=FALSE) {
+amcat.connect <- function(host,token=NULL, disable_ipv6=TRUE, ssl.verifypeer=FALSE,  passwordfile="~/.amcatauth") {
   opts = list(ssl.verifypeer = ssl.verifypeer)
   if (disable_ipv6) opts = c(opts, list(ipresolve=1))
   
   
   if (is.null(token)) {
-      a = tryCatch(.readauth(host), error=function(e) warning("Could not read ~/.amcatauth"))
-      if (is.null(a)) stop("Cannot find password in ~/.amcatauth, please add an entry to this file by using amcat.save.password!")
+      a = tryCatch(.readauth(host, passwordfile=passwordfile), error=function(e) warning("Could not read ", passwordfile))
+      if (is.null(a)) stop("Cannot find password in ", passwordfile, ", please add an entry to this file by using amcat.save.password!")
       username = a$username
       passwd = a$password
       
@@ -34,10 +35,10 @@ amcat.connect <- function(host,token=NULL, disable_ipv6=TRUE, ssl.verifypeer=FAL
   list(host=host, token=token, opts=opts)
 }
 
-#' Get authentication info for a host from ~/.amcatauth file
-.readauth <- function(host) {
-  if (!file.exists("~/.amcatauth")) return()
-  rows = read.csv("~/.amcatauth", header=F, stringsAsFactors=F)
+#' Get authentication info for a host from password file
+.readauth <- function(host, passwordfile) {
+  if (!file.exists(passwordfile)) return()
+  rows = read.csv(passwordfile, header=F, stringsAsFactors=F)
   colnames(rows) <- c("host", "username", "password")
   r = rows[rows$host == '*' | rows$host == host,]
   if (nrow(r) > 0) list(username=r$username[1], password=r$password[1]) 
@@ -52,16 +53,17 @@ amcat.connect <- function(host,token=NULL, disable_ipv6=TRUE, ssl.verifypeer=FAL
 #' @param host the host, e.g. "https://amcat.nl"
 #' @param username the AmCAT username to use
 #' @param password the password for the AmCAT user
+#' @param passwordfile optionally, specify a different password file
 #' @export
-amcat.save.password <- function(host, username, password) {
-  existing = if (file.exists("~/.amcatauth")) read.csv("~/.amcatauth", header=F, stringsAsFactors=F) else data.frame(V1=character(0),V2=character(0),V3=character(0))
+amcat.save.password <- function(host, username, password, passwordfile="~/.amcatauth") {
+  existing = if (file.exists(passwordfile)) read.csv(passwordfile, header=F, stringsAsFactors=F) else data.frame(V1=character(0),V2=character(0),V3=character(0))
   if (host %in% existing$V1) {
     existing$V2[existing$V1 == host] = username
     existing$V3[existing$V1 == host] = password
   } else {
     existing = rbind(existing, data.frame(V1=host, V2=username, V3=password, stringsAsFactors = F))
   }
-  write.table(existing, file="~/.amcatauth", sep=",",  col.names=FALSE, row.names=F)
+  write.table(existing, file=passwordfile, sep=",",  col.names=FALSE, row.names=F)
 }
 #' Retrieve a single URL from AmCAT with authentication and specified filters (GET or POST) 
 #' 
