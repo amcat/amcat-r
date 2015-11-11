@@ -9,14 +9,16 @@
 #' @param filters Additional filters, ie c(pos1="V", pos1="A") to select only verbs and adjectives 
 #' @param page_size the number of features (articles?) to include per call
 #' @param sentence a sentence (string) to be parsed if articleset id is not given
+#' @param only_cached if true, only get tokens that have already been preprocessed (recommended for large corpora!)
 #' @return A data frame of tokens
 #' @export
 amcat.gettokens <- function(conn, project=NULL, articleset=NULL, module="corenlp_lemmatize", 
                             filters=NULL,page_size=1, page=1, npages=NULL, 
-                            sentence=NULL) {
+                            sentence=NULL, only_cached=F) {
   # TODO: now do adhoc / articleset as completely different paths, converge?
   if (!is.null(articleset) & !is.null(project)) {
-    filters = c(module=module, page_size=page_size, format='csv', filters)
+    if (only_cached) filters = c(filters, list(only_cached=as.numeric(only_cached)))
+    filters = c(module=module, page_size=page_size, format='csv',  filters)
     path = paste("api", "v4", "projects", project, "articlesets", articleset, "tokens", "", sep="/")
     result = list()
     while (TRUE) {
