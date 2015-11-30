@@ -12,3 +12,4 @@ Depends:
 Description: Functions to call the AmCAT API
 License: MIT
 URL: http://github.com/amcat/amcat
+RoxygenNote: 5.0.1

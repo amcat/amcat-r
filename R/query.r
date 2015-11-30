@@ -44,23 +44,26 @@ amcat.aggregate <- function(conn, queries, labels=queries, sets, axis1=NULL, axi
 #'
 #' @param conn the connection object from \code{\link{amcat.connect}}
 #' @param queries a vector of queries to run
-#' @param labels if given, labels corresponding to the queries
+#' @param labels if given, labels corresponding to the queries. Alternatively, if a query starts with a label and a hashtag (e.g., label# "term1 term2"), this label is used.
 #' @param sets one or more article set ids to query on
 #' @param ... additional arguments to pass to the AmCAT API, e.g. extra filters
 #' @return A data frame with hits per article
 #' @export
 amcat.hits <- function(conn, queries, labels=queries, sets,  minimal=T, warn.no.result=T, ...) {
   result = NULL
+  
   for (i in 1:length(queries)) {
     q = paste("count", queries[i], sep="#")
     r = tryCatch(amcat.getobjects(conn, "search",filters=list(q=q, col="hits", sets=sets, minimal=minimal, ...)),
                  error=function(e) {warning("Error on querying '", labels[i], "': ", e$message); NULL})
-    if (is.null(r)) next    
+    if (is.null(r)) next
+    
+    label = if(grepl('#', queries[i])) gsub('#.*', '', queries[i]) else labels[i] 
     if (nrow(r) > 0) {
-      r$query = labels[i]
+      r$query = label
       result = rbind(result, r)
     } else {
-      if (warn.no.result) warning(paste("Query",labels[i]," produced no results"))
+      if (warn.no.result) warning(paste("Query",label," produced no results"))
     }
   }
   return(result)
