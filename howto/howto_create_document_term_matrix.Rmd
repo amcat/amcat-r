@@ -8,7 +8,12 @@ For these types of text analysis (bag-of-word approaches) the common way to orga
 In this howto we demonstrate how to import tokens from AmCAT into R and create a DTM.
 
 We use the DocumentTermMatrix class of the [tm](http://cran.r-project.org/web/packages/tm/vignettes/tm.pdf) package. 
-Since the `tm` package is quite popular, its DocumentTermMatrix class is compatible with various packages for text analysis.
+Since the `tm` package is quite popular, its DocumentTermMatrix class is compatible with various packages for text analysis. 
+The `tm` package is not a dependency for amcat-r, so it first needs to be loaded separately.
+
+```{r}
+library(tm)
+```
 
 Requesting tokens
 -----------------
@@ -29,7 +34,7 @@ However, [preview.amcat.nl](http://preview.amcat.nl)
 gives access to the same database using the newest development version of AmCAT.
 Therefore, this howto connects to that server rather than the default server:
   
-  ```{r message=FALSE}
+```{r message=FALSE}
 library(amcatr)
 conn = amcat.connect("http://preview.amcat.nl")
 t = amcat.gettokens(conn, project=442, articleset=10271, module="corenlp_lemmatize",
@@ -51,7 +56,7 @@ and only downloads the lemma per article:
   
 ```{r message=FALSE}
 t = amcat.gettokens(conn, project=442, articleset=10271, module="corenlp_lemmatize", 
-                    page_size=100, npages=100, keep=c("aid", "lemma"),
+                    page_size=100, npages=100, 
                     filters=c(pos1="N", pos1="M", pos1="V", pos1="M"))
 head(t, n=10)
 ```
@@ -60,12 +65,14 @@ head(t, n=10)
 Document-Term Matrix
 --------------------
 
-The token data as imported above can easily be transformed into a dtm with the `amcat.dtm.create` function.
-The input of the function is a vector for the tokens (terms), together with a vector indicating in which documents the token occured (ids) and how often (freqs).
+The token data as imported above can easily be transformed into a dtm. 
+For this we first create a sparse matrix using the xtabs function, and then transform it to a dtm using the `tm` function, `as.DocumentTermMatrix`.
+For this we need a vector for the tokens (terms), together with a vector indicating in which documents the token occured (ids) and how often (freqs).
 
 ```{r, message=F}
-dtm = amcat.dtm.create(ids=t$aid, terms=t$lemma, freqs=t$freq)
-dtm
+d$freq = 1
+dtm = xtabs(freq ~ aid + lemma, d, sparse=T)
+dtm = as.DocumentTermMatrix(dtm, weighting = weightTf)
 ```
 
 Match document meta
@@ -86,4 +93,13 @@ meta = meta[match(rownames(dtm), meta$id),]
 dim(dtm)
 dim(meta)
 ```
+
+
+Performing analysis with the dtm
+--------------------
+
+The dtm is a common data structure for a variety of computational text analysis applications. Many of these types of analysis are also covered in other R packages, such as:
+* [corpustools](https://github.com/kasperwelbers/corpus-tools).
+* [rTextTools](https://journal.r-project.org/archive/2013-1/collingwood-jurka-boydstun-etal.pdf).
+* [semnet](https://github.com/kasperwelbers/semnet).
 
