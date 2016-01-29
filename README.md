@@ -48,4 +48,4 @@ All functions in `amcatr` start with `amcat.` and you can use the built-in help 
 To help you get started with the AmCAT API, please see the following how-to guides:
 
 + [Howto: Querying](howto/howto_query.md) deals with querying and metadata retrieval. 
-+ [Howto: Corpus](howto/howto_corpus.md) shows how you can analyse and comparse corpora and fit LDA topic models. 
++ [Howto: DTM](howto/howto_create_document_term_matrix.md) shows how you can create a document term matrix, and refers to usefull packages for computational text analysis. 
