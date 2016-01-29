@@ -70,8 +70,8 @@ For this we first create a sparse matrix using the xtabs function, and then tran
 For this we need a vector for the tokens (terms), together with a vector indicating in which documents the token occured (ids) and how often (freqs).
 
 ```{r, message=F}
-d$freq = 1
-dtm = xtabs(freq ~ aid + lemma, d, sparse=T)
+t$freq = 1
+dtm = xtabs(freq ~ aid + lemma, t, sparse=T)
 dtm = as.DocumentTermMatrix(dtm, weighting = weightTf)
 ```
 
