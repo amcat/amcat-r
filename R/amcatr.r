@@ -31,8 +31,10 @@ amcat.connect <- function(host,token=NULL, disable_ipv6=TRUE, ssl.verifypeer=FAL
                                                  username,"@", host,
                                                  " please check host, username and password. Error: ", e, sep="")))
     token = fromJSON(res)$token
+    version = fromJSON(res)$version
+    if (is.null(version)) version = "0"
   }
-  list(host=host, token=token, opts=opts)
+  list(host=host, token=token, version=version, opts=opts)
 }
 
 #' Get authentication info for a host from password file
@@ -73,7 +75,7 @@ amcat.save.password <- function(host, username, password, passwordfile="~/.amcat
 #' @param post use HTTP POST instead of GET
 #' @return the raw result
 #' @export
-amcat.getURL <- function(conn, path, filters=NULL, post=FALSE, post_options=list(), error_unless_200=TRUE) {
+amcat.getURL <- function(conn, path, filters=NULL, post=FALSE, post_options=list(), error_unless_200=TRUE, null_on_404=FALSE, binary=FALSE) {
   httpheader = c(Authorization=paste("Token", conn$token))
   url = parse_url(conn$host)
   url$path = paste(path, sep="/")
@@ -87,9 +89,26 @@ amcat.getURL <- function(conn, path, filters=NULL, post=FALSE, post_options=list
     # build GET url query
     url = build_url(url)
     message("GET ", url)
-    result = getURL(url, httpheader=httpheader, .opts=conn$opts, curl=h)
+    urlfunc = if (binary) getBinaryURL else getURL
+    result = urlfunc(url, httpheader=httpheader, .opts=conn$opts, curl=h)
     if (getCurlInfo(h)$response.code != 200){
-      if (error_unless_200) stop("Unexpected Response Code ", getCurlInfo(h)$response.code, "\n", result)
+      if (error_unless_200 && !(null_on_404 && getCurlInfo(h)$response.code == 404)) {
+        
+        if (!is.null(getCurlInfo(h)$content.type) && grepl("application/x-r-rda", getCurlInfo(h)$content.type)) {
+          result = .load.rda(result)
+          result = paste(result$exception_type, result$detail, sep = ": ")
+        } else {
+          if (binary) result = rawToChar(result) 
+          fn = tempfile()
+          write(result, file=fn)
+          result = paste("Response written to", fn)
+        }
+        error_type = floor(getCurlInfo(h)$response.code / 100)
+        if (error_type == 5) msg = "This seems to be an AmCAT server error. Please see the server logs or create an issue at http://github.com/amcat/amcat/issues"
+        if (error_type == 4) msg = "It looks like you did something wrong, or there is something wrong in the amcat-r library. Please check your command and the error message below, or create an issue at http://github.com/amcat/amcat-r/issues"
+        
+        stop("Unexpected Response Code ", getCurlInfo(h)$response.code, "\n", msg, "\n", result)
+      }
       return(NULL)
     }
     result
@@ -106,28 +125,73 @@ amcat.getURL <- function(conn, path, filters=NULL, post=FALSE, post_options=list
 #' 
 #' @param conn the connection object from \code{\link{amcat.connect}}
 #' @param path the path of the url to retrieve (using the host from conn)
-#' @param filters: a named vector of filters, e.g. c(project=2, articleset=3)
+#' @param filters a named vector of filters, e.g. c(project=2, articleset=3)
 #' @param post use HTTP POST instead of GET
-#' @param page: the page number to start retrieving
-#' @param page_size: the number of rows per page
-#' @param max_page: the page number to stop retrieving at, if given
+#' @param page the page number to start retrieving
+#' @param page_size the number of rows per page
+#' @param max_page the page number to stop retrieving at, if given
 #' @return dataframe 
 #' @export
-amcat.getpages <- function(conn, path, format='csv', page=1, page_size=1000, filters=NULL, post=FALSE, post_options=list(), max_page=NULL) {
+amcat.getpages <- function(conn, path, format=NULL, page=1, page_size=1000, filters=NULL, 
+                           post=FALSE, post_options=list(), max_page=NULL, rbind_results=T) {
+
+  if (is.null(format)) format = if (.has.version(conn$version, "3.4.2")) "rda" else "csv" 
   filters = c(filters, page_size=page_size, format=format)
-  result = data.frame()
+  result = list()
+  npages = "?"
   while (TRUE) {
     if (!is.null(max_page)) if (page > max_page) break
     page_filters = c(filters, page=page)
-    subresult = amcat.getURL(conn, path, page_filters, post=post, post_options)
-    if (subresult == "") break
-    subresult = .amcat.readoutput(subresult, format=format)
-    result = rbind(result, subresult)
-    if(nrow(subresult) < page_size) break
+    subresult = amcat.getURL(conn, path, page_filters, post=post, post_options, binary = format=="rda", null_on_404 = format != "rda")
+    if (format == "rda") {
+      res = .load.rda(subresult)
+      npages = res$pages
+      subresult = res$result
+      result = c(result, list(subresult))
+      if (page >= npages) break
+    } else {
+      if (is.null(subresult) || subresult == "") break
+      subresult = .amcat.readoutput(subresult, format=format)
+      result = c(result, list(subresult))
+      if(nrow(subresult) < page_size) break
+    }
+    message("Retrieved page ",page,"/",npages, "; last page had ", nrow(subresult), " result rows")
     page = page + 1
   }
+  if (rbind_results) result = rbind.fill(result)
   result
 }
+
+.load.rda <- function(bytes) {
+  e = new.env()
+  load(rawConnection(bytes), envir = e)
+  as.list(e)
+}
+  
+.read.version <- function(vstr) {
+  if (!is.null(vstr)) {
+    m = str_match(vstr, "(\\d+)\\.(\\d+)\\.(\\d+)\\s*")
+    if (!is.na(m[[1]]))  {
+      v = as.numeric(m[-1])
+      names(v) = c("major", "minor", "patch")
+      return(v)
+    }
+  }
+  c(major=0, minor=0, patch=0)
+}
+
+.has.version <- function(actual, required) {
+  actual = .read.version(actual)
+  required = .read.version(required)
+  
+  if (actual["major"] > required["major"]) return(T)
+  if (actual["major"] < required["major"]) return(F)
+  if (actual["minor"] > required["minor"]) return(T)
+  if (actual["minor"] < required["minor"]) return(F)
+  return(actual["patch"] >= required["patch"])
+}
+
+
 
 #' Get objects from the AmCAT API
 #'
@@ -136,6 +200,7 @@ amcat.getpages <- function(conn, path, format='csv', page=1, page_size=1000, fil
 #' @param conn the connection object from \code{\link{amcat.connect}}
 #' @param resource the name of the resource, e.g. 'projects'. If it is of length>1, a path a/b/c/ will be created (e.g. c("projects",1,"articlesets"))
 #' @param ... Other options to pass to \code{\link{amcat.getpages}}, e.g. page_size, format, and filters
+#'
 #' @return A dataframe of objects (rows) by properties (columns)
 #' @export
 amcat.getobjects <- function(conn, resource, ...) {
@@ -202,13 +267,12 @@ amcat.runaction <- function(conn, action, format='csv', ...) {
 #' @param ... additional arguments are passed to \code{\link{amcat.getpages}}. Useful arguments include page_size, page (starting page) and maxpage (end page)
 #' @return A dataframe containing the articles and the selected columns
 #' @export
-amcat.getarticlemeta <- function(conn, set=NULL, article_ids=NULL, filters=list(), columns=c('id','date','medium','length'), time=F, dateparts=F, medium_names=T, ...){
+amcat.getarticlemeta <- function(conn, set=NULL, article_ids=NULL, filters=list(), columns=c('id','date','medium','length'), time=F, dateparts=F, medium_names=T, page_size=10000, ...){
   if(is.null(set) & is.null(article_ids)) stop('"set" or "article_ids" not specified')
   if(!is.null(set) & !is.null(article_ids)) stop('Either "set" OR "article_ids" has to be specified')
-  
   if(!is.null(set)) {
     filters[['articleset']] = set 
-    result = amcat.getobjects(conn, "articlemeta", filters=filters, ...)
+    result = amcat.getobjects(conn, "articlemeta", filters=filters, page_size=page_size, ...)
   }
   if(!is.null(article_ids)) {
     filters[['pk']] = article_ids 

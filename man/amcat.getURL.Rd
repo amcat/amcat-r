@@ -5,7 +5,7 @@
 \title{Retrieve a single URL from AmCAT with authentication and specified filters (GET or POST)}
 \usage{
 amcat.getURL(conn, path, filters = NULL, post = FALSE,
-  post_options = list(), error_unless_200 = TRUE)
+  post_options = list(), error_unless_200 = TRUE, binary = F)
 }
 \arguments{
 \item{conn}{the connection object from \code{\link{amcat.connect}}}

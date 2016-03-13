@@ -6,7 +6,7 @@
 \usage{
 amcat.getarticlemeta(conn, set = NULL, article_ids = NULL,
   filters = list(), columns = c("id", "date", "medium", "length"),
-  time = F, dateparts = F, medium_names = T, ...)
+  time = F, dateparts = F, medium_names = T, page_size = 10000, ...)
 }
 \arguments{
 \item{conn}{the connection object from \code{\link{amcat.connect}}}

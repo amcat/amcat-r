@@ -12,24 +12,14 @@
 #' @param only_cached if true, only get tokens that have already been preprocessed (recommended for large corpora!)
 #' @return A data frame of tokens
 #' @export
-amcat.gettokens <- function(conn, project=NULL, articleset=NULL, module="corenlp_lemmatize", 
-                            filters=NULL,page_size=1, page=1, npages=NULL, 
-                            sentence=NULL, only_cached=F) {
+amcat.gettokens <- function(conn, project=NULL, articleset=NULL, module="elastic", 
+                            filters=NULL,page_size=1, sentence=NULL, only_cached=F, ...) {
   # TODO: now do adhoc / articleset as completely different paths, converge?
   if (!is.null(articleset) & !is.null(project)) {
     if (only_cached) filters = c(filters, list(only_cached=as.numeric(only_cached)))
-    filters = c(module=module, page_size=page_size, format='csv',  filters)
+    filters = c(module=module, filters)
     path = paste("api", "v4", "projects", project, "articlesets", articleset, "tokens", "", sep="/")
-    result = list()
-    while (TRUE) {
-      page_filters = c(page=page, filters)
-      t = amcat.getURL(conn, path, page_filters, error_unless_200=FALSE)
-      if (is.null(t)) break
-      t = .amcat.readoutput(t, format='csv')
-      result = c(result, list(t))
-      if (!is.null(npages)) if (npages <= page) break
-      page = page + 1
-    }
+    result = amcat.getpages(conn, path, page_size=page_size, rbind_results=F, filters=filters, ...)
     result = .make.pages.unique(result)
     result = rbind.fill(result)
     result

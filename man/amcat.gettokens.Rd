@@ -5,8 +5,8 @@
 \title{Get Tokens from AmCAT}
 \usage{
 amcat.gettokens(conn, project = NULL, articleset = NULL,
-  module = "corenlp_lemmatize", filters = NULL, page_size = 1, page = 1,
-  npages = NULL, sentence = NULL, only_cached = F)
+  module = "elastic", filters = NULL, page_size = 1, sentence = NULL,
+  only_cached = F, ...)
 }
 \arguments{
 \item{conn}{the connection object from \code{\link{amcat.connect}}}

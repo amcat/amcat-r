@@ -4,23 +4,24 @@
 \alias{amcat.getpages}
 \title{Get and rbind pages from the AmCAT API}
 \usage{
-amcat.getpages(conn, path, format = "csv", page = 1, page_size = 1000,
-  filters = NULL, post = FALSE, post_options = list(), max_page = NULL)
+amcat.getpages(conn, path, format = NULL, page = 1, page_size = 1000,
+  filters = NULL, post = FALSE, post_options = list(), max_page = NULL,
+  rbind_results = T)
 }
 \arguments{
 \item{conn}{the connection object from \code{\link{amcat.connect}}}
 
 \item{path}{the path of the url to retrieve (using the host from conn)}
 
+\item{page}{the page number to start retrieving}
+
+\item{page_size}{the number of rows per page}
+
+\item{filters}{a named vector of filters, e.g. c(project=2, articleset=3)}
+
 \item{post}{use HTTP POST instead of GET}
 
-\item{filters:}{a named vector of filters, e.g. c(project=2, articleset=3)}
-
-\item{page:}{the page number to start retrieving}
-
-\item{page_size:}{the number of rows per page}
-
-\item{max_page:}{the page number to stop retrieving at, if given}
+\item{max_page}{the page number to stop retrieving at, if given}
 }
 \value{
 dataframe
