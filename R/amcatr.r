@@ -164,7 +164,9 @@ amcat.getpages <- function(conn, path, format=NULL, page=1, page_size=1000, filt
 
 .load.rda <- function(bytes) {
   e = new.env()
-  load(rawConnection(bytes), envir = e)
+  c = rawConnection(bytes)
+  load(c, envir = e)
+  close(c)
   as.list(e)
 }
   
