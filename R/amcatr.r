@@ -259,47 +259,35 @@ amcat.runaction <- function(conn, action, format='csv', ...) {
 #' additional postprocessing, e.g. to convert the data to Date objects.
 #'
 #' @param conn the connection object from \code{\link{amcat.connect}}
-#' @param set the article set id to retrieve
-#' @param article_ids the article ids to retrieve
-#' @param filters additional filters, e.g. list(medium=1)
+#' @param project the project of a set to retrieve metadata from
+#' @param articleset the article set id to retrieve
 #' @param columns the names of columns to retrieve
 #' @param time if true, parse the date as POSIXct datetime instead of Date
 #' @param dateparts if true, add date parts (year, month, week)
 #' @param medium_names if true, retrieve medium names and turn medium column into a factor
-#' @param ... additional arguments are passed to \code{\link{amcat.getpages}}. Useful arguments include page_size, page (starting page) and maxpage (end page)
 #' @return A dataframe containing the articles and the selected columns
 #' @export
-amcat.getarticlemeta <- function(conn, set=NULL, article_ids=NULL, filters=list(), columns=c('id','date','medium','length'), time=F, dateparts=F, medium_names=T, page_size=10000, ...){
-  if(is.null(set) & is.null(article_ids)) stop('"set" or "article_ids" not specified')
-  if(!is.null(set) & !is.null(article_ids)) stop('Either "set" OR "article_ids" has to be specified')
-  if(!is.null(set)) {
-    filters[['articleset']] = set 
-    result = amcat.getobjects(conn, "articlemeta", filters=filters, page_size=page_size, ...)
-  }
-  if(!is.null(article_ids)) {
-    filters[['pk']] = article_ids 
-    result = amcat.getobjects(conn, "article", filters=filters, post=T, 
-                              post_options = list(httpheader = 'X-HTTP-Method-Override: GET'), ...)
-  }
-
-  if(length(columns > 0)) result = result[,columns]
-  if ("date" %in% names(result)) {
+amcat.getarticlemeta <- function(conn, project, articleset, columns=c('date','medium'), time=F, dateparts=F, page_size=10000){
+  path = paste("api", "v4", "projects", project, "articlesets", articleset,  "meta", sep="/")
+  result = scroll(conn, path, page_size=page_size, columns=paste(columns, collapse=","))
+  
+  if ("date" %in% colnames(result)) {
     result$date = (if(time == T) as.POSIXct(result$date, format='%Y-%m-%d %H:%M:%S') 
                    else as.Date(result$date, format='%Y-%m-%d'))
+  
+    if (dateparts) {
+      result$year = as.Date(format(result$date, '%Y-1-1'))
+      result$month = as.Date(format(result$date, '%Y-%m-1'))
+      result$week = as.Date(paste(format(result$date, '%Y-%W'),1), '%Y-%W %u')
+    }
   }
-  if (dateparts) {
-    result$year = as.Date(format(result$date, '%Y-1-1'))
-    result$month = as.Date(format(result$date, '%Y-%m-1'))
-    result$week = as.Date(paste(format(result$date, '%Y-%W'),1), '%Y-%W %u')
+  columns = c('id', columns)
+  if (nrow(result) > 0) {
+    for(missing in setdiff(columns, colnames(result))) result[[missing]] <- NA
+    result = result[columns]
   }
-  if (medium_names & "medium" %in% columns) {
-    media = unique(result$medium)
-    # make filter from names by adding names (pk=)
-    names(media) = rep("pk", length(media))
-    media = amcat.getobjects(conn, "medium", filters=media)
-    result$medium = factor(result$medium, levels=media$id, labels=media$name)
-  }
-  return(result)
+  
+  result
 }
 
 
@@ -393,3 +381,38 @@ amcat.upload.articles <- function(conn, project, articleset, text, headline, dat
   }
   invisible(articleset)
 }
+
+#' Scroll an amcat API page with 'next' link
+#'
+#' @param conn the connection object from \code{\link{amcat.connect}}
+#' @param path the path to scroll
+#' @param page_size the amount of pages per request
+#' @param ... additional query arguments
+#'
+#' @return a data frame of all returned rows
+#' @export
+scroll <- function(conn, path, page_size=100, ...) {
+  if (!.has.version(conn$version, "3.4.2")) stop("Scrolling only possible on AmCAT >= 3.4.2")
+  result = list()
+  httpheader = c(Authorization=paste("Token", conn$token))
+  url = parse_url(conn$host)
+  url$path = path
+  url$query = list(page_size=page_size, format="rda", ...)
+  url = build_url(url)
+  n = 0
+  while(!is.na(url)) {
+    h = getCurlHandle()
+    message(url)
+    res = getBinaryURL(url, httpheader=httpheader, .opts=conn$opts, curl=h)
+    if (getCurlInfo(h)$response.code != 200) stop("ERROR")
+    res = .load.rda(res)  
+    subresult = res$results
+    n = n + nrow(subresult)
+    result = c(result, list(subresult))
+    message("Got ", nrow(subresult), " rows (total: ",n," / ", res$total,")")
+    url = res$`next`
+    if (nrow(subresult) < page_size) break
+  }
+  rbind.fill(result)
+}
+
