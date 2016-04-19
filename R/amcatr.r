@@ -322,8 +322,7 @@ amcat.add.articles.to.set <- function(conn, project, articles, articleset=NULL,
     url = paste(conn$host, "api", "v4", "projects",project, "articlesets", articleset, "articles", "", sep="/")
     
     resp = POST(url, body=toJSON(idlist), content_type_json(), accept_json(), add_headers(Authorization=paste("Token", conn$token)))
-    if (resp$status_code != 201) stop("Unexpected status: ", resp$status_code, "\n", content(resp, type="text/plain"))
-    content(resp)
+    if (resp$status_code != 201) stop("Unexpected status: ", resp$status_code, "\n", httr::content(resp, type="text/plain"))
   }
   articleset
 }
