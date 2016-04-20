@@ -279,6 +279,7 @@ amcat.getarticlemeta <- function(conn, project, articleset, columns=c('date','me
       result$year = as.Date(format(result$date, '%Y-1-1'))
       result$month = as.Date(format(result$date, '%Y-%m-1'))
       result$week = as.Date(paste(format(result$date, '%Y-%W'),1), '%Y-%W %u')
+      columns = c(columns, "year", "month", "week")
     }
   }
   columns = c('id', columns)
