@@ -9,15 +9,16 @@ context("AmCAT-R token tests")
 connect <- function() tryCatch(amcat.connect("http://localhost:8000"), 
                                error=function(err) {warning(err); skip("No AmCAT server available at localhost:8000")})
 
-test_that("We can retrieve (elastic) tokens", {
+testthat::test_that("We can retrieve (elastic) tokens", {
   conn = connect()
   texts = c("Dit is een text, joh!", "En dit is er nog een")
   headlines = c("Deze kop kost $2.00, a.u.b.", "kop twee")
   # add to new set
   aset = amcat.upload.articles(conn, project=1, articleset="Test set from unit tests", text=texts, headline=headlines, 
                                medium="test", date="2010-01-01T00:00")
+  amcat.flush(conn)
   t = amcat.gettokens(conn, project=1, articleset=aset)
-  expect_equal(length(unique(t$aid)), 2)
-  expect_equal(paste(t$term[t$aid==min(t$aid) & t$position < 5], collapse = " "), "deze kop kost 2 00")
+  testthat::expect_equal(length(unique(t$aid)), 2)
+  testthat::expect_equal(paste(t$term[t$aid==min(t$aid) & t$position < 5], collapse = " "), "deze kop kost 2 00")
 })
 

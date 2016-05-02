@@ -121,6 +121,7 @@ amcat.getURL <- function(conn, path, filters=NULL, post=FALSE, post_options=list
 }
 
 
+
 #' Get and rbind pages from the AmCAT API
 #' 
 #' @param conn the connection object from \code{\link{amcat.connect}}
@@ -261,7 +262,7 @@ amcat.runaction <- function(conn, action, format='csv', ...) {
 #' @param conn the connection object from \code{\link{amcat.connect}}
 #' @param project the project of a set to retrieve metadata from
 #' @param articleset the article set id to retrieve
-#' @param columns the names of columns to retrieve
+#' @param columns the names of columns to retrieve, e.g. date, medium, text, headline
 #' @param time if true, parse the date as POSIXct datetime instead of Date
 #' @param dateparts if true, add date parts (year, month, week)
 #' @param medium_names if true, retrieve medium names and turn medium column into a factor
@@ -272,7 +273,7 @@ amcat.getarticlemeta <- function(conn, project, articleset, columns=c('date','me
   result = scroll(conn, path, page_size=page_size, columns=paste(columns, collapse=","))
   
   if ("date" %in% colnames(result)) {
-    result$date = (if(time == T) as.POSIXct(result$date, format='%Y-%m-%d %H:%M:%S') 
+    result$date = (if(time == T) as.POSIXct(result$date, format='%Y-%m-%dT%H:%M:%S') 
                    else as.Date(result$date, format='%Y-%m-%d'))
   
     if (dateparts) {
@@ -416,3 +417,11 @@ scroll <- function(conn, path, page_size=100, ...) {
   rbind.fill(result)
 }
 
+
+#' Ask AmCAT to flush the elasticsearch
+#'
+#' @param conn the connection object from \code{\link{amcat.connect}}
+#' @export
+amcat.flush <- function(conn) {
+  invisible(amcat.getURL(conn, "api/v4/flush/", filters=list(format="json")))
+}
