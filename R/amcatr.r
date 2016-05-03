@@ -277,9 +277,9 @@ amcat.getarticlemeta <- function(conn, project, articleset, columns=c('date','me
                    else as.Date(result$date, format='%Y-%m-%d'))
   
     if (dateparts) {
-      result$year = as.Date(format(result$date, '%Y-1-1'))
-      result$month = as.Date(format(result$date, '%Y-%m-1'))
-      result$week = as.Date(paste(format(result$date, '%Y-%W'),1), '%Y-%W %u')
+      result$year = as.Date(cut(result$date, "year"))
+      result$month = as.Date(cut(result$date, "month"))
+      result$week = as.Date(cut(result$date, "week"))
       columns = c(columns, "year", "month", "week")
     }
   }
