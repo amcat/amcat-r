@@ -37,7 +37,7 @@ amcat.connect <- function(host,token=NULL, disable_ipv6=TRUE, ssl.verifypeer=FAL
   list(host=host, token=token, version=version, opts=opts)
 }
 
-#' Get authentication info for a host from password file
+# Get authentication info for a host from password file
 .readauth <- function(host, passwordfile="~/.amcatauth") {
   if (!file.exists(passwordfile)) return()
   rows = read.csv(passwordfile, header=F, stringsAsFactors=F)
@@ -212,7 +212,7 @@ amcat.getobjects <- function(conn, resource, ...) {
   amcat.getpages(conn, path, ...)
 }
 
-#' Internal call to check GET results and parse as csv or json
+# Internal call to check GET results and parse as csv or json
 .amcat.readoutput <- function(result, format){
   if (result == '401 Unauthorized')
     stop("401 Unauthorized")

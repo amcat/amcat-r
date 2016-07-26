@@ -31,17 +31,18 @@ amcat.gettokens <- function(conn, project=NULL, articleset=NULL, module="elastic
   } else stop("Please provide project+articleset or sentence")
 } 
 
-#' Make the given columns unique within a context for a list of data frames
-#' 
-#' It will iterate over the list of data frames and make the given columns globally unique
-#' assuming they are unique within a context.
-#' E.g. if you have a list of pages containing tokens within articles, and sentence is unique
-#' within an article but not globally unique, this will make it globally unique.
-#' 
-#' @param result list of token data frames
-#' @param context name of the context column
-#' @param columns names of the columns to make unique
-#' @return the original list with the columns made unique
+# Make the given columns unique within a context for a list of data frames
+# 
+# It will iterate over the list of data frames and make the given columns globally unique
+# assuming they are unique within a context.
+# E.g. if you have a list of pages containing tokens within articles, and sentence is unique
+# within an article but not globally unique, this will make it globally unique.
+# 
+# @param result list of token data frames
+# @param context name of the context column
+# @param columns names of the columns to make unique
+# 
+# @return the original list with the columns made unique
 .make.pages.unique <- function(result, context="aid", columns =  c("clause_id", "source_id", "coref", "sentence")) {
   all_colnames = Reduce(function(a,b) unique(c(a,colnames(b))), init=NULL, result)
   for (col in intersect(all_colnames, columns)) {
