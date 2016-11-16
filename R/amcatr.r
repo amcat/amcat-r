@@ -425,3 +425,27 @@ scroll <- function(conn, path, page_size=100, ...) {
 amcat.flush <- function(conn) {
   invisible(amcat.getURL(conn, "api/v4/flush/", filters=list(format="json")))
 }
+
+
+#' Download articles from AmCAT into a Quanteda corpus object
+#'
+#' @param conn the connection object from \code{\link{amcat.connect}}
+#' @param project The project ID
+#' @param articleset  The Articleset ID
+#' @param textcolumns Which columns contain text (default: headline, text)
+#' @param metacolumns Which columns to include as docvars (deafult: date, medium)
+#' @param headline.as.docvar Should headline be a docvar (as well as a text column)
+#' @param ... Other arguments to pass to amcat.getarticlemeta, i.e. dateparts=T
+#'
+#' @return a quanteda corpus object
+#' @export
+quanteda.corpus <- function(conn, project, articleset, textcolumns=c("headline", "text"), 
+                            metacolumns=c("date", "medium"), headline.as.docvar=T, ...) {
+  articles = amcat.getarticlemeta(conn, project, articleset, columns=c(textcolumns, metacolumns), ... )
+  
+  if (headline.as.docvar) textcolumns = setdiff(textcolumns, "headline")
+  metavars = setdiff(colnames(articles), textcolumns)
+  x = apply(articles[textcolumns], 1, paste, collapse='\n')
+  texts = apply(articles[textcolumns], 1, paste, collapse='\n')
+  quanteda::corpus(texts, docnames=articles$id, docvars=articles[metavars])
+}
