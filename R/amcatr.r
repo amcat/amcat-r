@@ -254,6 +254,7 @@ amcat.runaction <- function(conn, action, format='csv', ...) {
   result
 }
 
+
 #' Get article metadata from AmCAT
 #'
 #' Uses the \code{\link{amcat.getobjects}} function to retrieve article metadata, and applies some
@@ -268,7 +269,7 @@ amcat.runaction <- function(conn, action, format='csv', ...) {
 #' @param medium_names if true, retrieve medium names and turn medium column into a factor
 #' @return A dataframe containing the articles and the selected columns
 #' @export
-amcat.getarticlemeta <- function(conn, project, articleset, columns=c('date','medium'), time=F, dateparts=F, page_size=10000){
+amcat.articles <- function(conn, project, articleset, columns=c('date','medium'), time=F, dateparts=F, page_size=10000){
   path = paste("api", "v4", "projects", project, "articlesets", articleset,  "meta", sep="/")
   result = scroll(conn, path, page_size=page_size, columns=paste(columns, collapse=","))
   
@@ -291,6 +292,21 @@ amcat.getarticlemeta <- function(conn, project, articleset, columns=c('date','me
   
   result
 }
+#' Get article metadata from AmCAT
+#'
+#' Uses the \code{\link{amcat.getobjects}} function to retrieve article metadata, and applies some
+#' additional postprocessing, e.g. to convert the data to Date objects.
+#'
+#' @param conn the connection object from \code{\link{amcat.connect}}
+#' @param project the project of a set to retrieve metadata from
+#' @param articleset the article set id to retrieve
+#' @param columns the names of columns to retrieve, e.g. date, medium, text, headline
+#' @param time if true, parse the date as POSIXct datetime instead of Date
+#' @param dateparts if true, add date parts (year, month, week)
+#' @param medium_names if true, retrieve medium names and turn medium column into a factor
+#' @return A dataframe containing the articles and the selected columns
+#' @export
+amcat.getarticlemeta <- amcat.articles
 
 
 #' Add articles to an article set
