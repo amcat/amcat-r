@@ -262,16 +262,25 @@ amcat.runaction <- function(conn, action, format='csv', ...) {
 #'
 #' @param conn the connection object from \code{\link{amcat.connect}}
 #' @param project the project of a set to retrieve metadata from
-#' @param articleset the article set id to retrieve
+#' @param articleset the article set id to retrieve - provide either this or articleset
+#' @param articles the article ids to retrieve - provide either this or articleset
 #' @param columns the names of columns to retrieve, e.g. date, medium, text, headline
 #' @param time if true, parse the date as POSIXct datetime instead of Date
 #' @param dateparts if true, add date parts (year, month, week)
 #' @param medium_names if true, retrieve medium names and turn medium column into a factor
 #' @return A dataframe containing the articles and the selected columns
 #' @export
-amcat.articles <- function(conn, project, articleset, columns=c('date','medium'), time=F, dateparts=F, page_size=10000){
-  path = paste("api", "v4", "projects", project, "articlesets", articleset,  "meta", sep="/")
-  result = scroll(conn, path, page_size=page_size, columns=paste(columns, collapse=","))
+amcat.articles <- function(conn, project, articleset=NULL, articles=NULL, columns=c('date','medium'), time=F, dateparts=F, page_size=10000){
+  if (is.null(articleset) & is.null(articles)) stop("Provide either articleset or articles")
+  
+  if (!is.null(articleset)) {
+    path = paste("api", "v4", "projects", project, "articlesets", articleset,  "meta", sep="/")
+    result = scroll(conn, path, page_size=page_size, columns=paste(columns, collapse=","))
+  } else {
+    path = paste("api", "v4", "meta", sep="/")
+    articles = paste(articles, collapse=",")
+    result = scroll(conn, path, id=articles, page_size=page_size, columns=paste(columns, collapse=","))
+  }
   
   if ("date" %in% colnames(result)) {
     result$date = (if(time == T) as.POSIXct(result$date, format='%Y-%m-%dT%H:%M:%S') 
