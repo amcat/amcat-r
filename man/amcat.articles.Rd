@@ -4,15 +4,18 @@
 \alias{amcat.articles}
 \title{Get article metadata from AmCAT}
 \usage{
-amcat.articles(conn, project, articleset, columns = c("date", "medium"),
-  time = F, dateparts = F, page_size = 10000)
+amcat.articles(conn, project, articleset = NULL, articles = NULL,
+  columns = c("date", "medium"), time = F, dateparts = F,
+  page_size = 10000)
 }
 \arguments{
 \item{conn}{the connection object from \code{\link{amcat.connect}}}
 
 \item{project}{the project of a set to retrieve metadata from}
 
-\item{articleset}{the article set id to retrieve}
+\item{articleset}{the article set id to retrieve - provide either this or articleset}
+
+\item{articles}{the article ids to retrieve - provide either this or articleset}
 
 \item{columns}{the names of columns to retrieve, e.g. date, medium, text, headline}
 
