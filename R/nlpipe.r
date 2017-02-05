@@ -17,9 +17,13 @@ amcat.nlpipe <- function(conn, project, articleset, module, nlpipe_server=getOpt
     message("All ", length(ids), " articles from ", conn$host, " set ", articleset, " are already assigned with ", module, " at ", nlpipe_server)
   } else {
     message("Assigning ", length(todo), " articles from ", conn$host, " set ", articleset, " for processing with ", module, " at ", nlpipe_server)
-    articles = amcat.articles(conn, project, articles=todo, columns=c("headline", "text"))
-    texts = paste(articles$headline, articles$text, sep="\n\n")
-    nlpiper::process_async(module, texts, ids=articles$id)
+    chunks = split(todo, ceiling(seq_along(todo)/1000))
+    for (chunk in chunks) {
+      articles = amcat.articles(conn, project, articles=chunk, columns=c("headline", "text"))
+      texts = paste(articles$headline, articles$text, sep="\n\n")
+      nlpiper::process_async(module, texts, ids=articles$id)
+    }
   }
   return(ids) # also return ids that were already on queue
 }
+
