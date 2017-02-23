@@ -21,7 +21,7 @@ amcat.nlpipe <- function(conn, project, articleset, module, nlpipe_server=getOpt
     for (chunk in chunks) {
       articles = amcat.articles(conn, project, articles=chunk, columns=c("headline", "text"))
       texts = paste(articles$headline, articles$text, sep="\n\n")
-      nlpiper::process_async(module, texts, ids=articles$id)
+      nlpiper::process_async(module, texts, ids=articles$id, server = nlpipe_server)
     }
   }
   return(ids) # also return ids that were already on queue
