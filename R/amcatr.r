@@ -270,16 +270,21 @@ amcat.runaction <- function(conn, action, format='csv', ...) {
 #' @param medium_names if true, retrieve medium names and turn medium column into a factor
 #' @return A dataframe containing the articles and the selected columns
 #' @export
-amcat.articles <- function(conn, project, articleset=NULL, articles=NULL, columns=c('date','medium'), time=F, dateparts=F, page_size=10000){
-  if (is.null(articleset) & is.null(articles)) stop("Provide either articleset or articles")
+amcat.articles <- function(conn, project, articleset=NULL, articles=NULL, uuid=NULL, columns=c('date','medium'), time=F, dateparts=F, page_size=10000){
+  if (is.null(articleset) & is.null(articles) & is.null(uuid)) stop("Provide either articleset or articles (ids)/uuids")
   
   if (!is.null(articleset)) {
     path = paste("api", "v4", "projects", project, "articlesets", articleset,  "meta", sep="/")
     result = scroll(conn, path, page_size=page_size, columns=paste(columns, collapse=","))
   } else {
     path = paste("api", "v4", "meta", sep="/")
-    articles = paste(articles, collapse=",")
-    result = scroll(conn, path, id=articles, page_size=page_size, columns=paste(columns, collapse=","))
+    if (!is.null(articles)) {
+      articles = paste(articles, collapse=",")
+      result = scroll(conn, path, id=articles, page_size=page_size, columns=paste(columns, collapse=","))
+    } else {
+      uuid = paste(uuid, collapse=",")
+      result = scroll(conn, path, uuid=uuid, page_size=page_size, columns=paste(columns, collapse=","))
+    }
   }
   
   if ("date" %in% colnames(result)) {
