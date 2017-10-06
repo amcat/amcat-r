@@ -3,13 +3,13 @@ conn = amcat.connect("http://amcat.vu.nl", Sys.getenv('USER'))
 
 x = amcat.gethierarchy(conn=conn, codebook_id=296, languages=c("nl", "query"))
 
-x = amcat.codebook.cats(x, maxdepth=1)
+x = get_codebook.cats(x, maxdepth=1)
 q = amcat.getqueries(x$label.query, x$code)
 
 queries=q$query
 labels=q$label
 
-h = amcat.hits(conn, queries, labels, sets=6263) 
+h = get_hits(conn, queries, labels, sets=6263) 
 
-c = amcat.aggregate(conn, queries, labels=labels, sets=6263, axis1="year")
+c = get_aggregate(conn, queries, labels=labels, sets=6263, axis1="year")
 c = merge(x, c, by.x="code", by.y="query", all.x=T)

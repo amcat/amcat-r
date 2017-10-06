@@ -1,6 +1,8 @@
 ---
 title: "Automatic Keyword Analysis with the AmCAT API in R"
-output: md_document
+output: 
+  md_document:
+    variant: markdown_github
 ---
 
 This document is an introduction to using the AmCAT API from R. 
@@ -42,7 +44,7 @@ Before you can connect to the AmCAT API, you need to save your password for the 
 
 ```{r eval=FALSE}
 library(amcatr)
-conn = amcat.save.password("https://amcat.nl", username='example', passwd='secret')
+conn = save_amcat_password("https://amcat.nl", username='example', passwd='secret')
 ```
 
 This stores the password in a hidden file in your home folder (`~/.amcatauth`).
@@ -54,45 +56,18 @@ You only need to run it once per computer, so please run it directly in the cons
 Now, you can connect to the API using `amcat.connect`. 
 This requests an authentication token from the specified AmCAT server and stores it for further commands.
 
-```{r, message=FALSE,echo=FALSE}
-library(amcatr)
-```
-
 ```{r}
-conn = amcat.connect("https://amcat.nl")
+conn = amcat_connect("https://amcat.nl")
 ```
 
-Retrieving information from AmCAT
----------------------------------
-
-All functions in the `amcatr` library start with the prefix `amcat.`.  
-The basic command to get information from the API is the `amcat.getobjects`.
-For example, the following downloads a list of all accessible projects:
-
-```{r}
-projects = amcat.getobjects(conn, "projects/")
-head(projects[, c("id", "name")])
-```
-
-As you can see, the `amcat.getobjects` call is translated into an `HTTP GET` request to the `api/v4/projects` address.
-The resource is often specified hierarchically, so the list of sets in project 442 
-(a publicly accessible project containing articles from wikinews)
-can be queried as follows:
-
-```{r, message=FALSE}
-amcat.getobjects(conn, c("projects", 442, "articlesets"))
-```
-
-Note that the slash at the end is required for most resources, 
-but it is automatically appended if you specify a hierarchical resource such as above. 
 
 Querying AmCAT
 ==============
 
 The functionality of the query page in the AmCAT navigator is replicated in two `amcatr` functions.
-`amcat.hits` gives a list of articles with how often a keyword is found 
+`get_hits` gives a list of articles with how often a keyword is found 
 (the Article List function on the website)
-while `amcat.aggregate` gives total number of articles per query and optionally per date or medium
+while `get_aggregate` gives total number of articles per query and optionally per date or medium
 (the Graph/Table function).
 
 These examples use [Set 10271](http://amcat.nl/navigator/projects/442/articlesets/10271/) 
@@ -102,12 +77,12 @@ which contains the wikinews articles in the category Iraq.
 Aggregate Queries
 -----------------
 
-Using `amcat.aggregate`, 
+Using `get_aggregate`, 
 it is also possible to directly get the amount of articles per query and per time interval.
 For example, the code below gets the amount of articles for Obama, Bush and the total articles per year:
 
 ```{r}
-a = amcat.aggregate(conn, sets=10271, axis1="year",
+a = get_aggregate(conn, sets=10271, axis1="year",
                     queries=c("*", "obama", "bush"), 
                     labels=c("Total", "Obama", "Bush"))
 head(a)
@@ -136,7 +111,7 @@ The `amcat.hits` command allows you to get a list of articles matching a query.
 For example, to search for all articles containing the term 'tyrant' in this set, we can use the following
 
 ```{r, message=FALSE}
-amcat.hits(conn, queries="tyrant", sets=10271)
+get_hits(conn, queries="tyrant", sets=10271)
 ```
 
 So, this query could be found in two documents, occurring exactly once in each document. 
@@ -144,7 +119,7 @@ We can also search for multiple queries simultaneously by specifying a vector of
 and we can use the `labels=` argument to specify the result name:
 
 ```{r, message=FALSE}
-h = amcat.hits(conn, queries=c("tyrant OR brute", "saddam"), labels=c("tyrant", "saddam"), sets=10271)
+h = get_hits(conn, queries=c("tyrant OR brute", "saddam"), labels=c("tyrant", "saddam"), sets=10271)
 head(h)
 table(h$query)
 ```
@@ -167,14 +142,14 @@ The following code adds all articles mentioning a tyrant word to a new set in pr
 
 ```{r}
 articles = h$id[h$query == "tyrant"]
-setid = amcat.add.articles.to.set(conn, project=429, articles=articles, articleset.name="New set from howto")
+setid = add_articles_to_set(conn, project=429, articles=articles, articleset.name="New set from howto")
 ```
 
 It created a new article set and hopefully added those articles. 
 Let's retrieve the set metadata to find out:
 
 ```{r, message=FALSE}
-amcat.getarticlemeta(conn, set=setid)
+get_articles(conn, project = 429, articleset=setid)
 ```
 
 So, as expected there are only 2 articles in the new set. 
@@ -183,8 +158,8 @@ The following code adds the 'saddam' articles to the set:
 
 ```{r, message=FALSE}
 articles = h$id[h$query == "saddam"]
-setid = amcat.add.articles.to.set(conn, project=429, articles=articles, articleset=setid)
-meta = amcat.getarticlemeta(conn, set=setid)
+setid = add_articles_to_set(conn, project=429, articles=articles, articleset=setid)
+meta = get_articles(conn, project=429, articleset=setid)
 nrow(meta)
 ```
 
@@ -199,7 +174,7 @@ To do something useful with these data, we normally need to add the metadata (da
 The following code retrieves the metadata for set 10271 and adds it to the queries:
 
 ```{r, message=FALSE}
-meta = amcat.getarticlemeta(conn, set=10271, dateparts=TRUE)
+meta = get_articles(conn, project = 429, articleset=10271, dateparts=TRUE)
 head(meta)
 h = merge(h, meta, all.x=TRUE)
 head(h)

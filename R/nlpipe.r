@@ -8,9 +8,9 @@
 #' @param articleset the amcat articleset id
 #' @param module the nlpipe module name
 #' @export
-amcat.nlpipe <- function(conn, project, articleset, module, nlpipe_server=getOption("nlpiper.server", default="http://localhost:5001")) {
-  if (!require("nlpiper")) stop("Please install_github('/vanatteveldt/nlpiper')")
-  ids = amcat.articles(conn, project, articleset, columns=NULL)$id
+nlpipe <- function(conn, project, articleset, module, nlpipe_server=getOption("nlpiper.server", default="http://localhost:5001")) {
+  if(!requireNamespace('nlpiper', quietly = T)) stop("Please install_github('/vanatteveldt/nlpiper')")
+  ids = get_articles(conn, project, articleset, columns=NULL)$id
   status = nlpiper::status(module, ids, nlpipe_server)
   todo = ids[status == "UNKNOWN"]
   if (length(todo) == 0) {
@@ -19,11 +19,10 @@ amcat.nlpipe <- function(conn, project, articleset, module, nlpipe_server=getOpt
     message("Assigning ", length(todo), " articles from ", conn$host, " set ", articleset, " for processing with ", module, " at ", nlpipe_server)
     chunks = split(todo, ceiling(seq_along(todo)/1000))
     for (chunk in chunks) {
-      articles = amcat.articles(conn, project, articles=chunk, columns=c("headline", "text"))
+      articles = get_articles(conn, project, articles=chunk, columns=c("headline", "text"))
       texts = paste(articles$headline, articles$text, sep="\n\n")
       nlpiper::process_async(module, texts, ids=articles$id, server = nlpipe_server)
     }
   }
   return(ids) # also return ids that were already on queue
 }
-

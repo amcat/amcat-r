@@ -1,3 +1,9 @@
+---
+output:
+  md_document:
+    variant: markdown_github
+---
+
 Using AmCAT codebooks in R 
 ==========================
 
@@ -18,8 +24,8 @@ The `amcat.gethierarchy` function can be used to download all codes and their hi
 
 ```{r, message=F}
 library(amcatr)
-conn = amcat.connect("http://amcat.nl")
-h = amcat.gethierarchy(conn, codebook_id=374, languages=c("en", "query"))
+conn = amcat_connect("https://amcat.nl")
+h = get_hierarchy(conn, codebook_id=374, languages=c("en", "query"))
 h
 ```
 
@@ -32,7 +38,7 @@ Querying codes
 The functions `amcat.hits` and `amcat.aggregate` described in the Querying howto can be directly used from a codebook:
 
 ```{r, message=FALSE}
-counts = amcat.aggregate(conn, queries=h$label.query, labels=h$label.en, sets=10271)
+counts = get_aggregate(conn, queries=h$label.query, labels=h$label.en, sets=10271)
 counts
 ```
 
@@ -45,7 +51,7 @@ These parent-child relations define the hierarchy, but they are not very easy to
 The `amcat.hierarchy.cats` function creates category variables that specify in which part of the tree a code is found:
 
 ```{r, message=FALSE}
-h = amcat.hierarchy.cats(h, maxdepth=1)
+h = hierarchy_cats(h, maxdepth=1)
 h
 ```
 
@@ -63,7 +69,7 @@ It is probably a better idea to get the results per article, and then count the 
 that contain any of the codes in a specific category: 
 
 ```{r, message=F}
-arts = amcat.hits(conn, queries=h$label.query, labels=h$label.en, sets=10271)
+arts = get_hits(conn, queries=h$label.query, labels=h$label.en, sets=10271)
 head(arts)
 table(arts$query)
 ```

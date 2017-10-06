@@ -7,7 +7,7 @@
 scroll(conn, path, page_size = 100, ...)
 }
 \arguments{
-\item{conn}{the connection object from \code{\link{amcat.connect}}}
+\item{conn}{the connection object from \code{\link{amcat_connect}}}
 
 \item{path}{the path to scroll}
 
@@ -21,4 +21,3 @@ a data frame of all returned rows
 \description{
 Scroll an amcat API page with 'next' link
 }
-
