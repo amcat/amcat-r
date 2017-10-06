@@ -16,7 +16,7 @@ Suggests:
     quanteda,
     nlpiper
 Remotes:
-    vanatteveldt/nlpiper
+    github::vanatteveldt/nlpiper
 Description: Functions to call the AmCAT API.
 License: GPL-3
 URL: http://github.com/amcat/amcat
