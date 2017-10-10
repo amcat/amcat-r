@@ -7,13 +7,15 @@ Maintainer: Wouter van Atteveldt <wouter@vanatteveldt.com>
 Imports: 
     rjson,
     RCurl,
-    plyr,
     stringr,
     httr,
-    data.table
+    data.table,
+    digest,
+    getPass
 Suggests: 
     testthat,
     quanteda,
+    corpustools,
     nlpiper
 Remotes:
     github::vanatteveldt/nlpiper

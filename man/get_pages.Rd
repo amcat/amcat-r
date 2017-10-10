@@ -13,7 +13,7 @@ get_pages(conn, path, format = NULL, page = 1, page_size = 1000,
 
 \item{path}{the path of the url to retrieve (using the host from conn)}
 
-\item{format}{a character string giving the output format. Can be 'rda', 'csv' or 'json'. 'rda' is recommended. If NULL (default), 'rda' is used if the amcat version supports it.}
+\item{format}{a character string giving the output format. Can be 'rda', 'csv' or 'json'. 'rda' is recommended. If NULL (default), 'rda' is used.}
 
 \item{page}{the page number to start retrieving}
 

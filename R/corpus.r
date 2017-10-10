@@ -22,7 +22,6 @@ get_tokens <- function(conn, project=NULL, articleset=NULL, module="elastic",
     path = paste("api", "v4", "projects", project, "articlesets", articleset, "tokens", "", sep="/")
     result = get_pages(conn, path, page_size=page_size, rbind_results=F, filters=filters, ...)
     result = make_pages_unique(result)
-    #result = plyr::rbind.fill(result)
     result = as.data.frame(data.table::rbindlist(result))
     result
   } else if (!is.null(sentence)) {

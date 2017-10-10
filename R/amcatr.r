@@ -1,91 +1,5 @@
-#' Connect to the AmCAT API
-#'
-#' Connect to the AmCAT API and requests a temporary (24h) authentication token that will be stored in the output
-#' The host should be known in the ~/.amcatauth file, you can use save_amcat_password to add a password to this file
-#' 
-#' @param host the hostname, e.g. http://amcat.vu.nl or http://localhost:8000
-#' @param token an existing token to authenticate with. If given, username and password are not used and the token is not tested
-#' @param disable_ipv6 If True, only use ipv4 resolving (faster if ipv6 causes timeout). Defaults to true, but this may change in the future.
-#' @param ssl.verifypeer If True, verifies the authenticity of the peer's certificate
-#' @param passwordfile optionally, specify a different password file
-#' 
-#' @return A list with authentication information that is used by the other functions in this package
-#' @examples
-#' \dontrun{
-#' host = 'https://amcat.nl'  ## existing and available host
-#' username = 'XXX'           ## registered username  
-#' password = 'XXX'           ## registered password
-#' 
-#' ## first, store username and password for a given host. 
-#' save_amcat_password(host = host, username = username, password = password)
-#' 
-#' ## connect by just giving the host
-#' conn = amcat_connect(host)
-#' }
-#' @export
-amcat_connect <- function(host,token=NULL, disable_ipv6=TRUE, ssl.verifypeer=FALSE,  passwordfile="~/.amcatauth") {
-  opts = list(ssl.verifypeer = ssl.verifypeer)
-  if (disable_ipv6) opts = c(opts, list(ipresolve=1))
-  
-  if (is.null(token)) {
-      a = tryCatch(readauth(host, passwordfile=passwordfile), error=function(e) warning("Could not read ", passwordfile))
-      if (is.null(a)) stop("Cannot find password in ", passwordfile, ", please add an entry to this file by using save_amcat_password!")
-      username = a$username
-      passwd = a$password
-    
-    # get auth token
-    url = paste(host, '/api/v4/get_token', sep='')
-    
-    res = tryCatch(RCurl::postForm(url, username=username, password=passwd, .checkParams=F, .opts=opts), 
-                   error=function(e) stop(paste("Could not get token from ",
-                                                 username,"@", host,
-                                                 " please check host, username and password. Error: ", e, sep="")))
-    token = rjson::fromJSON(res)$token
-    version = rjson::fromJSON(res)$version
-    if (is.null(version)) version = "0"
-  }
-  list(host=host, token=token, version=version, opts=opts)
-}
 
-# Get authentication info for a host from password file
-readauth <- function(host, passwordfile="~/.amcatauth") {
-  if (!file.exists(passwordfile)) return()
-  rows = utils::read.csv(passwordfile, header=F, stringsAsFactors=F)
-  colnames(rows) <- c("host", "username", "password")
-  r = rows[rows$host == '*' | rows$host == host,]
-  if (nrow(r) > 0) list(username=r$username[1], password=r$password[1]) 
-}
 
-#' Add or change an entry in the cached authentication file
-#' 
-#' amcat-r uses the file '~/.amcatauth' to read credentials for connecting to servers
-#' to prevent passwords from appearing in script files. This function will update
-#' the .amcatauth file (if present) to add or change the password for the given host
-#' 
-#' @param host the host, e.g. "https://amcat.nl"
-#' @param username the AmCAT username to use
-#' @param password the password for the AmCAT user
-#' @param passwordfile optionally, specify a different password file
-#' 
-#' @examples
-#' \dontrun{
-#' host = 'https://amcat.nl'  ## existing and available host
-#' username = 'XXX'           ## registered username  
-#' password = 'XXX'           ## registered password
-#' 
-#' save_amcat_password(host = host, username = username, password = password)
-#' }
-#' @export
-save_amcat_password <- function(host, username, password, passwordfile="~/.amcatauth") {
-  existing = if (file.exists(passwordfile)) utils::read.csv(passwordfile, header=F, stringsAsFactors=F) else data.frame(V1=character(0),V2=character(0),V3=character(0))
-  if (host %in% existing$V1) {
-    existing$V2[existing$V1 == host] = username
-    existing$V3[existing$V1 == host] = password
-  } else {
-    existing = rbind(existing, data.frame(V1=host, V2=username, V3=password, stringsAsFactors = F))
-  }
-  utils::write.table(existing, file=passwordfile, sep=",",  col.names=FALSE, row.names=F)
-}
 
 #' Retrieve a single URL from AmCAT with authentication and specified filters (GET or POST) 
 #' 
@@ -149,7 +63,7 @@ get_url <- function(conn, path, filters=NULL, post=FALSE, post_options=list(), e
 #' 
 #' @param conn the connection object from \code{\link{amcat_connect}}
 #' @param path the path of the url to retrieve (using the host from conn)
-#' @param format a character string giving the output format. Can be 'rda', 'csv' or 'json'. 'rda' is recommended. If NULL (default), 'rda' is used if the amcat version supports it.
+#' @param format a character string giving the output format. Can be 'rda', 'csv' or 'json'. 'rda' is recommended. If NULL (default), 'rda' is used.
 #' @param page the page number to start retrieving
 #' @param page_size the number of rows per page
 #' @param filters a named vector of filters, e.g. c(project=2, articleset=3)
@@ -162,7 +76,7 @@ get_url <- function(conn, path, filters=NULL, post=FALSE, post_options=list(), e
 get_pages <- function(conn, path, format=NULL, page=1, page_size=1000, filters=NULL, 
                            post=FALSE, post_options=list(), max_page=NULL, rbind_results=T) {
 
-  if (is.null(format)) format = if (has_version(conn$version, "3.4.2")) "rda" else "csv" 
+  if (is.null(format)) format = "rda" 
   filters = c(filters, page_size=page_size, format=format)
   result = list()
   npages = "?"
@@ -185,7 +99,6 @@ get_pages <- function(conn, path, format=NULL, page=1, page_size=1000, filters=N
     message("Retrieved page ",page,"/",npages, "; last page had ", nrow(subresult), " result rows")
     page = page + 1
   }
-  #if (rbind_results) result = plyr::rbind.fill(result)
   if (rbind_results) result = as.data.frame(data.table::rbindlist(result))
   result
 }
@@ -197,10 +110,10 @@ load_rda <- function(bytes) {
   close(c)
   as.list(e)
 }
-  
+
 read_version <- function(vstr) {
   if (!is.null(vstr)) {
-    m = stringr::str_match(vstr, "(\\d+)\\.(\\d+)\\.(\\d+)\\s*")
+    m = stringr::str_match(vstr, "[a-zA-Z]*(\\d+)\\.[a-zA-Z]*(\\d+)\\.[a-zA-Z]*(\\d+)\\s*") ## the alpha match is for development notes
     if (!is.na(m[[1]]))  {
       v = as.numeric(m[-1])
       names(v) = c("major", "minor", "patch")
@@ -267,8 +180,11 @@ readoutput <- function(result, format){
 #' @param time if true, parse the date as POSIXct datetime instead of Date
 #' @param dateparts if true, add date parts (year, month, week)
 #' @param page_size the number of articles per (downloaded) page
+#' @param return_as determine whether article data is returned as a "data.frame", "quanteda_corpus" (requires quanteda package) or "tcorpus" (requires corpustools package). 
+#' @param text_columns if return_as is a corpus (either quanteda_corpus or tcorpus), the columns that contain the article text need to be specified. If multiple columns are given (e.g., headline, text), they are pasted together (separated by a double linebreak)
+#' @param ... if return_as is a corpus (either quanteda_corpus or tcorpus), additional arguments are passed to quanteda::corpus or corpustools::create_tcorpus. 
 #'
-#' @return A dataframe containing the articles and the selected columns
+#' @return The article data in the format specified with the return_as parameter
 #' 
 #' @examples
 #' \dontrun{
@@ -280,9 +196,10 @@ readoutput <- function(result, format){
 #' texts$text[1]
 #' }
 #' @export
-get_articles <- function(conn, project, articleset=NULL, articles=NULL, uuid=NULL, columns=c('date','medium'), time=F, dateparts=F, page_size=10000){
+get_articles <- function(conn, project, articleset=NULL, articles=NULL, uuid=NULL, columns=c('date','medium'), time=F, dateparts=F, page_size=10000, return_as = c('data.frame','quanteda_corpus','tcorpus'), text_columns = c('headline','text'), ...){
   if (is.null(articleset) & is.null(articles) & is.null(uuid)) stop("Provide either articleset or articles (ids)/uuids")
-  
+  return_as = match.arg(return_as)
+    
   if (!is.null(articleset)) {
     path = paste("api", "v4", "projects", project, "articlesets", articleset,  "meta", sep="/")
     result = scroll(conn, path, page_size=page_size, columns=paste(columns, collapse=","))
@@ -314,7 +231,28 @@ get_articles <- function(conn, project, articleset=NULL, articles=NULL, uuid=NUL
     result = result[columns]
   }
   
+  if (return_as == 'quanteda_corpus') result = as_quanteda_corpus(result, text_columns, ...)  
+  if (return_as == 'tcorpus') result = as_tcorpus(result, text_columns, ...)
   result
+}
+
+as_quanteda_corpus <- function(articles, text_columns = c('headline','text'), ...){
+  if(!requireNamespace('quanteda', quietly = T)) stop('To use this function, first install the quanteda package.')
+  text_columns = intersect(colnames(articles), text_columns)
+  metavars = setdiff(colnames(articles), text_columns)
+  
+  if (length(text_columns) > 1){
+    text = do.call(paste, c(as.list(articles[,text_columns]), sep='\n\n'))
+  } else {
+    text = articles[[text_columns]]
+  }
+  quanteda::corpus(texts, docnames=articles$id, docvars=articles[metavars], ...)
+}
+
+as_tcorpus <- function(articles, text_columns, ...) {
+  if(!requireNamespace('corpustools', quietly = T)) stop('To use this function, first install the quanteda package.')
+  text_columns = intersect(colnames(articles), text_columns)
+  corpustools::create_tcorpus(articles, doc_column = 'id', text_columns=text_columns, ...)
 }
 
 #' Add articles to an article set
@@ -443,7 +381,6 @@ upload_articles <- function(conn, project, articleset, text, headline, date, med
 #'
 #' @return a data frame of all returned rows
 scroll <- function(conn, path, page_size=100, ...) {
-  if (!has_version(conn$version, "3.4.2")) stop("Scrolling only possible on AmCAT >= 3.4.2")
   result = list()
   httpheader = c(Authorization=paste("Token", conn$token))
   url = httr::parse_url(conn$host)
@@ -455,6 +392,7 @@ scroll <- function(conn, path, page_size=100, ...) {
     h = RCurl::getCurlHandle()
     message(url)
     res = RCurl::getBinaryURL(url, httpheader=httpheader, .opts=conn$opts, curl=h)
+    print(RCurl::getCurlInfo(h)$response.code)
     if (RCurl::getCurlInfo(h)$response.code != 200) stop("ERROR")
     res = load_rda(res)  
     subresult = res$results
@@ -464,7 +402,6 @@ scroll <- function(conn, path, page_size=100, ...) {
     url = res$`next`
     if (nrow(subresult) < page_size) break
   }
-  #plyr::rbind.fill(result)
   as.data.frame(data.table::rbindlist(result))
 }
 

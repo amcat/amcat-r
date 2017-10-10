@@ -6,7 +6,8 @@
 \usage{
 get_articles(conn, project, articleset = NULL, articles = NULL,
   uuid = NULL, columns = c("date", "medium"), time = F, dateparts = F,
-  page_size = 10000)
+  page_size = 10000, return_as = c("data.frame", "quanteda_corpus",
+  "tcorpus"), text_columns = c("headline", "text"), ...)
 }
 \arguments{
 \item{conn}{the connection object from \code{\link{amcat_connect}}}
@@ -26,9 +27,15 @@ get_articles(conn, project, articleset = NULL, articles = NULL,
 \item{dateparts}{if true, add date parts (year, month, week)}
 
 \item{page_size}{the number of articles per (downloaded) page}
+
+\item{return_as}{determine whether article data is returned as a "data.frame", "quanteda_corpus" (requires quanteda package) or "tcorpus" (requires corpustools package).}
+
+\item{text_columns}{if return_as is a corpus (either quanteda_corpus or tcorpus), the columns that contain the article text need to be specified. If multiple columns are given (e.g., headline, text), they are pasted together (separated by a double linebreak)}
+
+\item{...}{if return_as is a corpus (either quanteda_corpus or tcorpus), additional arguments are passed to quanteda::corpus or corpustools::create_tcorpus.}
 }
 \value{
-A dataframe containing the articles and the selected columns
+The article data in the format specified with the return_as parameter
 }
 \description{
 Uses the \code{\link{get_objects}} function to retrieve article metadata, and applies some
