@@ -5,9 +5,9 @@
 \title{Get article metadata from AmCAT}
 \usage{
 get_articles(conn, project, articleset = NULL, articles = NULL,
-  uuid = NULL, columns = c("date", "medium"), time = F, dateparts = F,
+  uuid = NULL, columns = NULL, time = F, dateparts = F,
   page_size = 10000, return_as = c("data.frame", "quanteda_corpus",
-  "tcorpus"), text_columns = c("headline", "text"), ...)
+  "tcorpus"), text_columns = c("headline", "byline", "text"), ...)
 }
 \arguments{
 \item{conn}{the connection object from \code{\link{amcat_connect}}}

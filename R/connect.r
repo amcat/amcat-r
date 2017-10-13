@@ -8,7 +8,6 @@
 #' @param token an existing token to authenticate with. If given, username is not used and the token is not tested
 #' @param disable_ipv6 If True, only use ipv4 resolving (faster if ipv6 causes timeout). Defaults to true, but this may change in the future.
 #' @param ssl.verifypeer If True, verifies the authenticity of the peer's certificate
-#' @param remember_token if True, the token will be saved in the package folder for use in future sessions. 
 #' 
 #' @return A list with authentication information that is used by the other functions in this package
 #' @examples
@@ -24,52 +23,58 @@
 #' conn = amcat_connect(host)
 #' }
 #' @export
-amcat_connect <- function(host, username=NULL, token=NULL, disable_ipv6=TRUE, ssl.verifypeer=FALSE, remember_token=FALSE) {
-  if (is.null(username) && is.null(token)) stop('Either username or token has to be specified')
-  opts = list(ssl.verifypeer = ssl.verifypeer)
-  if (disable_ipv6) opts = c(opts, list(ipresolve=1))
-
-  if (is.null(token)) token = get_token_cache(host, username)
-  #if (!is.null(token)) {  ## test token
-  #                        ## if token does not work, set to NULL to get a new one
-  #}
+amcat_connect <- function(host, username, conn=NULL, token=NULL, disable_ipv6=TRUE, ssl.verifypeer=FALSE) {
+  if (is.null(conn)) {
+    conn = structure(list(host = host, 
+                          username = username,
+                          token = token, 
+                          ssl.verifypeer = ssl.verifypeer,
+                          disable_ipv6 = disable_ipv6),
+                     class = "amcat_connection")
+  }
   
-  if (is.null(token)) token = get_token(host, username, opts)
-  if (remember_token) set_token_cache(host, username, token)
-
-  structure(list(host = host, 
-                 token = token, 
-                 username = username, 
-                 opts = opts),
-            class = "amcat_api")
+  if (is.null(conn$token)) {
+    conn$token = get_token(conn)
+  } else {
+    conn$token = refresh_token(host, username, )
+  }
+  
   conn
 }
 
-get_token <- function(host, username, opts) {
-  passwd = getPass::getPass(paste('Enter AmCAT password for user', username))
+get_opts <- function(conn) {
+  opts = list(ssl.verifypeer = conn$ssl.verifypeer)
+  if (conn$disable_ipv6) opts = c(opts, list(ipresolve=1))
+  opts
+}
+
+##conn_to_env
+##
+
+get_token <- function(conn) {
+  passwd = getPass::getPass(paste('Enter AmCAT password for user', conn$username))
 
   # get auth token
-  url = paste(host, '/api/v4/get_token', sep='')
-  res = tryCatch(RCurl::postForm(url, username=username, password=passwd, .checkParams=F, .opts=opts), 
+  url = paste(conn$host, '/api/v4/get_token', sep='')
+  res = tryCatch(RCurl::postForm(url, username=conn$username, password=passwd, .checkParams=F, .opts=get_opts(conn)), 
                  error=function(e) stop(paste("Could not get token from ",
-                                              username,"@", host,
+                                              username,"@", conn$host,
                                               " please check host, username and password. Error: ", e, sep="")))
   rjson::fromJSON(res)$token
 }
 
-
-#' S3 print method for amcat_api (API connection) objects
+#' S3 print method for amcat_connection (API connection) objects
 #'
-#' @param x an amcat_api connection object, created with \link{amcat_connect}
+#' @param x an amcat_connection connection object, created with \link{amcat_connect}
 #' @param ... not used
 #'
-#' @method print amcat_api
+#' @method print amcat_connection
 #' @examples
 #' \dontrun{
 #' conn = amcat_connect('http://localhost:8000')
 #' conn
 #' }
 #' @export
-print.amcat_api <- function(x, ...){
-  cat(sprintf('connection to AmCAT server\nhost:\t%s\nuser:\t%s\n', conn$host, conn$username))
+print.amcat_connection <- function(x, ...){
+  cat(sprintf('connection to AmCAT server\nhost:\t%s\nuser:\t%s\n', x$host, x$username))
 }

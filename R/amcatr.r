@@ -28,7 +28,7 @@ get_url <- function(conn, path, filters=NULL, post=FALSE, post_options=list(), e
     url = httr::build_url(url)
     message("GET ", url)
     urlfunc = if (binary) RCurl::getBinaryURL else get_url
-    result = urlfunc(url, httpheader=httpheader, .opts=conn$opts, curl=h)
+    result = urlfunc(url, httpheader=httpheader, .opts=get_opts(conn), curl=h)
     if (RCurl::getCurlInfo(h)$response.code != 200){
       if (error_unless_200 && !(null_on_404 && RCurl::getCurlInfo(h)$response.code == 404)) {
         
@@ -52,7 +52,7 @@ get_url <- function(conn, path, filters=NULL, post=FALSE, post_options=list(), e
     result
   } else {  
     
-    post_opts = utils::modifyList(conn$opts, list(httpheader=httpheader))    
+    post_opts = utils::modifyList(get_opts(conn), list(httpheader=httpheader))    
     post_opts = utils::modifyList(post_opts, post_options)
     RCurl::postForm(httr::build_url(url), .params=filters, .opts=post_opts)
   }
@@ -196,21 +196,21 @@ readoutput <- function(result, format){
 #' texts$text[1]
 #' }
 #' @export
-get_articles <- function(conn, project, articleset=NULL, articles=NULL, uuid=NULL, columns=c('date','medium'), time=F, dateparts=F, page_size=10000, return_as = c('data.frame','quanteda_corpus','tcorpus'), text_columns = c('headline','text'), ...){
+get_articles <- function(conn, project, articleset=NULL, articles=NULL, uuid=NULL, columns=NULL, time=F, dateparts=F, page_size=10000, return_as = c('data.frame','quanteda_corpus','tcorpus'), text_columns = c('headline','byline','text'), ...){
   if (is.null(articleset) & is.null(articles) & is.null(uuid)) stop("Provide either articleset or articles (ids)/uuids")
   return_as = match.arg(return_as)
-    
+  
   if (!is.null(articleset)) {
-    path = paste("api", "v4", "projects", project, "articlesets", articleset,  "meta", sep="/")
-    result = scroll(conn, path, page_size=page_size, columns=paste(columns, collapse=","))
+    path = paste("api", "v4", "projects", project, "articlesets", articleset,  "articles", sep="/")
+    result = scroll(conn, path, page_size=page_size, text=1)
   } else {
-    path = paste("api", "v4", "meta", sep="/")
+    path = paste("api", "v4", "articles", sep="/")
     if (!is.null(articles)) {
       articles = paste(articles, collapse=",")
-      result = scroll(conn, path, id=articles, page_size=page_size, columns=paste(columns, collapse=","))
+      result = scroll(conn, path, id=articles, page_size=page_size, text=1)
     } else {
       uuid = paste(uuid, collapse=",")
-      result = scroll(conn, path, uuid=uuid, page_size=page_size, columns=paste(columns, collapse=","))
+      result = scroll(conn, path, uuid=uuid, page_size=page_size, text=1)
     }
   }
   
@@ -225,10 +225,12 @@ get_articles <- function(conn, project, articleset=NULL, articles=NULL, uuid=NUL
       columns = c(columns, "year", "month", "week")
     }
   }
-  columns = c('id', columns)
-  if (nrow(result) > 0) {
-    for(missing in setdiff(columns, colnames(result))) result[[missing]] <- NA
-    result = result[columns]
+  if (!is.null(columns)) {
+    columns = c('id', columns)
+    if (nrow(result) > 0) {
+      for(missing in setdiff(columns, colnames(result))) result[[missing]] <- NA
+      result = result[columns]
+    }
   }
   
   if (return_as == 'quanteda_corpus') result = as_quanteda_corpus(result, text_columns, ...)  
@@ -246,7 +248,7 @@ as_quanteda_corpus <- function(articles, text_columns = c('headline','text'), ..
   } else {
     text = articles[[text_columns]]
   }
-  quanteda::corpus(texts, docnames=articles$id, docvars=articles[metavars], ...)
+  quanteda::corpus(as.character(text), docnames=articles$id, docvars=articles[metavars], ...)
 }
 
 as_tcorpus <- function(articles, text_columns, ...) {
@@ -385,16 +387,18 @@ scroll <- function(conn, path, page_size=100, ...) {
   httpheader = c(Authorization=paste("Token", conn$token))
   url = httr::parse_url(conn$host)
   url$path = path
+  if (!grepl('/$', path)) url$path = paste0(url$path, '/')
   url$query = list(page_size=page_size, format="rda", ...)
   url = httr::build_url(url)
+  httr::build_url
   n = 0
   while(!is.na(url)) {
     h = RCurl::getCurlHandle()
     message(url)
-    res = RCurl::getBinaryURL(url, httpheader=httpheader, .opts=conn$opts, curl=h)
-    print(RCurl::getCurlInfo(h)$response.code)
+    res = RCurl::getBinaryURL(url, httpheader=httpheader, .opts=get_opts(conn), curl=h)
     if (RCurl::getCurlInfo(h)$response.code != 200) stop("ERROR")
     res = load_rda(res)  
+    head(res$results)
     subresult = res$results
     n = n + nrow(subresult)
     result = c(result, list(subresult))
