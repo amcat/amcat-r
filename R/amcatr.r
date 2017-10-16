@@ -1,10 +1,7 @@
-
-
-
 #' Retrieve a single URL from AmCAT with authentication and specified filters (GET or POST) 
 #' 
-#' @param conn the connection object from \code{\link{amcat_connect}}
 #' @param path the path of the url to retrieve (using the host from conn)
+#' @param conn the connection object from \code{\link{amcat_connect}}
 #' @param filters a named vector of filters, e.g. c(project=2, articleset=3)
 #' @param post use HTTP POST instead of GET
 #' @param post_options a list with options for HTTP POST (if post is TRUE) 
@@ -13,8 +10,8 @@
 #' @param binary if TRUE, convert with \link{rawToChar}
 #'
 #' @return the raw result
-get_url <- function(conn, path, filters=NULL, post=FALSE, post_options=list(), error_unless_200=TRUE, null_on_404=FALSE, binary=FALSE) {
-  httpheader = c(Authorization=paste("Token", conn$token))
+get_url <- function(path, conn=conn_from_env(), filters=NULL, post=FALSE, post_options=list(), error_unless_200=TRUE, null_on_404=FALSE, binary=FALSE) {
+  if (is.null(conn)) stop('conn not specified. Either provide conn as argument or run amcat_connect in the current session')
   url = httr::parse_url(conn$host)
   url$path = paste(path, sep="/")
   h = RCurl::getCurlHandle()
@@ -27,8 +24,9 @@ get_url <- function(conn, path, filters=NULL, post=FALSE, post_options=list(), e
     # build GET url query
     url = httr::build_url(url)
     message("GET ", url)
-    urlfunc = if (binary) RCurl::getBinaryURL else get_url
-    result = urlfunc(url, httpheader=httpheader, .opts=get_opts(conn), curl=h)
+    
+    urlfunc = if (binary) RCurl::getBinaryURL else RCurl::getURL
+    result = urlfunc(url, .opts=get_opts(conn), curl=h)
     if (RCurl::getCurlInfo(h)$response.code != 200){
       if (error_unless_200 && !(null_on_404 && RCurl::getCurlInfo(h)$response.code == 404)) {
         
@@ -52,8 +50,7 @@ get_url <- function(conn, path, filters=NULL, post=FALSE, post_options=list(), e
     result
   } else {  
     
-    post_opts = utils::modifyList(get_opts(conn), list(httpheader=httpheader))    
-    post_opts = utils::modifyList(post_opts, post_options)
+    post_opts = utils::modifyList(get_opts(conn), post_options)
     RCurl::postForm(httr::build_url(url), .params=filters, .opts=post_opts)
   }
 }
@@ -61,8 +58,8 @@ get_url <- function(conn, path, filters=NULL, post=FALSE, post_options=list(), e
 
 #' Get and rbind pages from the AmCAT API
 #' 
-#' @param conn the connection object from \code{\link{amcat_connect}}
 #' @param path the path of the url to retrieve (using the host from conn)
+#' @param conn the connection object from \code{\link{amcat_connect}}
 #' @param format a character string giving the output format. Can be 'rda', 'csv' or 'json'. 'rda' is recommended. If NULL (default), 'rda' is used.
 #' @param page the page number to start retrieving
 #' @param page_size the number of rows per page
@@ -73,9 +70,9 @@ get_url <- function(conn, path, filters=NULL, post=FALSE, post_options=list(), e
 #' @param rbind_results if TRUE, return results of multiple pages as a single data.frame. if FALSE, a list with data.frames is returned
 #' 
 #' @return dataframe
-get_pages <- function(conn, path, format=NULL, page=1, page_size=1000, filters=NULL, 
+get_pages <- function(path, conn=conn_from_env(), format=NULL, page=1, page_size=1000, filters=NULL, 
                            post=FALSE, post_options=list(), max_page=NULL, rbind_results=T) {
-
+  if (is.null(conn)) stop('conn not specified. Either provide conn as argument or run amcat_connect in the current session')
   if (is.null(format)) format = "rda" 
   filters = c(filters, page_size=page_size, format=format)
   result = list()
@@ -83,7 +80,7 @@ get_pages <- function(conn, path, format=NULL, page=1, page_size=1000, filters=N
   while (TRUE) {
     if (!is.null(max_page)) if (page > max_page) break
     page_filters = c(filters, page=page)
-    subresult = get_url(conn, path, page_filters, post=post, post_options, binary = format=="rda", null_on_404 = format != "rda")
+    subresult = get_url(path, conn, page_filters, post=post, post_options, binary = format=="rda", null_on_404 = format != "rda")
     if (format == "rda") {
       res = load_rda(subresult)
       npages = res$pages
@@ -140,15 +137,16 @@ has_version <- function(actual, required) {
 #'
 #' Get a table of objects from the AmCAT API, e.g. projects, sets etc.
 #' 
-#' @param conn the connection object from \code{\link{amcat_connect}}
 #' @param resource the name of the resource, e.g. 'projects'. If it is of length>1, a path a/b/c/ will be created (e.g. c("projects",1,"articlesets"))
+#' @param conn the connection object from \code{\link{amcat_connect}}
 #' @param ... Other options to pass to \code{\link{get_pages}}, e.g. page_size, format, and filters
 #'
 #' @return A dataframe of objects (rows) by properties (columns)
-get_objects <- function(conn, resource, ...) {
+get_objects <- function(resource, conn = conn_from_env(), ...) {
+  if (is.null(conn)) stop('conn not specified. Either provide conn as argument or run amcat_connect in the current session')
   if (length(resource) > 1) resource = paste(c(resource, ""), collapse="/")
   path = paste('api', 'v4', resource, sep='/')
-  get_pages(conn, path, ...)
+  get_pages(path, conn, ...)
 }
 
 # Internal call to check GET results and parse as csv or json
@@ -171,10 +169,10 @@ readoutput <- function(result, format){
 #' Uses the \code{\link{get_objects}} function to retrieve article metadata, and applies some
 #' additional postprocessing, e.g. to convert the data to Date objects.
 #'
-#' @param conn the connection object from \code{\link{amcat_connect}}
 #' @param project the project of a set to retrieve metadata from
 #' @param articleset the article set id to retrieve - provide either this or articleset
 #' @param articles the article ids to retrieve - provide either this or articleset
+#' @param conn the connection object from \code{\link{amcat_connect}}
 #' @param uuid like the articles argument, but using the universally unique identifier (uuid)
 #' @param columns the names of columns to retrieve, e.g. date, medium, text, headline
 #' @param time if true, parse the date as POSIXct datetime instead of Date
@@ -189,28 +187,29 @@ readoutput <- function(result, format){
 #' @examples
 #' \dontrun{
 #' conn = amcat_connect('https://amcat.nl')
-#' meta = get_articles(conn, project = 1, articleset = 1)
+#' meta = get_articles(project = 1, articleset = 1)
 #' head(meta) 
 #' 
-#' texts = get_articles(conn, project = 1, articleset = 1, columns = c('text'))
+#' texts = get_articles(project = 1, articleset = 1, columns = c('text'))
 #' texts$text[1]
 #' }
 #' @export
-get_articles <- function(conn, project, articleset=NULL, articles=NULL, uuid=NULL, columns=NULL, time=F, dateparts=F, page_size=10000, return_as = c('data.frame','quanteda_corpus','tcorpus'), text_columns = c('headline','byline','text'), ...){
+get_articles <- function(project, articleset=NULL, articles=NULL, conn=conn_from_env(), uuid=NULL, columns=NULL, time=F, dateparts=F, page_size=10000, return_as = c('data.frame','quanteda_corpus','tcorpus'), text_columns = c('headline','byline','text'), ...){
+  if (is.null(conn)) stop('conn not specified. Either provide conn as argument or run amcat_connect in the current session')
   if (is.null(articleset) & is.null(articles) & is.null(uuid)) stop("Provide either articleset or articles (ids)/uuids")
   return_as = match.arg(return_as)
   
   if (!is.null(articleset)) {
     path = paste("api", "v4", "projects", project, "articlesets", articleset,  "articles", sep="/")
-    result = scroll(conn, path, page_size=page_size, text=1)
+    result = scroll(path, conn=conn, page_size=page_size, text=1)
   } else {
     path = paste("api", "v4", "articles", sep="/")
     if (!is.null(articles)) {
       articles = paste(articles, collapse=",")
-      result = scroll(conn, path, id=articles, page_size=page_size, text=1)
+      result = scroll(path, conn=conn, id=articles, page_size=page_size, text=1)
     } else {
       uuid = paste(uuid, collapse=",")
-      result = scroll(conn, path, uuid=uuid, page_size=page_size, text=1)
+      result = scroll(path, conn=conn, uuid=uuid, page_size=page_size, text=1)
     }
   }
   
@@ -225,6 +224,9 @@ get_articles <- function(conn, project, articleset=NULL, articles=NULL, uuid=NUL
       columns = c(columns, "year", "month", "week")
     }
   }
+  
+  colnames(result) = gsub('properties.', '', colnames(result), fixed=T)
+  
   if (!is.null(columns)) {
     columns = c('id', columns)
     if (nrow(result) > 0) {
@@ -237,6 +239,8 @@ get_articles <- function(conn, project, articleset=NULL, articles=NULL, uuid=NUL
   if (return_as == 'tcorpus') result = as_tcorpus(result, text_columns, ...)
   result
 }
+
+
 
 as_quanteda_corpus <- function(articles, text_columns = c('headline','text'), ...){
   if(!requireNamespace('quanteda', quietly = T)) stop('To use this function, first install the quanteda package.')
@@ -261,9 +265,9 @@ as_tcorpus <- function(articles, text_columns, ...) {
 #' 
 #' Add the given article ids to a new or existing article set
 #' 
-#' @param conn the connection object from \code{\link{amcat_connect}}
 #' @param project the project to add the articles to
 #' @param articles a vector of article ids
+#' @param conn the connection object from \code{\link{amcat_connect}}
 #' @param articleset the article set id of an existing set
 #' @param articleset.name the name for a new article set
 #' @param articleset.provenance a provenance text for a new article set
@@ -273,25 +277,26 @@ as_tcorpus <- function(articles, text_columns, ...) {
 #' \dontrun{
 #' conn = amcat_connect('https://amcat.nl')
 #' 
-#' h = get_hits(conn, queries=c("tyrant OR brute", "saddam"), labels=c("tyrant", "saddam"), sets=10271)
+#' h = get_hits(queries=c("tyrant OR brute", "saddam"), labels=c("tyrant", "saddam"), sets=10271)
 #' articles = h$id[h$query == "tyrant"]
 #' 
 #' ## make new setwith the (two) documents that mention "tyrant"
-#' setid = add_articles_to_set(conn, project=429, articles=articles, articleset.name="New set from howto")
+#' setid = add_articles_to_set(project=429, articles=articles, articleset.name="New set from howto")
 #' 
 #' ## set contains only these two documents
-#' get_articles(conn, project = 429, articleset=setid)
+#' get_articles(project = 429, articleset=setid)
 #' }
 #' @export
-add_articles_to_set <- function(conn, project, articles, articleset=NULL,
+add_articles_to_set <- function(project, articles, conn=conn_from_env(), articleset=NULL,
                                       articleset.name=NULL, articleset.provenance=NULL) {
+  if (is.null(conn)) stop('conn not specified. Either provide conn as argument or run amcat_connect in the current session')
   if (is.null(articleset)) {
     if (is.null(articleset.name)) 
       stop("Provide articleset or articleset.name")
     path = paste("api", "v4", "projects",project, "articlesets", "?format=json", sep="/")
     if (is.null(articleset.provenance)) 
       articleset.provenance=paste("Uploaded", length(articles), "articles from R on", format(Sys.time(), "%FT%T"))
-    r = get_url(conn, path, filters=list(name=articleset.name, provenance=articleset.provenance), post=TRUE) 
+    r = get_url(path, conn, filters=list(name=articleset.name, provenance=articleset.provenance), post=TRUE) 
     
     articleset = rjson::fromJSON(r)$id
     message("Created articleset ", articleset, ": ", articleset.name," in project ", project)
@@ -316,13 +321,13 @@ add_articles_to_set <- function(conn, project, articles, articleset=NULL,
 #' or a variable that can be converted to string using format(), e.g. Date, POSIXct or POSIXlt. 
 #' The articles will be uploaded in batches of 100. 
 #' 
-#' @param conn the connection object from \code{\link{amcat_connect}}
 #' @param project the project to add the articles to
 #' @param articleset the article set id of an existing set, or the name of a new set to create
 #' @param text the text of the articles to upload
 #' @param headline the headlines of the articles to upload
 #' @param date the date of the articles to upload
 #' @param medium the medium of the articles to upload. 
+#' @param conn the connection object from \code{\link{amcat_connect}}. 
 #' @param provenance if articleset is character, an optional provenance string to store with the new set
 #' @param ... and additional fields to upload, e.g. author, byline etc. 
 #' 
@@ -330,20 +335,20 @@ add_articles_to_set <- function(conn, project, articles, articleset=NULL,
 #' \dontrun{
 #' conn = amcat_connect('https://amcat.nl')
 #' 
-#' set_id = upload_articles(conn, project = 1, articleset = 'example set', 
+#' set_id = upload_articles(project = 1, articleset = 'example set', 
 #'                          headline = 'example', text = 'example',
 #'                          date = as.POSIXct('2010-01-01'), medium = 'example')
 #'                          
-#' get_articles(conn, project = 1, articleset = set_id, 
+#' get_articles(project = 1, articleset = set_id, 
 #'              columns = c('headline','text','date','medium'))
 #' }
 #' @export
-upload_articles <- function(conn, project, articleset, text, headline, date, medium, provenance=NULL, ...) {
-  
+upload_articles <- function(project, articleset, text, headline, date, medium, conn=conn_from_env(), provenance=NULL, ...) {
+  if (is.null(conn)) stop('conn not specified. Either provide conn as argument or run amcat_connect in the current session')
   n = length(text)
   if (is.character(articleset)) {
     if (is.null(provenance)) provenance=paste("Uploaded", n, "articles using R function upload.articles")
-    articleset = add_articles_to_set(conn, project, articles=NULL, articleset.name=articleset, articleset.provenance=provenance) 
+    articleset = add_articles_to_set(project, conn=conn, articles=NULL, articleset.name=articleset, articleset.provenance=provenance) 
   }
   
   if (is.factor(date)) date=as.character(date)
@@ -376,15 +381,15 @@ upload_articles <- function(conn, project, articleset, text, headline, date, med
 
 #' Scroll an amcat API page with 'next' link
 #'
-#' @param conn the connection object from \code{\link{amcat_connect}}
 #' @param path the path to scroll
+#' @param conn the connection object from \code{\link{amcat_connect}}
 #' @param page_size the amount of pages per request
 #' @param ... additional query arguments
 #'
 #' @return a data frame of all returned rows
-scroll <- function(conn, path, page_size=100, ...) {
+scroll <- function(path, conn=conn_from_env(), page_size=100, ...) {
+  if (is.null(conn)) stop('conn not specified. Either provide conn as argument or run amcat_connect in the current session')
   result = list()
-  httpheader = c(Authorization=paste("Token", conn$token))
   url = httr::parse_url(conn$host)
   url$path = path
   if (!grepl('/$', path)) url$path = paste0(url$path, '/')
@@ -395,10 +400,12 @@ scroll <- function(conn, path, page_size=100, ...) {
   while(!is.na(url)) {
     h = RCurl::getCurlHandle()
     message(url)
-    res = RCurl::getBinaryURL(url, httpheader=httpheader, .opts=get_opts(conn), curl=h)
-    if (RCurl::getCurlInfo(h)$response.code != 200) stop("ERROR")
+    res = RCurl::getBinaryURL(url, .opts=get_opts(conn), curl=h)
+    if (RCurl::getCurlInfo(h)$response.code != 200) {
+      rrr = rawToChar(res)
+      stop("ERROR")
+    }
     res = load_rda(res)  
-    head(res$results)
     subresult = res$results
     n = n + nrow(subresult)
     result = c(result, list(subresult))
@@ -407,12 +414,4 @@ scroll <- function(conn, path, page_size=100, ...) {
     if (nrow(subresult) < page_size) break
   }
   as.data.frame(data.table::rbindlist(result))
-}
-
-
-#' Ask AmCAT to flush the elasticsearch
-#'
-#' @param conn the connection object from \code{\link{amcat_connect}}
-flush_elasticsearch <- function(conn) {
-  invisible(get_url(conn, "api/v4/flush/", filters=list(format="json")))
 }

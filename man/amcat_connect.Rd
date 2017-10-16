@@ -4,8 +4,8 @@
 \alias{amcat_connect}
 \title{Connect to the AmCAT API}
 \usage{
-amcat_connect(host, username, conn = NULL, token = NULL,
-  disable_ipv6 = TRUE, ssl.verifypeer = FALSE)
+amcat_connect(host = NULL, username = NULL, token = NULL,
+  disable_ipv6 = TRUE, ssl.verifypeer = FALSE, conn = NULL)
 }
 \arguments{
 \item{host}{the hostname, e.g. http://amcat.vu.nl or http://localhost:8000}
@@ -17,6 +17,8 @@ amcat_connect(host, username, conn = NULL, token = NULL,
 \item{disable_ipv6}{If True, only use ipv4 resolving (faster if ipv6 causes timeout). Defaults to true, but this may change in the future.}
 
 \item{ssl.verifypeer}{If True, verifies the authenticity of the peer's certificate}
+
+\item{conn}{an existing AmCAT connection object. If provided, the connection will be opened (if not yet open) and refreshed (i.e. new token). The other arguments are ignored.}
 }
 \value{
 A list with authentication information that is used by the other functions in this package

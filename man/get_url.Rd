@@ -4,13 +4,14 @@
 \alias{get_url}
 \title{Retrieve a single URL from AmCAT with authentication and specified filters (GET or POST)}
 \usage{
-get_url(conn, path, filters = NULL, post = FALSE, post_options = list(),
-  error_unless_200 = TRUE, null_on_404 = FALSE, binary = FALSE)
+get_url(path, conn = conn_from_env(), filters = NULL, post = FALSE,
+  post_options = list(), error_unless_200 = TRUE, null_on_404 = FALSE,
+  binary = FALSE)
 }
 \arguments{
-\item{conn}{the connection object from \code{\link{amcat_connect}}}
-
 \item{path}{the path of the url to retrieve (using the host from conn)}
+
+\item{conn}{the connection object from \code{\link{amcat_connect}}}
 
 \item{filters}{a named vector of filters, e.g. c(project=2, articleset=3)}
 

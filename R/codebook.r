@@ -3,18 +3,19 @@
 #' 
 #' Get the labels and parents for all codes in a codebook
 #' 
-#' @param conn the connection object from \code{\link{amcat.connect}}
 #' @param codebook_id the id of the codebook
+#' @param conn the connection object from \code{\link{amcat_connect}}
 #' @param languages which languages to retrieve
 #' @return A data frame with code, parent, and one column per language
 #' 
 #' @examples 
 #' \dontrun{
 #' conn = amcat_connect("https://amcat.nl")
-#' get_hierarchy(conn, codebook_id=374, languages=c("en", "query"))
+#' get_hierarchy(codebook_id=374, languages=c("en", "query"))
 #' }
 #' @export
-get_hierarchy <- function(conn, codebook_id, languages=NULL) {
+get_hierarchy <- function(codebook_id, conn=conn_from_env(), languages=NULL) {
+  if (is.null(conn)) stop('conn not specified. Either provide conn as argument or run amcat_connect in the current session')
   hierarchy = get_objects(conn, "codebookcode", filters=list(codebook__id=codebook_id))
   hierarchy = hierarchy[,c("code", "parent")]
   
@@ -93,14 +94,14 @@ codebookcat <- function(hierarchy, depth=0) {
 #' unemployment, economy, issue, economy
 #' environment, issue, issue, environment
 #' 
-#' @param hierarchy the hierarchy data frame from \code{\link{amcat.gethierarchy}}
+#' @param hierarchy the hierarchy data frame from \code{\link{get_hierarchy}}
 #' @param maxdepth the maxium number of ancestors per code
 #' @return The hierarchy data frame with a column added for each code
 #' 
 #' @examples 
 #' \dontrun{
 #' conn = amcat_connect("https://amcat.nl")
-#' h = get_hierarchy(conn, codebook_id=374, languages=c("en", "query"))
+#' h = get_hierarchy(codebook_id=374, languages=c("en", "query"))
 #' h
 #' 
 #' h = hierarchy_cats(h, maxdepth=1)

@@ -3,6 +3,8 @@
 S3method(print,amcat_connection)
 export(add_articles_to_set)
 export(amcat_connect)
+export(conn_from_env)
+export(conn_to_env)
 export(get_aggregate)
 export(get_articles)
 export(get_hierarchy)

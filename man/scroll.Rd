@@ -4,12 +4,12 @@
 \alias{scroll}
 \title{Scroll an amcat API page with 'next' link}
 \usage{
-scroll(conn, path, page_size = 100, ...)
+scroll(path, conn = conn_from_env(), page_size = 100, ...)
 }
 \arguments{
-\item{conn}{the connection object from \code{\link{amcat_connect}}}
-
 \item{path}{the path to scroll}
+
+\item{conn}{the connection object from \code{\link{amcat_connect}}}
 
 \item{page_size}{the amount of pages per request}
 

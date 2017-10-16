@@ -4,15 +4,16 @@
 \alias{get_tokens}
 \title{Get Tokens from AmCAT}
 \usage{
-get_tokens(conn, project = NULL, articleset = NULL, module = "elastic",
-  filters = NULL, page_size = 1, sentence = NULL, only_cached = F, ...)
+get_tokens(project = NULL, articleset = NULL, conn = conn_from_env(),
+  module = "elastic", filters = NULL, page_size = 1, sentence = NULL,
+  only_cached = F, ...)
 }
 \arguments{
-\item{conn}{the connection object from \code{\link{amcat.connect}}}
-
 \item{project}{id of the project containing the tokens}
 
 \item{articleset}{id of the articleset to get features from. If not specified, specify sentence for 'ad hoc' parsing}
+
+\item{conn}{the connection object from \code{\link{amcat_connect}}}
 
 \item{module}{the NLP preprocessing module to get the tokens from}
 

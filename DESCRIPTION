@@ -10,7 +10,7 @@ Imports:
     stringr,
     httr,
     data.table,
-    digest,
+    methods,
     getPass
 Suggests: 
     testthat,

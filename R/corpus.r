@@ -2,7 +2,7 @@
 #' 
 #' Get Tokens (pos, lemma etc) from AmCAT
 #' 
-#' @param conn the connection object from \code{\link{amcat.connect}}
+#' @param conn the connection object from \code{\link{amcat_connect}}
 #' @param project id of the project containing the tokens
 #' @param articleset id of the articleset to get features from. If not specified, specify sentence for 'ad hoc' parsing
 #' @param module the NLP preprocessing module to get the tokens from
@@ -13,21 +13,23 @@
 #' @param ... additional arguments to get_pages
 #' @return A data frame of tokens
 #' @export
-get_tokens <- function(conn, project=NULL, articleset=NULL, module="elastic", 
+get_tokens <- function(project=NULL, articleset=NULL, conn=conn_from_env(), module="elastic", 
                             filters=NULL,page_size=1, sentence=NULL, only_cached=F, ...) {
+  if (is.null(conn)) stop('conn not specified. Either provide conn as argument or run amcat_connect in the current session')
+  
   # TODO: now do adhoc / articleset as completely different paths, converge?
   if (!is.null(articleset) & !is.null(project)) {
     if (only_cached) filters = c(filters, list(only_cached=as.numeric(only_cached)))
     filters = c(module=module, filters)
     path = paste("api", "v4", "projects", project, "articlesets", articleset, "tokens", "", sep="/")
-    result = get_pages(conn, path, page_size=page_size, rbind_results=F, filters=filters, ...)
+    result = get_pages(path, conn, page_size=page_size, rbind_results=F, filters=filters, ...)
     result = make_pages_unique(result)
     result = as.data.frame(data.table::rbindlist(result))
     result
   } else if (!is.null(sentence)) {
     filters = c(module=module, page_size=page_size, format='csv', sentence=sentence, filters)
     path = paste("api", "v4", "tokens", "", sep="/")
-    t = get_url(conn, path, filters)
+    t = get_url(path, conn, filters)
     readoutput(t, format='csv')
   } else stop("Please provide project+articleset or sentence")
 } 

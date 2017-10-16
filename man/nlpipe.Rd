@@ -4,18 +4,18 @@
 \alias{nlpipe}
 \title{Process an articleset with nlpipe}
 \usage{
-nlpipe(conn, project, articleset, module,
+nlpipe(project, articleset, module, conn = conn_from_env(),
   nlpipe_server = getOption("nlpiper.server", default =
   "http://localhost:5001"))
 }
 \arguments{
-\item{conn}{the amcatr connection object}
-
 \item{project}{the amcat project id}
 
 \item{articleset}{the amcat articleset id}
 
 \item{module}{the nlpipe module name}
+
+\item{conn}{the amcatr connection object}
 
 \item{nlpipe_server}{the nlpipe server name or folder}
 }

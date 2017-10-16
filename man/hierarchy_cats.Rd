@@ -7,7 +7,7 @@
 hierarchy_cats(hierarchy, maxdepth = 2)
 }
 \arguments{
-\item{hierarchy}{the hierarchy data frame from \code{\link{amcat.gethierarchy}}}
+\item{hierarchy}{the hierarchy data frame from \code{\link{get_hierarchy}}}
 
 \item{maxdepth}{the maxium number of ancestors per code}
 }
@@ -37,7 +37,7 @@ environment, issue, issue, environment
 \examples{
 \dontrun{
 conn = amcat_connect("https://amcat.nl")
-h = get_hierarchy(conn, codebook_id=374, languages=c("en", "query"))
+h = get_hierarchy(codebook_id=374, languages=c("en", "query"))
 h
 
 h = hierarchy_cats(h, maxdepth=1)

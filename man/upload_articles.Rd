@@ -4,12 +4,10 @@
 \alias{upload_articles}
 \title{Upload new articles to AmCAT}
 \usage{
-upload_articles(conn, project, articleset, text, headline, date, medium,
-  provenance = NULL, ...)
+upload_articles(project, articleset, text, headline, date, medium,
+  conn = conn_from_env(), provenance = NULL, ...)
 }
 \arguments{
-\item{conn}{the connection object from \code{\link{amcat_connect}}}
-
 \item{project}{the project to add the articles to}
 
 \item{articleset}{the article set id of an existing set, or the name of a new set to create}
@@ -21,6 +19,8 @@ upload_articles(conn, project, articleset, text, headline, date, medium,
 \item{date}{the date of the articles to upload}
 
 \item{medium}{the medium of the articles to upload.}
+
+\item{conn}{the connection object from \code{\link{amcat_connect}}.}
 
 \item{provenance}{if articleset is character, an optional provenance string to store with the new set}
 
@@ -38,11 +38,11 @@ The articles will be uploaded in batches of 100.
 \dontrun{
 conn = amcat_connect('https://amcat.nl')
 
-set_id = upload_articles(conn, project = 1, articleset = 'example set', 
+set_id = upload_articles(project = 1, articleset = 'example set', 
                          headline = 'example', text = 'example',
                          date = as.POSIXct('2010-01-01'), medium = 'example')
                          
-get_articles(conn, project = 1, articleset = set_id, 
+get_articles(project = 1, articleset = set_id, 
              columns = c('headline','text','date','medium'))
 }
 }

@@ -4,15 +4,15 @@
 \alias{add_articles_to_set}
 \title{Add articles to an article set}
 \usage{
-add_articles_to_set(conn, project, articles, articleset = NULL,
-  articleset.name = NULL, articleset.provenance = NULL)
+add_articles_to_set(project, articles, conn = conn_from_env(),
+  articleset = NULL, articleset.name = NULL, articleset.provenance = NULL)
 }
 \arguments{
-\item{conn}{the connection object from \code{\link{amcat_connect}}}
-
 \item{project}{the project to add the articles to}
 
 \item{articles}{a vector of article ids}
+
+\item{conn}{the connection object from \code{\link{amcat_connect}}}
 
 \item{articleset}{the article set id of an existing set}
 
@@ -30,13 +30,13 @@ Add the given article ids to a new or existing article set
 \dontrun{
 conn = amcat_connect('https://amcat.nl')
 
-h = get_hits(conn, queries=c("tyrant OR brute", "saddam"), labels=c("tyrant", "saddam"), sets=10271)
+h = get_hits(queries=c("tyrant OR brute", "saddam"), labels=c("tyrant", "saddam"), sets=10271)
 articles = h$id[h$query == "tyrant"]
 
 ## make new setwith the (two) documents that mention "tyrant"
-setid = add_articles_to_set(conn, project=429, articles=articles, articleset.name="New set from howto")
+setid = add_articles_to_set(project=429, articles=articles, articleset.name="New set from howto")
 
 ## set contains only these two documents
-get_articles(conn, project = 429, articleset=setid)
+get_articles(project = 429, articleset=setid)
 }
 }

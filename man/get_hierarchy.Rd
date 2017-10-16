@@ -4,12 +4,12 @@
 \alias{get_hierarchy}
 \title{Get the hierarchy from an AmCAT codebook}
 \usage{
-get_hierarchy(conn, codebook_id, languages = NULL)
+get_hierarchy(codebook_id, conn = conn_from_env(), languages = NULL)
 }
 \arguments{
-\item{conn}{the connection object from \code{\link{amcat.connect}}}
-
 \item{codebook_id}{the id of the codebook}
+
+\item{conn}{the connection object from \code{\link{amcat_connect}}}
 
 \item{languages}{which languages to retrieve}
 }
@@ -22,6 +22,6 @@ Get the labels and parents for all codes in a codebook
 \examples{
 \dontrun{
 conn = amcat_connect("https://amcat.nl")
-get_hierarchy(conn, codebook_id=374, languages=c("en", "query"))
+get_hierarchy(codebook_id=374, languages=c("en", "query"))
 }
 }

@@ -4,17 +4,17 @@
 \alias{get_hits}
 \title{Conduct a query on amcat}
 \usage{
-get_hits(conn, queries, labels = queries, sets, minimal = T,
-  warn.no.result = T, ...)
+get_hits(queries, sets, conn = conn_from_env(), labels = queries,
+  minimal = T, warn.no.result = T, ...)
 }
 \arguments{
-\item{conn}{the connection object from \code{\link{amcat.connect}}}
-
 \item{queries}{a vector of queries to run}
 
-\item{labels}{if given, labels corresponding to the queries. Alternatively, if a query starts with a label and a hashtag (e.g., label# "term1 term2"), this label is used.}
-
 \item{sets}{one or more article set ids to query on}
+
+\item{conn}{the connection object from \code{\link{amcat_connect}}}
+
+\item{labels}{if given, labels corresponding to the queries. Alternatively, if a query starts with a label and a hashtag (e.g., label# "term1 term2"), this label is used.}
 
 \item{minimal}{if TRUE, returns only hits per document. if set to FALSE, includes more meta data}
 
@@ -32,7 +32,7 @@ number of queries and get document metadata and number of hits per document
 \examples{
 \dontrun{
 conn = amcat_connect('https://amcat.nl')
-h = get_hits(conn, queries=c("tyrant OR brute", "saddam"), labels=c("tyrant", "saddam"), sets=10271)
+h = get_hits(queries=c("tyrant OR brute", "saddam"), labels=c("tyrant", "saddam"), sets=10271)
 head(h)
 table(h$query)
 }

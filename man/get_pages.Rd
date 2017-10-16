@@ -4,14 +4,14 @@
 \alias{get_pages}
 \title{Get and rbind pages from the AmCAT API}
 \usage{
-get_pages(conn, path, format = NULL, page = 1, page_size = 1000,
-  filters = NULL, post = FALSE, post_options = list(), max_page = NULL,
-  rbind_results = T)
+get_pages(path, conn = conn_from_env(), format = NULL, page = 1,
+  page_size = 1000, filters = NULL, post = FALSE, post_options = list(),
+  max_page = NULL, rbind_results = T)
 }
 \arguments{
-\item{conn}{the connection object from \code{\link{amcat_connect}}}
-
 \item{path}{the path of the url to retrieve (using the host from conn)}
+
+\item{conn}{the connection object from \code{\link{amcat_connect}}}
 
 \item{format}{a character string giving the output format. Can be 'rda', 'csv' or 'json'. 'rda' is recommended. If NULL (default), 'rda' is used.}
 

@@ -3,10 +3,10 @@
 #' This function is similar to using the 'show table' function in AmCAT. It allows you to specify a
 #' number of queries and get the number of hits per search term, per period, etc.
 #'
-#' @param conn the connection object from \code{\link{amcat.connect}}
 #' @param queries a vector of queries to run
-#' @param labels if given, labels corresponding to the queries
 #' @param sets one or more article set ids to query on
+#' @param conn the connection object from \code{\link{amcat_connect}}
+#' @param labels if given, labels corresponding to the queries
 #' @param axis1 The first grouping (break/group by) variable, e.g. year, month, week, day, or medium
 #' @param axis2 The second grouping (break/group by) variable, e.g. medium. Do not use a date interval here.
 #' @param ... additional arguments to pass to the AmCAT API. 
@@ -14,14 +14,16 @@
 #' @examples 
 #' \dontrun{
 #' conn = amcat_connect('https://amcat.nl')
-#' a = get_aggregate(conn, sets=10271, axis1="year",
+#' a = get_aggregate(sets=10271, axis1="year",
 #'                   queries=c("*", "obama", "bush"), 
 #'                   labels=c("Total", "Obama", "Bush"))
 #' head(a)
 #' }
 #' @return A data frame with hits per group
 #' @export
-get_aggregate <- function(conn, queries, labels=queries, sets, axis1=NULL, axis2=NULL, ...) {
+get_aggregate <- function(queries, sets, conn=conn_from_env(), labels=queries, axis1=NULL, axis2=NULL, ...) {
+  if (is.null(conn)) stop('conn not specified. Either provide conn as argument or run amcat_connect in the current session')
+  
   result = NULL
   queries = as.character(queries)
   for (i in 1:length(queries)) {
@@ -51,7 +53,7 @@ get_aggregate <- function(conn, queries, labels=queries, sets, axis1=NULL, axis2
 #' This function is similar to using the 'show article list' function in AmCAT. It allows you to specify a
 #' number of queries and get document metadata and number of hits per document
 #'
-#' @param conn the connection object from \code{\link{amcat.connect}}
+#' @param conn the connection object from \code{\link{amcat_connect}}
 #' @param queries a vector of queries to run
 #' @param labels if given, labels corresponding to the queries. Alternatively, if a query starts with a label and a hashtag (e.g., label# "term1 term2"), this label is used.
 #' @param sets one or more article set ids to query on
@@ -63,12 +65,14 @@ get_aggregate <- function(conn, queries, labels=queries, sets, axis1=NULL, axis2
 #' @examples 
 #' \dontrun{
 #' conn = amcat_connect('https://amcat.nl')
-#' h = get_hits(conn, queries=c("tyrant OR brute", "saddam"), labels=c("tyrant", "saddam"), sets=10271)
+#' h = get_hits(queries=c("tyrant OR brute", "saddam"), labels=c("tyrant", "saddam"), sets=10271)
 #' head(h)
 #' table(h$query)
 #' }
 #' @export
-get_hits <- function(conn, queries, labels=queries, sets,  minimal=T, warn.no.result=T, ...) {
+get_hits <- function(queries, sets, conn=conn_from_env(), labels=queries,  minimal=T, warn.no.result=T, ...) {
+  if (is.null(conn)) stop('conn not specified. Either provide conn as argument or run amcat_connect in the current session')
+  
   result = NULL
   
   for (i in 1:length(queries)) {

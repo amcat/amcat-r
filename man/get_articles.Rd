@@ -4,19 +4,20 @@
 \alias{get_articles}
 \title{Get article metadata from AmCAT}
 \usage{
-get_articles(conn, project, articleset = NULL, articles = NULL,
-  uuid = NULL, columns = NULL, time = F, dateparts = F,
-  page_size = 10000, return_as = c("data.frame", "quanteda_corpus",
-  "tcorpus"), text_columns = c("headline", "byline", "text"), ...)
+get_articles(project, articleset = NULL, articles = NULL,
+  conn = conn_from_env(), uuid = NULL, columns = NULL, time = F,
+  dateparts = F, page_size = 10000, return_as = c("data.frame",
+  "quanteda_corpus", "tcorpus"), text_columns = c("headline", "byline",
+  "text"), ...)
 }
 \arguments{
-\item{conn}{the connection object from \code{\link{amcat_connect}}}
-
 \item{project}{the project of a set to retrieve metadata from}
 
 \item{articleset}{the article set id to retrieve - provide either this or articleset}
 
 \item{articles}{the article ids to retrieve - provide either this or articleset}
+
+\item{conn}{the connection object from \code{\link{amcat_connect}}}
 
 \item{uuid}{like the articles argument, but using the universally unique identifier (uuid)}
 
@@ -44,10 +45,10 @@ additional postprocessing, e.g. to convert the data to Date objects.
 \examples{
 \dontrun{
 conn = amcat_connect('https://amcat.nl')
-meta = get_articles(conn, project = 1, articleset = 1)
+meta = get_articles(project = 1, articleset = 1)
 head(meta) 
 
-texts = get_articles(conn, project = 1, articleset = 1, columns = c('text'))
+texts = get_articles(project = 1, articleset = 1, columns = c('text'))
 texts$text[1]
 }
 }

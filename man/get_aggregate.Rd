@@ -4,17 +4,17 @@
 \alias{get_aggregate}
 \title{Conduct an aggregate query on amcat}
 \usage{
-get_aggregate(conn, queries, labels = queries, sets, axis1 = NULL,
-  axis2 = NULL, ...)
+get_aggregate(queries, sets, conn = conn_from_env(), labels = queries,
+  axis1 = NULL, axis2 = NULL, ...)
 }
 \arguments{
-\item{conn}{the connection object from \code{\link{amcat.connect}}}
-
 \item{queries}{a vector of queries to run}
 
-\item{labels}{if given, labels corresponding to the queries}
-
 \item{sets}{one or more article set ids to query on}
+
+\item{conn}{the connection object from \code{\link{amcat_connect}}}
+
+\item{labels}{if given, labels corresponding to the queries}
 
 \item{axis1}{The first grouping (break/group by) variable, e.g. year, month, week, day, or medium}
 
@@ -32,7 +32,7 @@ number of queries and get the number of hits per search term, per period, etc.
 \examples{
 \dontrun{
 conn = amcat_connect('https://amcat.nl')
-a = get_aggregate(conn, sets=10271, axis1="year",
+a = get_aggregate(sets=10271, axis1="year",
                   queries=c("*", "obama", "bush"), 
                   labels=c("Total", "Obama", "Bush"))
 head(a)
