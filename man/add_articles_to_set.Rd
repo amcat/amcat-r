@@ -28,7 +28,7 @@ Add the given article ids to a new or existing article set
 }
 \examples{
 \dontrun{
-conn = amcat_connect('https://amcat.nl')
+conn = amcat_connect('https://amcat.nl', 'username')
 
 h = get_hits(queries=c("tyrant OR brute", "saddam"), labels=c("tyrant", "saddam"), sets=10271)
 articles = h$id[h$query == "tyrant"]

@@ -1,73 +1,50 @@
-#' Get Tokens from AmCAT
-#' 
-#' Get Tokens (pos, lemma etc) from AmCAT
-#' 
+#' Get article metadata from AmCAT
+#'
+#' Uses the \code{\link{get_objects}} function to retrieve article metadata, and applies some
+#' additional postprocessing, e.g. to convert the data to Date objects.
+#'
+#' @param project the project of a set to retrieve metadata from
+#' @param articleset the article set id to retrieve - provide either this or articleset
+#' @param articles the article ids to retrieve - provide either this or articleset
 #' @param conn the connection object from \code{\link{amcat_connect}}
-#' @param project id of the project containing the tokens
-#' @param articleset id of the articleset to get features from. If not specified, specify sentence for 'ad hoc' parsing
-#' @param module the NLP preprocessing module to get the tokens from
-#' @param filters Additional filters, ie c(pos1="V", pos1="A") to select only verbs and adjectives 
-#' @param page_size the number of features (articles?) to include per call
-#' @param sentence a sentence (string) to be parsed if articleset id is not given
-#' @param only_cached if true, only get tokens that have already been preprocessed (recommended for large corpora!)
-#' @param ... additional arguments to get_pages
-#' @return A data frame of tokens
+#' @param uuid like the articles argument, but using the universally unique identifier (uuid)
+#' @param text_columns The columns that contain the article text. If multiple columns are given (e.g., headline, text), they are pasted together (separated by a double linebreak)
+#' @param meta_columns the names of columns to retrieve, e.g. date, medium, text, headline
+#' @param time if true, parse the date as POSIXct datetime instead of Date
+#' @param dateparts if true, add date parts (year, month, week)
+#' @param page_size the number of articles per (downloaded) page
+#' @param format determine whether article data is returned as a "data.frame", "quanteda_corpus" (requires quanteda package) or "tcorpus" (requires corpustools package). 
+#' @param ... additional arguments are passed to quanteda::corpus or corpustools::create_tcorpus. 
+#
+#'
+#' @return
 #' @export
-get_tokens <- function(project=NULL, articleset=NULL, conn=conn_from_env(), module="elastic", 
-                            filters=NULL,page_size=1, sentence=NULL, only_cached=F, ...) {
-  if (is.null(conn)) stop('conn not specified. Either provide conn as argument or run amcat_connect in the current session')
-  
-  # TODO: now do adhoc / articleset as completely different paths, converge?
-  if (!is.null(articleset) & !is.null(project)) {
-    if (only_cached) filters = c(filters, list(only_cached=as.numeric(only_cached)))
-    filters = c(module=module, filters)
-    path = paste("api", "v4", "projects", project, "articlesets", articleset, "tokens", "", sep="/")
-    result = get_pages(path, conn, page_size=page_size, rbind_results=F, filters=filters, ...)
-    result = make_pages_unique(result)
-    result = as.data.frame(data.table::rbindlist(result))
-    result
-  } else if (!is.null(sentence)) {
-    filters = c(module=module, page_size=page_size, format='csv', sentence=sentence, filters)
-    path = paste("api", "v4", "tokens", "", sep="/")
-    t = get_url(path, conn, filters)
-    readoutput(t, format='csv')
-  } else stop("Please provide project+articleset or sentence")
-} 
-
-#' Make the given columns unique within a context for a list of data frames
-#'  
-#' It will iterate over the list of data frames and make the given columns globally unique
-#' assuming they are unique within a context.
-#' E.g. if you have a list of pages containing tokens within articles, and sentence is unique
-#' within an article but not globally unique, this will make it globally unique.
-#'  
-#' @param result list of token data frames
-#' @param context name of the context column
-#' @param columns names of the columns to make unique
-#'  
-#' @return the original list with the columns made unique
-make_pages_unique <- function(result, context="aid", columns =  c("clause_id", "source_id", "coref", "sentence")) {
-  all_colnames = Reduce(function(a,b) unique(c(a,colnames(b))), init=NULL, result)
-  for (col in intersect(all_colnames, columns)) {
-    inc = 0
-    for(i in 1:length(result)) {
-      if (i%%100 == 0) message("Creating unique index for column ",col," page ", i, "/",length(result))
-      if (!(col %in% colnames(result[[i]]))) {
-        warning("Column ",col," not present in page ",i)
-        next
-      }
-      if (sum(!is.na(result[[i]][[col]])) == 0) {
-        warning("Column ",col," had no valid values for page ", i)
-        next
-      }
-      result[[i]][[col]] = .make.unique(result[[i]][[context]], result[[i]][[col]]) + inc
-      inc = max(result[[i]][[col]], na.rm = T) + 1
-    }
-  }
-  result
+#'
+#' @examples
+get_corpus <- function(project, articleset=NULL, articles=NULL, conn=conn_from_env(), uuid=NULL, text_columns = c('headline','byline','text'), meta_columns=NULL, time=F, dateparts=F, page_size=10000, format = c('quanteda_corpus','tcorpus'), ...){
+  format = match.arg(format)
+  if (!is.null(meta_columns)) meta_columns = union(meta_columns, text_columns)
+  result = get_articles(project=project, articleset=articleset, articles=articles, conn=conn, uuid=uuid, columns=meta_columns, time=time, dateparts=dateparts, page_size=page_size, text_columns=text_columns)
+  if (format == 'quanteda_corpus') result = as_quanteda_corpus(result, text_columns, ...)  
+  if (format == 'tcorpus') result = as_tcorpus(result, text_columns, ...)
 }
 
-.make.unique <- function(context, col)  {
-  values = interaction(context, col)
-  match(values, stats::na.omit(unique(values)))
+
+as_quanteda_corpus <- function(articles, text_columns = c('headline','text'), ...){
+  if(!requireNamespace('quanteda', quietly = T)) stop('To use this function, first install the quanteda package.')
+  text_columns = intersect(colnames(articles), text_columns)
+  metavars = setdiff(colnames(articles), text_columns)
+  
+  if (length(text_columns) > 1){
+    text = do.call(paste, c(as.list(articles[,text_columns]), sep='\n\n'))
+  } else {
+    text = articles[[text_columns]]
+  }
+  quanteda::corpus(as.character(text), docnames=articles$id, docvars=articles[metavars], ...)
+}
+
+as_tcorpus <- function(articles, text_columns, ...) {
+  if(!requireNamespace('corpustools', quietly = T)) stop('To use this function, first install the quanteda package.')
+  text_columns = intersect(colnames(articles), text_columns)
+  corpustools::create_tcorpus(articles, doc_column = 'id', text_columns=text_columns, ...)
 }

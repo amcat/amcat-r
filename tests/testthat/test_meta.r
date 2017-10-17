@@ -1,7 +1,7 @@
 conn = conn_from_env()
 
 if(is.null(conn)){
-  message('COULD NOT RUN TESTS. NO AMCAT SERVER RUNNING ON localhost:8000')
+  message('Could not run tests, because there is no AmCAT connection. Run amcat_connect() first.')
 } else {
   testthat::test_that("Article metadata", {
     # add to new set

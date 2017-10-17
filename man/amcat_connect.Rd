@@ -5,14 +5,14 @@
 \title{Connect to the AmCAT API}
 \usage{
 amcat_connect(host = NULL, username = NULL, token = NULL,
-  disable_ipv6 = TRUE, ssl.verifypeer = FALSE, conn = NULL)
+  disable_ipv6 = TRUE, ssl.verifypeer = TRUE, conn = NULL)
 }
 \arguments{
-\item{host}{the hostname, e.g. http://amcat.vu.nl or http://localhost:8000}
+\item{host}{the hostname, e.g. https://amcat.nl or http://localhost:8000}
 
 \item{username}{an existing username on the host server}
 
-\item{token}{an existing token to authenticate with. If given, username is not used and the token is not tested}
+\item{token}{an existing token to authenticate with. If given (and valid), no password has to be entered}
 
 \item{disable_ipv6}{If True, only use ipv4 resolving (faster if ipv6 causes timeout). Defaults to true, but this may change in the future.}
 
@@ -21,22 +21,30 @@ amcat_connect(host = NULL, username = NULL, token = NULL,
 \item{conn}{an existing AmCAT connection object. If provided, the connection will be opened (if not yet open) and refreshed (i.e. new token). The other arguments are ignored.}
 }
 \value{
-A list with authentication information that is used by the other functions in this package
+A S3 class (amcatConnection) with authentication information that is used by the other functions in this package
 }
 \description{
-Connect to the AmCAT API and requests a temporary (24h) authentication token that will be stored in the output
-The host should be known in the ~/.amcatauth file, you can use save_amcat_password to add a password to this file
+Connect to the AmCAT API and request or refresh a temporary (48h) authentication token.
+}
+\details{
+The token can be used in two ways. Firstly, after running amcat_connect, the token will automatically be used
+until the R session is ended. This is recommended for occasional use. Alternatively, amcat_connect() returns
+a connection object (amcatConnection) that can be passed to the conn argument in functions that require a connection. 
+The amcatConnection object can be saved for use across sessions, so that the password does not have to be given to connect.
+It is also possible to pass the amcatConnection object to amcat_connect, which will refresh the token and set it up for
+default use within a session.
 }
 \examples{
 \dontrun{
-host = 'https://amcat.nl'  ## existing and available host
-username = 'XXX'           ## registered username  
-password = 'XXX'           ## registered password
+## create connection
+amcat_connect('https://amcat.nl', 'username')
 
-## first, store username and password for a given host. 
-save_amcat_password(host = host, username = username, password = password)
+## optionally, get the amcatConnect object, e.g., to save it for later use
+conn = amcat_connect('https://amcat.nl', 'username')
+saveRDS(conn, '~/.amcat_connection.rds')
 
-## connect by just giving the host
-conn = amcat_connect(host)
+## refresh connection 
+conn = readRDS('~/.amcat_connection.rds')
+conn = amcat_connect(conn = conn)
 }
 }

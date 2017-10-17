@@ -2,13 +2,12 @@
 % Please edit documentation in R/amcatr.r
 \name{get_articles}
 \alias{get_articles}
-\title{Get article metadata from AmCAT}
+\title{Get article data from AmCAT}
 \usage{
 get_articles(project, articleset = NULL, articles = NULL,
-  conn = conn_from_env(), uuid = NULL, columns = NULL, time = F,
-  dateparts = F, page_size = 10000, return_as = c("data.frame",
-  "quanteda_corpus", "tcorpus"), text_columns = c("headline", "byline",
-  "text"), ...)
+  conn = conn_from_env(), uuid = NULL, columns = c("id", "date", "title"),
+  include_all = F, include_text = F, time = F, dateparts = F,
+  page_size = 10000, ...)
 }
 \arguments{
 \item{project}{the project of a set to retrieve metadata from}
@@ -21,30 +20,31 @@ get_articles(project, articleset = NULL, articles = NULL,
 
 \item{uuid}{like the articles argument, but using the universally unique identifier (uuid)}
 
-\item{columns}{the names of columns to retrieve, e.g. date, medium, text, headline}
+\item{columns}{the names of columns to retrieve, e.g. date, medium, text, headline. If set to NULL, all available columns are retrieved.}
+
+\item{include_all}{shorthand for including all columns. (this is identical to passing NULL to columns)}
+
+\item{include_text}{shorthand for including the "headline", "byline" and "text" columns. (this is identical to passing these names to columns)}
 
 \item{time}{if true, parse the date as POSIXct datetime instead of Date}
 
 \item{dateparts}{if true, add date parts (year, month, week)}
 
 \item{page_size}{the number of articles per (downloaded) page}
-
-\item{return_as}{determine whether article data is returned as a "data.frame", "quanteda_corpus" (requires quanteda package) or "tcorpus" (requires corpustools package).}
-
-\item{text_columns}{if return_as is a corpus (either quanteda_corpus or tcorpus), the columns that contain the article text need to be specified. If multiple columns are given (e.g., headline, text), they are pasted together (separated by a double linebreak)}
-
-\item{...}{if return_as is a corpus (either quanteda_corpus or tcorpus), additional arguments are passed to quanteda::corpus or corpustools::create_tcorpus.}
 }
 \value{
-The article data in the format specified with the return_as parameter
+A data.frame with article columns
 }
 \description{
-Uses the \code{\link{get_objects}} function to retrieve article metadata, and applies some
-additional postprocessing, e.g. to convert the data to Date objects.
+Retrieve article data. Be default only returns basic meta data ("id","date","title"),
+but any available article data can be retrieved, including text.
+}
+\details{
+If "date" is included, it will be returned as either a Date (default) or as a POSIXct (if time is TRUE)
 }
 \examples{
 \dontrun{
-conn = amcat_connect('https://amcat.nl')
+conn = amcat_connect('https://amcat.nl', 'username')
 meta = get_articles(project = 1, articleset = 1)
 head(meta) 
 

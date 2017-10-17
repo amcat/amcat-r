@@ -1,192 +1,27 @@
-#' Retrieve a single URL from AmCAT with authentication and specified filters (GET or POST) 
-#' 
-#' @param path the path of the url to retrieve (using the host from conn)
-#' @param conn the connection object from \code{\link{amcat_connect}}
-#' @param filters a named vector of filters, e.g. c(project=2, articleset=3)
-#' @param post use HTTP POST instead of GET
-#' @param post_options a list with options for HTTP POST (if post is TRUE) 
-#' @param error_unless_200 if TRUE, yield an error if HTTP request is not succesfull (status code 200: OK)
-#' @param null_on_404 if TRUE, return NULL if url not found (status code 404: NOT FOUND)
-#' @param binary if TRUE, convert with \link{rawToChar}
+#' Get article data from AmCAT
 #'
-#' @return the raw result
-get_url <- function(path, conn=conn_from_env(), filters=NULL, post=FALSE, post_options=list(), error_unless_200=TRUE, null_on_404=FALSE, binary=FALSE) {
-  if (is.null(conn)) stop('conn not specified. Either provide conn as argument or run amcat_connect in the current session')
-  url = httr::parse_url(conn$host)
-  url$path = paste(path, sep="/")
-  h = RCurl::getCurlHandle()
-  # strip NULL filters
-  for (n in names(filters)) if (is.null(filters[[n]])) filters[[n]] <- NULL
-  if (!post) {
-    # convert list(a=c(1,2)) to list(a=1, a=2). From: http://stackoverflow.com/a/22346656
-    url$query = structure(do.call(c, lapply(filters, function(z) as.list(z))), names=rep(names(filters), sapply(filters, length)))
-    
-    # build GET url query
-    url = httr::build_url(url)
-    message("GET ", url)
-    
-    urlfunc = if (binary) RCurl::getBinaryURL else RCurl::getURL
-    result = urlfunc(url, .opts=get_opts(conn), curl=h)
-    if (RCurl::getCurlInfo(h)$response.code != 200){
-      if (error_unless_200 && !(null_on_404 && RCurl::getCurlInfo(h)$response.code == 404)) {
-        
-        if (!is.null(RCurl::getCurlInfo(h)$content.type) && grepl("application/x-r-rda", RCurl::getCurlInfo(h)$content.type)) {
-          result = load_rda(result)
-          result = paste(result$exception_type, result$detail, sep = ": ")
-        } else {
-          if (binary) result = rawToChar(result) 
-          fn = tempfile()
-          write(result, file=fn)
-          result = paste("Response written to", fn)
-        }
-        error_type = floor(RCurl::getCurlInfo(h)$response.code / 100)
-        if (error_type == 5) msg = "This seems to be an AmCAT server error. Please see the server logs or create an issue at http://github.com/amcat/amcat/issues"
-        if (error_type == 4) msg = "It looks like you did something wrong, or there is something wrong in the amcat-r library. Please check your command and the error message below, or create an issue at http://github.com/amcat/amcat-r/issues"
-        
-        stop("Unexpected Response Code ", RCurl::getCurlInfo(h)$response.code, "\n", msg, "\n", result)
-      }
-      return(NULL)
-    }
-    result
-  } else {  
-    
-    post_opts = utils::modifyList(get_opts(conn), post_options)
-    RCurl::postForm(httr::build_url(url), .params=filters, .opts=post_opts)
-  }
-}
-
-
-#' Get and rbind pages from the AmCAT API
+#' Retrieve article data. Be default only returns basic meta data ("id","date","title"),
+#' but any available article data can be retrieved, including text.
 #' 
-#' @param path the path of the url to retrieve (using the host from conn)
-#' @param conn the connection object from \code{\link{amcat_connect}}
-#' @param format a character string giving the output format. Can be 'rda', 'csv' or 'json'. 'rda' is recommended. If NULL (default), 'rda' is used.
-#' @param page the page number to start retrieving
-#' @param page_size the number of rows per page
-#' @param filters a named vector of filters, e.g. c(project=2, articleset=3)
-#' @param post use HTTP POST instead of GET
-#' @param post_options a list with options for the HTTP POST (if post is TRUE)
-#' @param max_page the page number to stop retrieving at, if given
-#' @param rbind_results if TRUE, return results of multiple pages as a single data.frame. if FALSE, a list with data.frames is returned
-#' 
-#' @return dataframe
-get_pages <- function(path, conn=conn_from_env(), format=NULL, page=1, page_size=1000, filters=NULL, 
-                           post=FALSE, post_options=list(), max_page=NULL, rbind_results=T) {
-  if (is.null(conn)) stop('conn not specified. Either provide conn as argument or run amcat_connect in the current session')
-  if (is.null(format)) format = "rda" 
-  filters = c(filters, page_size=page_size, format=format)
-  result = list()
-  npages = "?"
-  while (TRUE) {
-    if (!is.null(max_page)) if (page > max_page) break
-    page_filters = c(filters, page=page)
-    subresult = get_url(path, conn, page_filters, post=post, post_options, binary = format=="rda", null_on_404 = format != "rda")
-    if (format == "rda") {
-      res = load_rda(subresult)
-      npages = res$pages
-      subresult = res$result
-      result = c(result, list(subresult))
-      if (page >= npages) break
-    } else {
-      if (is.null(subresult) || subresult == "") break
-      subresult = readoutput(subresult, format=format)
-      result = c(result, list(subresult))
-      if(nrow(subresult) < page_size) break
-    }
-    message("Retrieved page ",page,"/",npages, "; last page had ", nrow(subresult), " result rows")
-    page = page + 1
-  }
-  if (rbind_results) result = as.data.frame(data.table::rbindlist(result))
-  result
-}
-
-load_rda <- function(bytes) {
-  e = new.env()
-  c = rawConnection(bytes)
-  load(c, envir = e)
-  close(c)
-  as.list(e)
-}
-
-read_version <- function(vstr) {
-  if (!is.null(vstr)) {
-    m = stringr::str_match(vstr, "[a-zA-Z]*(\\d+)\\.[a-zA-Z]*(\\d+)\\.[a-zA-Z]*(\\d+)\\s*") ## the alpha match is for development notes
-    if (!is.na(m[[1]]))  {
-      v = as.numeric(m[-1])
-      names(v) = c("major", "minor", "patch")
-      return(v)
-    }
-  }
-  c(major=0, minor=0, patch=0)
-}
-
-has_version <- function(actual, required) {
-  actual = read_version(actual)
-  required = read_version(required)
-  
-  if (actual["major"] > required["major"]) return(T)
-  if (actual["major"] < required["major"]) return(F)
-  if (actual["minor"] > required["minor"]) return(T)
-  if (actual["minor"] < required["minor"]) return(F)
-  return(actual["patch"] >= required["patch"])
-}
-
-
-
-#' Get objects from the AmCAT API
-#'
-#' Get a table of objects from the AmCAT API, e.g. projects, sets etc.
-#' 
-#' @param resource the name of the resource, e.g. 'projects'. If it is of length>1, a path a/b/c/ will be created (e.g. c("projects",1,"articlesets"))
-#' @param conn the connection object from \code{\link{amcat_connect}}
-#' @param ... Other options to pass to \code{\link{get_pages}}, e.g. page_size, format, and filters
-#'
-#' @return A dataframe of objects (rows) by properties (columns)
-get_objects <- function(resource, conn = conn_from_env(), ...) {
-  if (is.null(conn)) stop('conn not specified. Either provide conn as argument or run amcat_connect in the current session')
-  if (length(resource) > 1) resource = paste(c(resource, ""), collapse="/")
-  path = paste('api', 'v4', resource, sep='/')
-  get_pages(path, conn, ...)
-}
-
-# Internal call to check GET results and parse as csv or json
-readoutput <- function(result, format){
-  if (result == '401 Unauthorized')
-    stop("401 Unauthorized")
-  if (format == 'json') {
-    result = rjson::fromJSON(result)
-    
-  } else  if (format == 'csv') {
-    con <- textConnection(result)
-    result = tryCatch(utils::read.csv(con), 
-                      error=function(e) data.frame())
-  }
-  result
-}
-
-#' Get article metadata from AmCAT
-#'
-#' Uses the \code{\link{get_objects}} function to retrieve article metadata, and applies some
-#' additional postprocessing, e.g. to convert the data to Date objects.
+#' If "date" is included, it will be returned as either a Date (default) or as a POSIXct (if time is TRUE)
 #'
 #' @param project the project of a set to retrieve metadata from
 #' @param articleset the article set id to retrieve - provide either this or articleset
 #' @param articles the article ids to retrieve - provide either this or articleset
 #' @param conn the connection object from \code{\link{amcat_connect}}
 #' @param uuid like the articles argument, but using the universally unique identifier (uuid)
-#' @param columns the names of columns to retrieve, e.g. date, medium, text, headline
+#' @param columns the names of columns to retrieve, e.g. date, medium, text, headline. If set to NULL, all available columns are retrieved.
+#' @param include_all shorthand for including all columns. (this is identical to passing NULL to columns)
+#' @param include_text shorthand for including the "headline", "byline" and "text" columns. (this is identical to passing these names to columns)
 #' @param time if true, parse the date as POSIXct datetime instead of Date
 #' @param dateparts if true, add date parts (year, month, week)
 #' @param page_size the number of articles per (downloaded) page
-#' @param return_as determine whether article data is returned as a "data.frame", "quanteda_corpus" (requires quanteda package) or "tcorpus" (requires corpustools package). 
-#' @param text_columns if return_as is a corpus (either quanteda_corpus or tcorpus), the columns that contain the article text need to be specified. If multiple columns are given (e.g., headline, text), they are pasted together (separated by a double linebreak)
-#' @param ... if return_as is a corpus (either quanteda_corpus or tcorpus), additional arguments are passed to quanteda::corpus or corpustools::create_tcorpus. 
 #'
-#' @return The article data in the format specified with the return_as parameter
+#' @return A data.frame with article columns
 #' 
 #' @examples
 #' \dontrun{
-#' conn = amcat_connect('https://amcat.nl')
+#' conn = amcat_connect('https://amcat.nl', 'username')
 #' meta = get_articles(project = 1, articleset = 1)
 #' head(meta) 
 #' 
@@ -194,29 +29,31 @@ readoutput <- function(result, format){
 #' texts$text[1]
 #' }
 #' @export
-get_articles <- function(project, articleset=NULL, articles=NULL, conn=conn_from_env(), uuid=NULL, columns=NULL, time=F, dateparts=F, page_size=10000, return_as = c('data.frame','quanteda_corpus','tcorpus'), text_columns = c('headline','byline','text'), ...){
+get_articles <- function(project, articleset=NULL, articles=NULL, conn=conn_from_env(), uuid=NULL, columns=c('id','date','title'), include_all=F, include_text=F, time=F, dateparts=F, page_size=10000, ...){
   if (is.null(conn)) stop('conn not specified. Either provide conn as argument or run amcat_connect in the current session')
   if (is.null(articleset) & is.null(articles) & is.null(uuid)) stop("Provide either articleset or articles (ids)/uuids")
-  return_as = match.arg(return_as)
-  
+  if (include_all) columns = NULL
+  if (include_text) columns = union(columns, c('headline','byline','text'))
+  include_text = ifelse('text' %in% columns, 1, 0)
+    
   if (!is.null(articleset)) {
     path = paste("api", "v4", "projects", project, "articlesets", articleset,  "articles", sep="/")
-    result = scroll(path, conn=conn, page_size=page_size, text=1)
+    result = get_pages(path, conn=conn, page_size=page_size, text=include_text)
   } else {
     path = paste("api", "v4", "articles", sep="/")
     if (!is.null(articles)) {
       articles = paste(articles, collapse=",")
-      result = scroll(path, conn=conn, id=articles, page_size=page_size, text=1)
+      result = get_pages(path, conn=conn, id=articles, page_size=page_size, text=include_text)
     } else {
       uuid = paste(uuid, collapse=",")
-      result = scroll(path, conn=conn, uuid=uuid, page_size=page_size, text=1)
+      result = get_pages(path, conn=conn, uuid=uuid, page_size=page_size, text=include_text)
     }
   }
   
   if ("date" %in% colnames(result)) {
     result$date = (if(time == T) as.POSIXct(result$date, format='%Y-%m-%dT%H:%M:%S') 
                    else as.Date(result$date, format='%Y-%m-%d'))
-  
+    
     if (dateparts) {
       result$year = as.Date(cut(result$date, "year"))
       result$month = as.Date(cut(result$date, "month"))
@@ -228,38 +65,16 @@ get_articles <- function(project, articleset=NULL, articles=NULL, conn=conn_from
   colnames(result) = gsub('properties.', '', colnames(result), fixed=T)
   
   if (!is.null(columns)) {
-    columns = c('id', columns)
+    columns = union('id', columns)
     if (nrow(result) > 0) {
       for(missing in setdiff(columns, colnames(result))) result[[missing]] <- NA
       result = result[columns]
     }
   }
   
-  if (return_as == 'quanteda_corpus') result = as_quanteda_corpus(result, text_columns, ...)  
-  if (return_as == 'tcorpus') result = as_tcorpus(result, text_columns, ...)
   result
 }
 
-
-
-as_quanteda_corpus <- function(articles, text_columns = c('headline','text'), ...){
-  if(!requireNamespace('quanteda', quietly = T)) stop('To use this function, first install the quanteda package.')
-  text_columns = intersect(colnames(articles), text_columns)
-  metavars = setdiff(colnames(articles), text_columns)
-  
-  if (length(text_columns) > 1){
-    text = do.call(paste, c(as.list(articles[,text_columns]), sep='\n\n'))
-  } else {
-    text = articles[[text_columns]]
-  }
-  quanteda::corpus(as.character(text), docnames=articles$id, docvars=articles[metavars], ...)
-}
-
-as_tcorpus <- function(articles, text_columns, ...) {
-  if(!requireNamespace('corpustools', quietly = T)) stop('To use this function, first install the quanteda package.')
-  text_columns = intersect(colnames(articles), text_columns)
-  corpustools::create_tcorpus(articles, doc_column = 'id', text_columns=text_columns, ...)
-}
 
 #' Add articles to an article set
 #' 
@@ -275,7 +90,7 @@ as_tcorpus <- function(articles, text_columns, ...) {
 #' 
 #' @examples
 #' \dontrun{
-#' conn = amcat_connect('https://amcat.nl')
+#' conn = amcat_connect('https://amcat.nl', 'username')
 #' 
 #' h = get_hits(queries=c("tyrant OR brute", "saddam"), labels=c("tyrant", "saddam"), sets=10271)
 #' articles = h$id[h$query == "tyrant"]
@@ -288,7 +103,7 @@ as_tcorpus <- function(articles, text_columns, ...) {
 #' }
 #' @export
 add_articles_to_set <- function(project, articles, conn=conn_from_env(), articleset=NULL,
-                                      articleset.name=NULL, articleset.provenance=NULL) {
+                                articleset.name=NULL, articleset.provenance=NULL) {
   if (is.null(conn)) stop('conn not specified. Either provide conn as argument or run amcat_connect in the current session')
   if (is.null(articleset)) {
     if (is.null(articleset.name)) 
@@ -333,7 +148,7 @@ add_articles_to_set <- function(project, articles, conn=conn_from_env(), article
 #' 
 #' @examples
 #' \dontrun{
-#' conn = amcat_connect('https://amcat.nl')
+#' conn = amcat_connect('https://amcat.nl', 'username')
 #' 
 #' set_id = upload_articles(project = 1, articleset = 'example set', 
 #'                          headline = 'example', text = 'example',
@@ -377,41 +192,4 @@ upload_articles <- function(project, articleset, text, headline, date, medium, c
     if (resp$status_code != 201) stop("Unexpected status: ", resp$status_code, "\n", httr::content(resp, type="text/plain"))
   }
   invisible(articleset)
-}
-
-#' Scroll an amcat API page with 'next' link
-#'
-#' @param path the path to scroll
-#' @param conn the connection object from \code{\link{amcat_connect}}
-#' @param page_size the amount of pages per request
-#' @param ... additional query arguments
-#'
-#' @return a data frame of all returned rows
-scroll <- function(path, conn=conn_from_env(), page_size=100, ...) {
-  if (is.null(conn)) stop('conn not specified. Either provide conn as argument or run amcat_connect in the current session')
-  result = list()
-  url = httr::parse_url(conn$host)
-  url$path = path
-  if (!grepl('/$', path)) url$path = paste0(url$path, '/')
-  url$query = list(page_size=page_size, format="rda", ...)
-  url = httr::build_url(url)
-  httr::build_url
-  n = 0
-  while(!is.na(url)) {
-    h = RCurl::getCurlHandle()
-    message(url)
-    res = RCurl::getBinaryURL(url, .opts=get_opts(conn), curl=h)
-    if (RCurl::getCurlInfo(h)$response.code != 200) {
-      rrr = rawToChar(res)
-      stop("ERROR")
-    }
-    res = load_rda(res)  
-    subresult = res$results
-    n = n + nrow(subresult)
-    result = c(result, list(subresult))
-    message("Got ", nrow(subresult), " rows (total: ",n," / ", res$total,")")
-    url = res$`next`
-    if (nrow(subresult) < page_size) break
-  }
-  as.data.frame(data.table::rbindlist(result))
 }

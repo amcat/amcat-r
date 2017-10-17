@@ -36,7 +36,7 @@ The articles will be uploaded in batches of 100.
 }
 \examples{
 \dontrun{
-conn = amcat_connect('https://amcat.nl')
+conn = amcat_connect('https://amcat.nl', 'username')
 
 set_id = upload_articles(project = 1, articleset = 'example set', 
                          headline = 'example', text = 'example',
