@@ -10,42 +10,40 @@
 #' @param page_size the number of features (articles?) to include per call
 #' @param sentence a sentence (string) to be parsed if articleset id is not given
 #' @param only_cached if true, only get tokens that have already been preprocessed (recommended for large corpora!)
-#' @param ... additional arguments to get_pages
 #' @return A data frame of tokens
 #' @export
-get_tokens <- function(conn, project=NULL, articleset=NULL, module="elastic", 
+amcat.gettokens <- function(conn, project=NULL, articleset=NULL, module="elastic", 
                             filters=NULL,page_size=1, sentence=NULL, only_cached=F, ...) {
   # TODO: now do adhoc / articleset as completely different paths, converge?
   if (!is.null(articleset) & !is.null(project)) {
     if (only_cached) filters = c(filters, list(only_cached=as.numeric(only_cached)))
     filters = c(module=module, filters)
     path = paste("api", "v4", "projects", project, "articlesets", articleset, "tokens", "", sep="/")
-    result = get_pages(conn, path, page_size=page_size, rbind_results=F, filters=filters, ...)
-    result = make_pages_unique(result)
-    #result = plyr::rbind.fill(result)
-    result = as.data.frame(data.table::rbindlist(result))
+    result = amcat.getpages(conn, path, page_size=page_size, rbind_results=F, filters=filters, ...)
+    result = .make.pages.unique(result)
+    result = rbind.fill(result)
     result
   } else if (!is.null(sentence)) {
     filters = c(module=module, page_size=page_size, format='csv', sentence=sentence, filters)
     path = paste("api", "v4", "tokens", "", sep="/")
-    t = get_url(conn, path, filters)
-    readoutput(t, format='csv')
+    t = amcat.getURL(conn, path, filters)
+    .amcat.readoutput(t, format='csv')
   } else stop("Please provide project+articleset or sentence")
 } 
 
-#' Make the given columns unique within a context for a list of data frames
-#'  
-#' It will iterate over the list of data frames and make the given columns globally unique
-#' assuming they are unique within a context.
-#' E.g. if you have a list of pages containing tokens within articles, and sentence is unique
-#' within an article but not globally unique, this will make it globally unique.
-#'  
-#' @param result list of token data frames
-#' @param context name of the context column
-#' @param columns names of the columns to make unique
-#'  
-#' @return the original list with the columns made unique
-make_pages_unique <- function(result, context="aid", columns =  c("clause_id", "source_id", "coref", "sentence")) {
+# Make the given columns unique within a context for a list of data frames
+# 
+# It will iterate over the list of data frames and make the given columns globally unique
+# assuming they are unique within a context.
+# E.g. if you have a list of pages containing tokens within articles, and sentence is unique
+# within an article but not globally unique, this will make it globally unique.
+# 
+# @param result list of token data frames
+# @param context name of the context column
+# @param columns names of the columns to make unique
+# 
+# @return the original list with the columns made unique
+.make.pages.unique <- function(result, context="aid", columns =  c("clause_id", "source_id", "coref", "sentence")) {
   all_colnames = Reduce(function(a,b) unique(c(a,colnames(b))), init=NULL, result)
   for (col in intersect(all_colnames, columns)) {
     inc = 0
@@ -68,5 +66,5 @@ make_pages_unique <- function(result, context="aid", columns =  c("clause_id", "
 
 .make.unique <- function(context, col)  {
   values = interaction(context, col)
-  match(values, stats::na.omit(unique(values)))
+  match(values, na.omit(unique(values)))
 }
