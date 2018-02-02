@@ -50,21 +50,22 @@ amcat.aggregate <- function(conn, queries, labels=queries, sets, axis1=NULL, axi
 #' @return A data frame with hits per article
 #' @export
 amcat.hits <- function(conn, queries, labels=queries, sets,  minimal=T, warn.no.result=T, ...) {
-  result = NULL
+  result = list()
   
   for (i in 1:length(queries)) {
     q = paste("count", queries[i], sep="#")
     r = tryCatch(amcat.getobjects(conn, "search",filters=list(q=q, col="hits", sets=sets, minimal=minimal, ...)),
                  error=function(e) {warning("Error on querying '", labels[i], "': ", e$message); NULL})
     if (is.null(r)) next
+    r$hits = NULL
     
     label = if(grepl('#', queries[i])) gsub('#.*', '', queries[i]) else labels[i] 
     if (nrow(r) > 0) {
       r$query = label
-      result = rbind(result, r)
+      result[[i]] = r
     } else {
       if (warn.no.result) warning(paste("Query",label," produced no results"))
     }
   }
-  return(result)
+  dplyr::bind_rows(result)
 }
