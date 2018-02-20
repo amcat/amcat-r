@@ -26,4 +26,3 @@ The articleset id of the new or existing article set
 \description{
 Add the given article ids to a new or existing article set
 }
-

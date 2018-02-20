@@ -10,4 +10,3 @@ CharField(label = NA, initial = "", required = T, min_length = NA,
 \description{
 Use to create field objects for R plugins in AmCAT. See djangoFormFields().
 }
-

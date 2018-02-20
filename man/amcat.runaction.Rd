@@ -21,4 +21,3 @@ A dataframe containing the result of the action [WvA: shouldn't that depend on t
 \description{
 Run an action from the AmCAT API
 }
-

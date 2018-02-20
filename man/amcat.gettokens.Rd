@@ -31,4 +31,3 @@ A data frame of tokens
 \description{
 Get Tokens (pos, lemma etc) from AmCAT
 }
-

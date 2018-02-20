@@ -9,4 +9,3 @@ DecimalField(label = NA, initial = 0, required = T)
 \description{
 Use to create field objects for R plugins in AmCAT. See djangoFormFields().
 }
-

@@ -18,4 +18,3 @@ a character vector of regular expressions, with names added if given
 It is assumed that this will be used to filter single words/lemmata, so the query should only consist of a list of synonyms with optional wildcards.
 E.g. a query like (many* words*) is fine, but many AND words or "many words" will give an error.
 }
-

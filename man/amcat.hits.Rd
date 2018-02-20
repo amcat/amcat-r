@@ -25,4 +25,3 @@ A data frame with hits per article
 This function is similar to using the 'show article list' function in AmCAT. It allows you to specify a
 number of queries and get document metadata and number of hits per document
 }
-

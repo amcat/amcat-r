@@ -30,4 +30,3 @@ A dataframe containing the articles and the selected columns
 Uses the \code{\link{amcat.getobjects}} function to retrieve article metadata, and applies some
 additional postprocessing, e.g. to convert the data to Date objects.
 }
-

@@ -28,4 +28,3 @@ a quanteda corpus object
 \description{
 Download articles from AmCAT into a Quanteda corpus object
 }
-

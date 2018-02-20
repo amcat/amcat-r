@@ -9,4 +9,3 @@ ChoiceField(label = NA, choices, required = T, help_text = NA)
 \description{
 Use to create field objects for R plugins in AmCAT. See djangoFormFields().
 }
-

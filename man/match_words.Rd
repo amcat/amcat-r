@@ -21,4 +21,3 @@ This is intended as a 'drop-in' replacement for grepl and should give identical 
 This function first matches on the unique strings and then matches back to the original,
 so it will give a speedup iff length(unique(words)) << length(words)
 }
-

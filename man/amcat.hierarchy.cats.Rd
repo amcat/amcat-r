@@ -35,4 +35,3 @@ unemployment, economy, issue, economy
 environment, issue, issue, environment
 #'
 }
-

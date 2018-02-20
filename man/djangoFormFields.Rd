@@ -19,4 +19,3 @@ Create the form fields to be used for R plugins in AmCAT.
 djangoFormFields(field1=BooleanField(initial=F, required=F),
                  field2=IntegerField(initial=10, required=T))
 }
-

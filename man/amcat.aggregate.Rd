@@ -29,4 +29,3 @@ A data frame with hits per group
 This function is similar to using the 'show table' function in AmCAT. It allows you to specify a
 number of queries and get the number of hits per search term, per period, etc.
 }
-

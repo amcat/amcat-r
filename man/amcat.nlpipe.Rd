@@ -22,4 +22,3 @@ amcat.nlpipe(conn, project, articleset, module,
 \description{
 This requires vanatteveldt/nlpiper to be install as well
 }
-

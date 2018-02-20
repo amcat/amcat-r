@@ -29,4 +29,3 @@ dataframe
 \description{
 Get and rbind pages from the AmCAT API
 }
-

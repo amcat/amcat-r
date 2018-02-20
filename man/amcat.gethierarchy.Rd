@@ -19,4 +19,3 @@ A data frame with code, parent, and one column per language
 \description{
 Get the labels and parents for all codes in a codebook
 }
-

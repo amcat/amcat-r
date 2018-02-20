@@ -23,4 +23,3 @@ A list with authentication information that is used by the other functions in th
 Connect to the AmCAT API and requests a temporary (24h) authentication token that will be stored in the output
 The host should be known in the ~/.amcatauth file, you can use amcat.save.password to add a password to this file
 }
-

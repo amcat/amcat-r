@@ -19,4 +19,3 @@ A dataframe of objects (rows) by properties (columns)
 \description{
 Get a table of objects from the AmCAT API, e.g. projects, sets etc.
 }
-

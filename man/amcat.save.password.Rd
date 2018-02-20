@@ -20,4 +20,3 @@ amcat-r uses the file '~/.amcatauth' to read credentials for connecting to serve
 to prevent passwords from appearing in script files. This function will update
 the .amcatauth file (if present) to add or change the password for the given host
 }
-

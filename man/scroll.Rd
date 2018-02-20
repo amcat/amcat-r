@@ -21,4 +21,3 @@ a data frame of all returned rows
 \description{
 Scroll an amcat API page with 'next' link
 }
-

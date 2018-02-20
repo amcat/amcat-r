@@ -12,4 +12,3 @@ amcat.flush(conn)
 \description{
 Ask AmCAT to flush the elasticsearch
 }
-

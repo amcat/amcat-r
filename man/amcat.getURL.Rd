@@ -23,4 +23,3 @@ the raw result
 \description{
 Retrieve a single URL from AmCAT with authentication and specified filters (GET or POST)
 }
-

@@ -32,4 +32,3 @@ For date, please provide either a string in ISO notatoin (i.e. "2010-12-31" or "
 or a variable that can be converted to string using format(), e.g. Date, POSIXct or POSIXlt. 
 The articles will be uploaded in batches of 100.
 }
-
