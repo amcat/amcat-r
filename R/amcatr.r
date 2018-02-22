@@ -173,25 +173,21 @@ amcat.getpages <- function(conn, path, format=NULL, page=1, page_size=1000, filt
   
 .read.version <- function(vstr) {
   if (!is.null(vstr)) {
-    m = str_match(vstr, "(\\d+)\\.(\\d+)\\.(\\d+)\\s*")
+    m = str_match(vstr, "(\\d+)\\.(\\d+)\\.(\\w+)\\s*")
     if (!is.na(m[[1]]))  {
-      v = as.numeric(m[-1])
-      names(v) = c("major", "minor", "patch")
-      return(v)
+      return(list(major=as.numeric(m[[2]]), minor=as.numeric(m[[3]]), patch=m[[4]]))
     }
   }
-  c(major=0, minor=0, patch=0)
+  list(major=0, minor=0, patch=0)
 }
 
 .has.version <- function(actual, required) {
   actual = .read.version(actual)
   required = .read.version(required)
   
-  if (actual["major"] > required["major"]) return(T)
-  if (actual["major"] < required["major"]) return(F)
-  if (actual["minor"] > required["minor"]) return(T)
-  if (actual["minor"] < required["minor"]) return(F)
-  return(actual["patch"] >= required["patch"])
+  if (actual[["major"]] > required[["major"]]) return(T)
+  if (actual[["major"]] < required[["major"]]) return(F)
+  return(actual[["minor"]] >= required[["minor"]])
 }
 
 
@@ -435,7 +431,7 @@ scroll <- function(conn, path, page_size=100, ...) {
     h = getCurlHandle()
     message(url)
     res = getBinaryURL(url, httpheader=httpheader, .opts=conn$opts, curl=h)
-    if (getCurlInfo(h)$response.code != 200) stop("ERROR")
+    if (getCurlInfo(h)$response.code != 200) stop("Error on scrolling:", getCurlInfo(h)$response.code)
     res = .load.rda(res)  
     subresult = res$results
     n = n + nrow(subresult)
