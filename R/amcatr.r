@@ -16,7 +16,7 @@ amcat.connect <- function(host,token=NULL, disable_ipv6=TRUE, ssl.verifypeer=FAL
   opts = list(ssl.verifypeer = ssl.verifypeer)
   if (disable_ipv6) opts = c(opts, list(ipresolve=1))
   
-  
+  path= '/api/v4/get_token'
   if (is.null(token)) {
       a = tryCatch(.readauth(host, passwordfile=passwordfile), error=function(e) warning("Could not read ", passwordfile))
       if (is.null(a)) stop("Cannot find password in ", passwordfile, ", please add an entry to this file by using amcat.save.password!")
@@ -24,16 +24,19 @@ amcat.connect <- function(host,token=NULL, disable_ipv6=TRUE, ssl.verifypeer=FAL
       passwd = a$password
       
     # get auth token
-    url = paste(host, '/api/v4/get_token', sep='')
-    
+    url = paste(host, path, sep='')
     res = tryCatch(postForm(url, username=username, password=passwd, .checkParams=F, .opts=opts), 
                    error=function(e) stop(paste("Could not get token from ",
                                                  username,"@", host,
                                                  " please check host, username and password. Error: ", e, sep="")))
-    token = fromJSON(res)$token
-    version = fromJSON(res)$version
-    if (is.null(version)) version = "0"
-  }
+    } else {
+     conn = list(host=host, token=token, opts=opts)
+     res = amcat.getURL(conn, "/api/v4/get_token", post=T, filters=list(dummy=1)) # dummy to prevent warning msg, sorry
+      }
+  token = fromJSON(res)$token
+  version = fromJSON(res)$version
+  if (is.null(version)) version = "0"
+  
   list(host=host, token=token, version=version, opts=opts)
 }
 
@@ -113,7 +116,6 @@ amcat.getURL <- function(conn, path, filters=NULL, post=FALSE, post_options=list
     }
     result
   } else {  
-    
     post_opts = modifyList(conn$opts, list(httpheader=httpheader))    
     post_opts = modifyList(post_opts, post_options)
     postForm(build_url(url), .params=filters, .opts=post_opts)
