@@ -347,14 +347,21 @@ amcat.add.articles.to.set <- function(conn, project, articles, articleset=NULL,
     message("Created articleset ", articleset, ": ", articleset.name," in project ", project)
   }
   if (!is.null(articles)) {
+    message("Adding ",length(articles), " articles to set ", articleset)
     #idlist = lapply(articles, function(x) list(id=x))
     idlist = articles
     url = paste(conn$host, "api", "v4", "projects",project, "articlesets", articleset, "articles", "", sep="/")
     
-    resp = POST(url, body=toJSON(idlist), content_type_json(), accept_json(), add_headers(Authorization=paste("Token", conn$token)))
-    if (resp$status_code != 201) stop("Unexpected status: ", resp$status_code, "\n", httr::content(resp, type="text/plain"))
+    
+    chunks = split(articles, ceiling(seq_along(articles)/1000))
+    for (i in seq_along(chunks)) {
+      chunk = chunks[[i]]
+      if (length(chunks) > 1) message("  [", i, "/", length(chunks), "] Adding ", length(chunk), " articles")
+      resp = POST(url, body=toJSON(chunk), content_type_json(), accept_json(), add_headers(Authorization=paste("Token", conn$token)))
+      if (resp$status_code != 201) stop("Unexpected status: ", resp$status_code, "\n", httr::content(resp, type="text/plain"))
+    }
   }
-  articleset
+  invisible(articleset)
 }
 
 #' Upload new articles to AmCAT
