@@ -53,9 +53,9 @@ amcat.get.job.codings <- function(conn, project, job, coded_article_ids) {
     codings = amcat.getobjects(conn, c(base, "coded_articles", id, "codings"), format="json", verbose=F)
     for (coding in codings) {
       v = list.to.df(coding$values)
+      if (nrow(v) == 0) next
       v$coding_id = coding$id 
       v$id = NULL # codingvalue_id is not relevant
-      if (nrow(v) == 0) next
       v$coded_article = coding$coded_article
       v$sentence = coding$sentence
       result[[as.character(coding$id)]] = v
