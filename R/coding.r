@@ -53,6 +53,8 @@ amcat.get.job.codings <- function(conn, project, job, coded_article_ids) {
     codings = amcat.getobjects(conn, c(base, "coded_articles", id, "codings"), format="json", verbose=F)
     for (coding in codings) {
       v = list.to.df(coding$values)
+      v$coding_id = coding$id 
+      v$id = NULL # codingvalue_id is not relevant
       if (nrow(v) == 0) next
       v$coded_article = coding$coded_article
       v$sentence = coding$sentence
@@ -65,25 +67,27 @@ amcat.get.job.codings <- function(conn, project, job, coded_article_ids) {
 
 #' Process a 'long' list of raw codings into a 'wide' data frame with a column per coded variable
 process.codings <- function(codings, fields, codes) {
-  # field types:  TEXT = 1     INT = 2     CODEBOOK = 5     BOOLEAN = 7     QUALITY = 9
-  
   if (length(unique(fields$label)) != nrow(fields)) stop("Duplicate label!")
-  result = unique(codings[c("coded_article", "sentence")])
+  result = unique(codings[c("coded_article", "sentence", "coding_id")])
   for (field in unique(codings$field)) {
     f = fields[fields$id == field,]
+    # field types:  TEXT = 1     INT = 2     CODEBOOK = 5     BOOLEAN = 7     QUALITY = 9
     if (f$fieldtype == 1) {
-      col = subset(codings, field == f$id, select=c("coded_article", "sentence", "strval"))
+      col = subset(codings, field == f$id, select=c("coding_id", "strval"))
     } else {
-      col = subset(codings, field == f$id, select=c("coded_article", "sentence", "intval"))
+      col = subset(codings, field == f$id, select=c("coding_id", "intval"))
       if (f$fieldtype == 5) col$intval = codes$label[match(col$intval, codes$code)]
       if (f$fieldtype == 7) col$intval = col$intval == 1
       if (f$fieldtype == 9) col$intval = col$intval / 10
     }
-    colnames(col)[3] = as.character(f$label)
+    colnames(col)[2] = as.character(f$label)
     result = merge(result, col, all.x=T)
   }
   result
 }
+
+.STATUSCODES=c(NOT_STARTED=0, IN_PROGRESS=1, COMPLETE=2, IRRELEVANT=9)
+
 
 #' Get the results of a codingjob
 #' 
@@ -100,21 +104,21 @@ amcat.get.codingjob.results <- function(conn, project, job) {
   fields = amcat.getobjects(conn, c(base, "codingschemafields"))
   codes = amcat.get.job.codes(conn, project, job)
   articles = amcat.getobjects(conn, c(base, "coded_articles"))
-  articles = dplyr::select(articles, codingjob=codingjob, article_id=article_id, coded_article=id, status=status, comments=comments)
+  articles = dplyr::transmute(articles, codingjob=codingjob, article_id=article_id, coded_article=id, 
+                              status=names(.STATUSCODES)[match(articles$status, .STATUSCODES)], comments=as.character(comments))
+  
   codings = amcat.get.job.codings(conn, project, job, articles$coded_article)
-  
-  status_codes=c(NOT_STARTED=0, IN_PROGRESS=1, COMPLETE=2, IRRELEVANT=9)
-  articles$status = names(status_codes)[match(articles$status, status_codes)]
-  
   # if no article codings, only return article meta
   if (nrow(codings) == 0) return(list(article.codings=articles))
   
   has_scodings = "sentence" %in% names(codings)
   if (!has_scodings) codings$sentence = NA
   acodings = dplyr::select(process.codings(subset(codings, is.na(sentence)), fields, codes), -sentence)
+  articles
   result = list(article.codings = merge(articles, acodings, all.x = T))
   if (has_scodings) {
-    result[["sentence.codings"]] = merge(dplyr::select(articles, -status, -comments), process.codings(subset(codings, !is.na(sentence)), fields, codes))
+    scodings = process.codings(subset(codings, !is.na(sentence)), fields, codes)
+    result[["sentence.codings"]] = merge(dplyr::select(articles, -status, -comments), scodings)
   }
   result
 }
