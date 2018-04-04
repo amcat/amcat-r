@@ -6,7 +6,7 @@
 \usage{
 amcat.getURL(conn, path, filters = NULL, post = FALSE,
   post_options = list(), error_unless_200 = TRUE, null_on_404 = FALSE,
-  binary = FALSE)
+  binary = FALSE, verbose = TRUE)
 }
 \arguments{
 \item{conn}{the connection object from \code{\link{amcat.connect}}}

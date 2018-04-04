@@ -6,7 +6,7 @@
 \usage{
 amcat.getpages(conn, path, format = NULL, page = 1, page_size = 1000,
   filters = NULL, post = FALSE, post_options = list(), max_page = NULL,
-  rbind_results = T)
+  rbind_results = format != "json", verbose = TRUE)
 }
 \arguments{
 \item{conn}{the connection object from \code{\link{amcat.connect}}}

@@ -4,21 +4,24 @@
 \alias{amcat.create.codingjob}
 \title{Create a new codingjob}
 \usage{
-amcat.create.codingjob(conn, project, codingjobname, articleset = articleset,
-  coder = coder, articleschema = NULL, unitschema = NULL)
+amcat.create.codingjob(conn, project, codingjobname, coder,
+  articleschema = NULL, unitschema = NULL, articleset = NULL,
+  articles = NULL)
 }
 \arguments{
 \item{conn}{the connection object from \code{\link{amcat.connect}}}
 
 \item{project}{the project to add the articles to}
 
-\item{articleset}{the article set id of an existing set, or the name of a new set to create}
-
 \item{coder}{the ID of the coder to assign the job to}
 
 \item{articleschema}{the ID of the articleschema (may be ommitted)}
 
 \item{unitschema}{the ID of the unit (sentence) schema (may be ommitted)}
+
+\item{articleset}{the article set id of an existing set, or the name of a new set to create}
+
+\item{articlesarticle}{IDs to be added to this coding job. Ignored if articleset is an ID}
 }
 \description{
 Create a new codingjob

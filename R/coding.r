@@ -24,3 +24,97 @@ amcat.create.codingjob <- function(conn, project, codingjobname, coder, articles
   invisible(content(resp)$id)
 }
 
+
+#' Convert a list of rows (named list) into a data frame
+list.to.df = function(x, stringsAsFactors=F) {
+  dplyr::bind_rows(lapply(x, function(f) {
+    as.data.frame(Filter(Negate(is.null), f), stringsAsFactors=stringsAsFactors)
+  }))
+}
+
+#' Get the codebook codes for a job
+amcat.get.job.codes <- function(conn, project, job) {
+  base = c("projects", project, "codingjobs", job)
+  codebooks = amcat.getobjects(conn, c(base, "codebooks"), page_size=99999, format="json")
+  codes = list()
+  for(cb in codebooks) {
+    codes[[as.character(cb$id)]] = data.frame(label = sapply(cb$codes, function(x) x$label), code=sapply(cb$codes, function(x) x$code), stringsAsFactors = F)
+  }
+  unique(dplyr::bind_rows(codes))
+}
+
+# ' Get the 'raw' codings for a job
+amcat.get.job.codings <- function(conn, project, job, coded_article_ids) {
+  base = c("projects", project, "codingjobs", job)
+  bar = utils::txtProgressBar(max=length(coded_article_ids), style=3)
+  result = list()
+  for (id in coded_article_ids) {
+    bar$up(bar$getVal()+1)
+    codings = amcat.getobjects(conn, c(base, "coded_articles", id, "codings"), format="json", verbose=F)
+    for (coding in codings) {
+      v = list.to.df(coding$values)
+      if (nrow(v) == 0) next
+      v$coded_article = coding$coded_article
+      v$sentence = coding$sentence
+      result[[as.character(coding$id)]] = v
+    }
+  }
+  bar$kill()
+  dplyr::bind_rows(result)
+}
+
+#' Process a 'long' list of raw codings into a 'wide' data frame with a column per coded variable
+process.codings <- function(codings, fields, codes) {
+  # field types:  TEXT = 1     INT = 2     CODEBOOK = 5     BOOLEAN = 7     QUALITY = 9
+  
+  if (length(unique(fields$label)) != nrow(fields)) stop("Duplicate label!")
+  result = unique(codings[c("coded_article", "sentence")])
+  for (field in unique(codings$field)) {
+    f = fields[fields$id == field,]
+    if (f$fieldtype == 1) {
+      col = subset(codings, field == f$id, select=c("coded_article", "sentence", "strval"))
+    } else {
+      col = subset(codings, field == f$id, select=c("coded_article", "sentence", "intval"))
+      if (f$fieldtype == 5) col$intval = codes$label[match(col$intval, codes$code)]
+      if (f$fieldtype == 7) col$intval = col$intval == 1
+      if (f$fieldtype == 9) col$intval = col$intval / 10
+    }
+    colnames(col)[3] = as.character(f$label)
+    result = merge(result, col, all.x=T)
+  }
+  result
+}
+
+#' Get the results of a codingjob
+#' 
+#' (note: current implementation is fairly slow because )
+#' 
+#' @param conn the connection object from \code{\link{amcat.connect}}
+#' @param project project ID
+#' @param job coding job ID
+#' 
+#' @result a list with article.codings and (if available) sentence.codings
+#' @export
+amcat.get.codingjob.results <- function(conn, project, job) {
+  base = c("projects", project, "codingjobs", job)
+  fields = amcat.getobjects(conn, c(base, "codingschemafields"))
+  codes = amcat.get.job.codes(conn, project, job)
+  articles = amcat.getobjects(conn, c(base, "coded_articles"))
+  articles = dplyr::select(articles, codingjob=codingjob, article_id=article_id, coded_article=id, status=status, comments=comments)
+  codings = amcat.get.job.codings(conn, project, job, articles$coded_article)
+  
+  status_codes=c(NOT_STARTED=0, IN_PROGRESS=1, COMPLETE=2, IRRELEVANT=9)
+  articles$status = names(status_codes)[match(articles$status, status_codes)]
+  
+  # if no article codings, only return article meta
+  if (nrow(codings) == 0) return(list(article.codings=articles))
+  
+  has_scodings = "sentence" %in% names(codings)
+  if (!has_scodings) codings$sentence = NA
+  acodings = dplyr::select(process.codings(subset(codings, is.na(sentence)), fields, codes), -sentence)
+  result = list(article.codings = merge(articles, acodings, all.x = T))
+  if (has_scodings) {
+    result[["sentence.codings"]] = merge(dplyr::select(articles, -status, -comments), process.codings(subset(codings, !is.na(sentence)), fields, codes))
+  }
+  result
+}

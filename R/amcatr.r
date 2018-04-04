@@ -78,7 +78,7 @@ amcat.save.password <- function(host, username, password, passwordfile="~/.amcat
 #' @param post use HTTP POST instead of GET
 #' @return the raw result
 #' @export
-amcat.getURL <- function(conn, path, filters=NULL, post=FALSE, post_options=list(), error_unless_200=TRUE, null_on_404=FALSE, binary=FALSE) {
+amcat.getURL <- function(conn, path, filters=NULL, post=FALSE, post_options=list(), error_unless_200=TRUE, null_on_404=FALSE, binary=FALSE, verbose=TRUE) {
   httpheader = c(Authorization=paste("Token", conn$token))
   url = parse_url(conn$host)
   url$path = paste(path, sep="/")
@@ -91,7 +91,7 @@ amcat.getURL <- function(conn, path, filters=NULL, post=FALSE, post_options=list
     
     # build GET url query
     url = build_url(url)
-    message("GET ", url)
+    if (verbose) message("GET ", url)
     urlfunc = if (binary) getBinaryURL else getURL
     result = urlfunc(url, httpheader=httpheader, .opts=conn$opts, curl=h)
     if (getCurlInfo(h)$response.code != 200){
@@ -136,7 +136,8 @@ amcat.getURL <- function(conn, path, filters=NULL, post=FALSE, post_options=list
 #' @return dataframe 
 #' @export
 amcat.getpages <- function(conn, path, format=NULL, page=1, page_size=1000, filters=NULL, 
-                           post=FALSE, post_options=list(), max_page=NULL, rbind_results=T) {
+                           post=FALSE, post_options=list(), max_page=NULL, rbind_results=format != "json",
+                           verbose=TRUE) {
 
   if (is.null(format)) format = if (.has.version(conn$version, "3.4.2")) "rda" else "csv" 
   filters = c(filters, page_size=page_size, format=format)
@@ -145,20 +146,25 @@ amcat.getpages <- function(conn, path, format=NULL, page=1, page_size=1000, filt
   while (TRUE) {
     if (!is.null(max_page)) if (page > max_page) break
     page_filters = c(filters, page=page)
-    subresult = amcat.getURL(conn, path, page_filters, post=post, post_options, binary = format=="rda", null_on_404 = format != "rda")
+    subresult = amcat.getURL(conn, path, page_filters, post=post, post_options, binary = format=="rda", null_on_404 = format != "rda", verbose=verbose)
     if (format == "rda") {
       res = .load.rda(subresult)
       npages = res$pages
       subresult = res$result
       result = c(result, list(subresult))
       if (page >= npages) break
-    } else {
+    } else if (format == "json") {
+      subresult = .amcat.readoutput(subresult, format=format)
+      npages = subresult$pages
+      result = c(result, subresult$results)
+      if (page >= npages) break
+    } else  {
       if (is.null(subresult) || subresult == "") break
       subresult = .amcat.readoutput(subresult, format=format)
       result = c(result, list(subresult))
       if(nrow(subresult) < page_size) break
     }
-    message("Retrieved page ",page,"/",npages, "; last page had ", nrow(subresult), " result rows")
+    if (verbose) message("Retrieved page ",page,"/",npages, "; last page had ", nrow(subresult), " result rows")
     page = page + 1
   }
   if (rbind_results) result = rbind.fill(result)
