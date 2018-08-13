@@ -21,12 +21,13 @@
 #' @export
 #'
 #' @examples
-get_corpus <- function(project, articleset=NULL, articles=NULL, conn=conn_from_env(), uuid=NULL, text_columns = c('headline','byline','text'), meta_columns=NULL, time=F, dateparts=F, page_size=10000, format = c('quanteda_corpus','tcorpus'), ...){
+get_corpus <- function(project, articleset=NULL, articles=NULL, conn=conn_from_env(), uuid=NULL, text_columns = c('headline','byline','text'), meta_columns=NULL, time=F, dateparts=F, page_size=1000, format = c('quanteda_corpus','tcorpus','data.frame'), ...){
   format = match.arg(format)
   if (!is.null(meta_columns)) meta_columns = union(meta_columns, text_columns)
   result = get_articles(project=project, articleset=articleset, articles=articles, conn=conn, uuid=uuid, columns=meta_columns, time=time, dateparts=dateparts, page_size=page_size, text_columns=text_columns)
   if (format == 'quanteda_corpus') result = as_quanteda_corpus(result, text_columns, ...)  
   if (format == 'tcorpus') result = as_tcorpus(result, text_columns, ...)
+  result
 }
 
 

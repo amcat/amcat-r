@@ -90,6 +90,10 @@ load_rda <- function(bytes) {
 
 read_response <- function(res, only_2xx=T) {
   error_handling(res, only_2xx)
+  parse_response(res)
+}
+
+parse_response <- function(res) {
   ct = res$headers$`content-type`
   if (is.null(ct)) return(NULL)
   if (grepl('application/x-r-rda', ct)) return(load_rda(res$content))
@@ -100,7 +104,7 @@ read_response <- function(res, only_2xx=T) {
 error_handling <- function(res, only_2xx) {
   code_class = floor(res$status_code/100)
   if (code_class != 2 && only_2xx){
-    res_msg = read_response(res)
+    res_msg = parse_response(res)
     if (!methods::is(res_msg, 'character')) res_msg = rjson::toJSON(res_msg)
     fn = tempfile()
     write(res_msg, file=fn)

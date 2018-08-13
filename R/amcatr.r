@@ -1,7 +1,7 @@
 #' Get article data from AmCAT
 #'
 #' Retrieve article data. Be default only returns basic meta data ("id","date","title"),
-#' but any available article data can be retrieved, including text.
+#' but any available article data can be retrieved.
 #' 
 #' If "date" is included, it will be returned as either a Date (default) or as a POSIXct (if time is TRUE)
 #'
@@ -124,7 +124,7 @@ add_articles_to_set <- function(project, articles, conn=conn_from_env(), article
     resp = httr::POST(url, body=rjson::toJSON(idlist), httr::content_type_json(), httr::accept_json(), httr::add_headers(Authorization=paste("Token", conn$token)))
     if (resp$status_code != 201) stop("Unexpected status: ", resp$status_code, "\n", httr::content(resp, type="text/plain"))
   }
-  articleset
+  invisible(articleset)
 }
 
 #' Upload new articles to AmCAT

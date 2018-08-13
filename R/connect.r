@@ -33,6 +33,7 @@
 #' @export
 amcat_connect <- function(host=NULL, username=NULL, token=NULL, disable_ipv6=TRUE, ssl.verifypeer=TRUE, conn=NULL) {
   if (is.null(conn)) {
+    if (is.null(host) | is.null(username)) stop('If no connection (conn) is given, host and username are required')
     conn = structure(list(host = host, 
                           username = username,
                           token = token, 
@@ -73,7 +74,6 @@ get_headers <- function(conn, ...) {
   do.call(httr::add_headers, args = l)
 }
 
-
 conn_to_env <- function(conn) {
   if(!methods::is(conn, 'amcatConnection')) stop("conn is not an amcatConnection object")
   Sys.setenv(AMCAT_CONNECTION = rjson::toJSON(conn))
@@ -87,7 +87,7 @@ conn_from_env <- function(){
             class = 'amcatConnection')
 }
 
-get_token <- function(conn) {
+get_token <- function(conn, min_version='3.4.1') {
   url = httr::parse_url(conn$host)
   url$path = '/api/v4/get_token'
   
@@ -105,7 +105,18 @@ get_token <- function(conn) {
       stop(paste("Could not get token for ", conn$username,"@", conn$host, " please check host, username and password"))
     }
   }
-  read_response(res)$token
+  
+  res = read_response(res)
+  verify_version(res, min_version)
+  res$token
+}
+
+verify_version <- function(res, min_version) {
+  version = gsub('[a-zA-Z]*', '', res$version)
+  if (compareVersion(version, min_version) < 0) {
+    e = 'VERSION ERROR. This version of amcatr only works for AmCAT servers >= %s (current server runs %s). To connect to the current server, you can use an older version of amcatr hosted on github under amcat/amcat-r .'
+    stop(sprintf(e, min_version, version), call. = F)
+  }
 }
 
 #' S3 print method for amcatConnection (API connection) objects

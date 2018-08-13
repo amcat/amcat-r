@@ -1,6 +1,6 @@
 #' Process an articleset with nlpipe
 #' 
-#' This requires vanatteveldt/nlpiper to be install as well
+#' This requires vanatteveldt/nlpiper to be installed as well
 #' 
 #' @param project the amcat project id
 #' @param articleset the amcat articleset id
