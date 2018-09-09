@@ -2,27 +2,29 @@
 % Please edit documentation in R/http.r
 \name{get_pages}
 \alias{get_pages}
-\title{A wrapper for get_url to get data from multiple pages}
+\title{A wrapper for request to get data from multiple pages}
 \usage{
-get_pages(path, conn, param = list(), page_size = 500, start_page = 1,
-  end_page = NA, verbose = T, ...)
+get_pages(branch, param = list(), page_size = 500, start_page = 1,
+  end_page = NA, as_dt = F, conn = conn_from_env(), verbose = T, ...)
 }
 \arguments{
-\item{path}{the path of the url to retrieve (using the host from conn)}
-
-\item{conn}{the connection object from \code{\link{amcat_connect}}}
+\item{branch}{a character vector with the names and values of the API resources. For example, use c('projects', 1, 'articlesets', 10) for the url host/api/v4/projects/1/articlesets/10}
 
 \item{param}{a named vector of parameters, e.g. c(project=2, articleset=3)}
 
 \item{page_size}{an integer, specifying the number of items per page}
+
+\item{as_dt}{if TRUE, return as data.table (for internal use: more efficient, but confusing for user)}
+
+\item{conn}{the connection object from \code{\link{amcat_connect}}}
 
 \item{verbose}{if TRUE, report size of data to be retrieved and report progress}
 
 \item{...}{additional parameters (param) in name-value pairs}
 }
 \value{
-the raw result
+The response
 }
 \description{
-A wrapper for get_url to get data from multiple pages
+A wrapper for request to get data from multiple pages
 }

@@ -5,7 +5,7 @@
 #'
 #' @param project the project of a set to retrieve metadata from
 #' @param articleset the article set id to retrieve - provide either this or articleset
-#' @param articles the article ids to retrieve - provide either this or articleset
+#' @param articles the article ids to retrieve - provide either this or articleset (only works on latest versions of AmCAT)
 #' @param conn the connection object from \code{\link{amcat_connect}}
 #' @param uuid like the articles argument, but using the universally unique identifier (uuid)
 #' @param text_columns The columns that contain the article text. If multiple columns are given (e.g., headline, text), they are pasted together (separated by a double linebreak)
@@ -13,7 +13,7 @@
 #' @param time if true, parse the date as POSIXct datetime instead of Date
 #' @param dateparts if true, add date parts (year, month, week)
 #' @param page_size the number of articles per (downloaded) page
-#' @param format determine whether article data is returned as a "data.frame", "quanteda_corpus" (requires quanteda package) or "tcorpus" (requires corpustools package). 
+#' @param format determine whether article data is returned as a "data.frame", "quanteda_corpus" (default, but requires quanteda package) or "tcorpus" (requires corpustools package). 
 #' @param ... additional arguments are passed to quanteda::corpus or corpustools::create_tcorpus. 
 #
 #'

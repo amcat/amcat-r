@@ -7,14 +7,15 @@
 get_corpus(project, articleset = NULL, articles = NULL,
   conn = conn_from_env(), uuid = NULL, text_columns = c("headline",
   "byline", "text"), meta_columns = NULL, time = F, dateparts = F,
-  page_size = 10000, format = c("quanteda_corpus", "tcorpus"), ...)
+  page_size = 1000, format = c("quanteda_corpus", "tcorpus", "data.frame"),
+  ...)
 }
 \arguments{
 \item{project}{the project of a set to retrieve metadata from}
 
 \item{articleset}{the article set id to retrieve - provide either this or articleset}
 
-\item{articles}{the article ids to retrieve - provide either this or articleset}
+\item{articles}{the article ids to retrieve - provide either this or articleset (only works on latest versions of AmCAT)}
 
 \item{conn}{the connection object from \code{\link{amcat_connect}}}
 
@@ -30,7 +31,7 @@ get_corpus(project, articleset = NULL, articles = NULL,
 
 \item{page_size}{the number of articles per (downloaded) page}
 
-\item{format}{determine whether article data is returned as a "data.frame", "quanteda_corpus" (requires quanteda package) or "tcorpus" (requires corpustools package).}
+\item{format}{determine whether article data is returned as a "data.frame", "quanteda_corpus" (default, but requires quanteda package) or "tcorpus" (requires corpustools package).}
 
 \item{...}{additional arguments are passed to quanteda::corpus or corpustools::create_tcorpus.}
 }

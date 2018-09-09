@@ -5,26 +5,31 @@
 \title{Connect to the AmCAT API}
 \usage{
 amcat_connect(host = NULL, username = NULL, token = NULL,
-  disable_ipv6 = TRUE, ssl.verifypeer = TRUE, conn = NULL)
+  disable_ipv6 = TRUE, ssl.verifypeer = TRUE, conn = NULL,
+  .password = NULL)
 }
 \arguments{
-\item{host}{the hostname, e.g. https://amcat.nl or http://localhost:8000}
+\item{host}{The hostname, e.g. https://amcat.nl or http://localhost:8000}
 
-\item{username}{an existing username on the host server}
+\item{username}{An existing username on the host server}
 
-\item{token}{an existing token to authenticate with. If given (and valid), no password has to be entered}
+\item{token}{An existing token to authenticate with. If given (and valid), no password has to be entered}
 
 \item{disable_ipv6}{If True, only use ipv4 resolving (faster if ipv6 causes timeout). Defaults to true, but this may change in the future.}
 
 \item{ssl.verifypeer}{If True, verifies the authenticity of the peer's certificate}
 
-\item{conn}{an existing AmCAT connection object. If provided, the connection will be opened (if not yet open) and refreshed (i.e. new token). The other arguments are ignored.}
+\item{conn}{An existing AmCAT connection object. If provided, the connection will be opened (if not yet open) and refreshed (i.e. new token). The other arguments are ignored.}
+
+\item{.password}{Optionally, the password can be passed as an argument, but this is not recommended.}
 }
 \value{
 A S3 class (amcatConnection) with authentication information that is used by the other functions in this package
 }
 \description{
-Connect to the AmCAT API and request or refresh a temporary (48h) authentication token.
+Connect to the AmCAT API and request or refresh a temporary (48h) authentication token. The typical mode of use is to provide the
+'host' (url) of the AmCAT server and a 'username'. The password will then be requested in a separate prompt, to avoid putting your password (unsafely)
+in the script.
 }
 \details{
 The token can be used in two ways. Firstly, after running amcat_connect, the token will automatically be used

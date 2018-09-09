@@ -2,32 +2,44 @@
 % Please edit documentation in R/query.r
 \name{get_hits}
 \alias{get_hits}
-\title{Conduct a query on amcat}
+\title{Perform a query on AmCAT}
 \usage{
-get_hits(queries, sets, conn = conn_from_env(), labels = queries,
-  minimal = T, warn.no.result = T, ...)
+get_hits(project, articleset, queries = "*", labels = substr(queries, 0,
+  25), start_date = NULL, end_date = NULL, hits = T, columns = NULL,
+  conn = conn_from_env(), verbose = T, ...)
 }
 \arguments{
-\item{queries}{a vector of queries to run}
+\item{project}{The project id}
 
-\item{sets}{one or more article set ids to query on}
+\item{articleset}{One or more article set ids to query on. If NULL, all sets in the project will be used.}
 
-\item{conn}{the connection object from \code{\link{amcat_connect}}}
+\item{queries}{A character vector with queries. Default is the special case "*" which finds anything and is automatically given the label "total".}
 
-\item{labels}{if given, labels corresponding to the queries. Alternatively, if a query starts with a label and a hashtag (e.g., label# "term1 term2"), this label is used.}
+\item{labels}{If given, labels corresponding to the queries. Alternatively, if a query starts with a label and a hashtag (e.g., "label# term1 AND term2"), this label is used.}
 
-\item{minimal}{if TRUE, returns only hits per document. if set to FALSE, includes more meta data}
+\item{start_date}{Search only from given date. Must be either a date type (Date, POSIXct or POSIXlt) or a}
 
-\item{warn.no.result}{if TRUE, yield a warning in case no results were found}
+\item{hits}{If TRUE (default) return number of hits per query per documents. If FALSE, only return documents.}
 
-\item{...}{additional arguments to pass to the AmCAT API, e.g. extra filters}
+\item{columns}{Optionally, request additional fields (e.g., date, title, ) to be included as columns.}
+
+\item{conn}{t     The connection object from \code{\link{amcat_connect}}}
+
+\item{verbose}{If TRUE, report progress}
+
+\item{...}{additional arguments to pass to the AmCAT API}
 }
 \value{
 A data frame with hits per article
 }
 \description{
 This function is similar to using the 'show article list' function in AmCAT. It allows you to specify a
-number of queries and get document metadata and number of hits per document
+number of queries and get document metadata and number of hits per document.
+}
+\details{
+The output will contain a column for each query. The column names can be specified with the labels argument, 
+or by adding the label to the query itself, separated with a hashtag: "label# query". 
+If no labels are given, the queries themselves are used as column names (up to 25 characters)
 }
 \examples{
 \dontrun{

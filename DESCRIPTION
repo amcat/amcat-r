@@ -5,7 +5,7 @@ Title: R bindings for the AmCAT API
 Author: Wouter van Atteveldt and Kasper Welbers
 Maintainer: Wouter van Atteveldt <wouter@vanatteveldt.com>
 Imports: 
-    rjson,
+    jsonlite,
     RCurl,
     stringr,
     httr,
@@ -15,8 +15,7 @@ Imports:
 Suggests: 
     testthat,
     quanteda,
-    corpustools,
-    nlpiper
+    corpustools
 Remotes:
     github::vanatteveldt/nlpiper
 Description: Functions to call the AmCAT API.

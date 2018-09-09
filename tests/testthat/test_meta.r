@@ -1,3 +1,5 @@
+context('AmCAT-R meta data')
+
 conn = conn_from_env()
 
 if(is.null(conn)){
@@ -5,7 +7,7 @@ if(is.null(conn)){
 } else {
   testthat::test_that("Article metadata", {
     # add to new set
-    aset = upload_articles(project=1, articleset="Test set from unit tests", text="text", headline="headline", 
+    aset = create_articles(project=1, articleset="Test set from unit tests", text="text", headline="headline", 
                                  medium="test", date="2010-02-03T12:34")
     meta = get_articles(1, aset, columns=c("medium", "date", "headline", "text"))
     testthat::expect_equal(nrow(meta), 1)
