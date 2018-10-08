@@ -109,7 +109,7 @@ amcat.codingjob.results <- function(conn, project, job) {
   codes = amcat.get.job.codes(conn, project, job)
   articles = amcat.getobjects(conn, c(base, "coded_articles"))
   if (nrow(articles) == 0) return(NULL)
-  articles = dplyr::transmute(articles, codingjob=codingjob, article_id=article_id, coded_article=id, 
+  articles = dplyr::transmute(articles, rticle_id=article_id, coded_article=id, 
                               status=names(.STATUSCODES)[match(articles$status, .STATUSCODES)], comments=as.character(comments))
   
   codings = amcat.get.job.codings(conn, project, job, articles$coded_article)
