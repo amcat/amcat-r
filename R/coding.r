@@ -69,22 +69,27 @@ amcat.get.job.codings <- function(conn, project, job, coded_article_ids) {
 process.codings <- function(codings, fields, codes) {
   if (length(unique(fields$label)) != nrow(fields)) stop("Duplicate label!")
   result = unique(codings[c("coded_article", "sentence", "coding_id")])
-  for (field in unique(codings$field)) {
+  fields_present = unique(codings$field)
+  for (field in fields$id) {
     f = fields[fields$id == field,]
     # field types:  TEXT = 1     INT = 2     CODEBOOK = 5     BOOLEAN = 7     QUALITY = 9
-    if (f$fieldtype == 1) {
-      col = subset(codings, field == f$id, select=c("coding_id", "strval"))
-    } else {
-      col = subset(codings, field == f$id, select=c("coding_id", "intval"))
-      if (f$fieldtype == 5) { # codebook
-        col$intval = factor(paste(col$intval, codes$label[match(col$intval, codes$code)], sep = " - "))
+    if (field %in% fields_present) {
+      if (f$fieldtype == 1) {
+        col = subset(codings, field == f$id, select=c("coding_id", "strval"))
+      } else {
+        col = subset(codings, field == f$id, select=c("coding_id", "intval"))
+        if (f$fieldtype == 5) { # codebook
+          col$intval = factor(paste(col$intval, codes$label[match(col$intval, codes$code)], sep = " - "))
+        }
+        if (f$fieldtype == 7) col$intval = col$intval == 1
+        if (f$fieldtype == 9) col$intval = col$intval / 10
       }
-      if (f$fieldtype == 7) col$intval = col$intval == 1
-      if (f$fieldtype == 9) col$intval = col$intval / 10
+      colnames(col)[2] = as.character(f$label)
+  
+      result = merge(result, col, all.x=T)
+    } else {
+      result[[as.character(f$label)]] = NA
     }
-    colnames(col)[2] = as.character(f$label)
-    attributes(col[[2]])$amcat.codingschemafield = field
-    result = merge(result, col, all.x=T)
   }
   result
 }
@@ -109,7 +114,7 @@ amcat.codingjob.results <- function(conn, project, job) {
   codes = amcat.get.job.codes(conn, project, job)
   articles = amcat.getobjects(conn, c(base, "coded_articles"))
   if (nrow(articles) == 0) return(NULL)
-  articles = dplyr::transmute(articles, rticle_id=article_id, coded_article=id, 
+  articles = dplyr::transmute(articles, article_id=article_id, coded_article=id, 
                               status=names(.STATUSCODES)[match(articles$status, .STATUSCODES)], comments=as.character(comments))
   
   codings = amcat.get.job.codings(conn, project, job, articles$coded_article)
