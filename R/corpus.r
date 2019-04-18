@@ -21,7 +21,7 @@ amcat.gettokens <- function(conn, project=NULL, articleset=NULL, module="elastic
     path = paste("api", "v4", "projects", project, "articlesets", articleset, "tokens", "", sep="/")
     result = amcat.getpages(conn, path, page_size=page_size, rbind_results=F, filters=filters, ...)
     result = .make.pages.unique(result)
-    result = rbind.fill(result)
+    result = dplyr::bind_rows(result)
     result
   } else if (!is.null(sentence)) {
     filters = c(module=module, page_size=page_size, format='csv', sentence=sentence, filters)

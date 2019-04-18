@@ -167,7 +167,7 @@ amcat.getpages <- function(conn, path, format=NULL, page=1, page_size=1000, filt
     if (verbose) message("Retrieved page ",page,"/",npages, "; last page had ", nrow(subresult), " result rows")
     page = page + 1
   }
-  if (rbind_results) result = rbind.fill(result)
+  if (rbind_results) result = dplyr::bind_rows(result)
   result
 }
 
@@ -455,7 +455,7 @@ scroll <- function(conn, path, page_size=100, ...) {
     url = res$`next`
     if (nrow(subresult) < page_size) break
   }
-  rbind.fill(result)
+  dplyr::bind_rows(result)
 }
 
 

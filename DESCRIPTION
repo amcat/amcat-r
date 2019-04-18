@@ -8,7 +8,8 @@ Depends:
     rjson,
     RCurl,
     stringr,
-    httr
+    httr,
+    dplyr
 Description: Functions to call the AmCAT API
 License: MIT
 URL: http://github.com/amcat/amcat
