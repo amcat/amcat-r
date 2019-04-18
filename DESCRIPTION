@@ -7,7 +7,6 @@ Maintainer: Wouter van Atteveldt <wouter@vanatteveldt.com>
 Depends: 
     rjson,
     RCurl,
-    plyr,
     stringr,
     httr
 Description: Functions to call the AmCAT API
