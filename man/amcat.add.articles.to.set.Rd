@@ -4,8 +4,14 @@
 \alias{amcat.add.articles.to.set}
 \title{Add articles to an article set}
 \usage{
-amcat.add.articles.to.set(conn, project, articles, articleset = NULL,
-  articleset.name = NULL, articleset.provenance = NULL)
+amcat.add.articles.to.set(
+  conn,
+  project,
+  articles,
+  articleset = NULL,
+  articleset.name = NULL,
+  articleset.provenance = NULL
+)
 }
 \arguments{
 \item{conn}{the connection object from \code{\link{amcat.connect}}}

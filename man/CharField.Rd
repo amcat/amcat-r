@@ -4,8 +4,14 @@
 \alias{CharField}
 \title{Create a Django Form Field}
 \usage{
-CharField(label = NA, initial = "", required = T, min_length = NA,
-  max_length = NA, help_text = NA)
+CharField(
+  label = NA,
+  initial = "",
+  required = T,
+  min_length = NA,
+  max_length = NA,
+  help_text = NA
+)
 }
 \description{
 Use to create field objects for R plugins in AmCAT. See djangoFormFields().

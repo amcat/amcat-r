@@ -4,8 +4,13 @@
 \alias{amcat.connect}
 \title{Connect to the AmCAT API}
 \usage{
-amcat.connect(host, token = NULL, disable_ipv6 = TRUE,
-  ssl.verifypeer = FALSE, passwordfile = "~/.amcatauth")
+amcat.connect(
+  host,
+  token = NULL,
+  disable_ipv6 = TRUE,
+  ssl.verifypeer = FALSE,
+  passwordfile = "~/.amcatauth"
+)
 }
 \arguments{
 \item{host}{the hostname, e.g. http://amcat.vu.nl or http://localhost:8000}

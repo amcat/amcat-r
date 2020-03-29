@@ -4,9 +4,13 @@
 \alias{amcat.nlpipe}
 \title{Process an articleset with nlpipe}
 \usage{
-amcat.nlpipe(conn, project, articleset, module,
-  nlpipe_server = getOption("nlpiper.server", default =
-  "http://localhost:5001"))
+amcat.nlpipe(
+  conn,
+  project,
+  articleset,
+  module,
+  nlpipe_server = getOption("nlpiper.server", default = "http://localhost:5001")
+)
 }
 \arguments{
 \item{conn}{the amcatr connection object}

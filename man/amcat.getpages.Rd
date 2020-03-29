@@ -4,9 +4,19 @@
 \alias{amcat.getpages}
 \title{Get and rbind pages from the AmCAT API}
 \usage{
-amcat.getpages(conn, path, format = NULL, page = 1, page_size = 1000,
-  filters = NULL, post = FALSE, post_options = list(), max_page = NULL,
-  rbind_results = format != "json", verbose = TRUE)
+amcat.getpages(
+  conn,
+  path,
+  format = NULL,
+  page = 1,
+  page_size = 1000,
+  filters = NULL,
+  post = FALSE,
+  post_options = list(),
+  max_page = NULL,
+  rbind_results = format != "json",
+  verbose = TRUE
+)
 }
 \arguments{
 \item{conn}{the connection object from \code{\link{amcat.connect}}}

@@ -13,5 +13,5 @@ Depends:
 Description: Functions to call the AmCAT API
 License: MIT
 URL: http://github.com/amcat/amcat
-RoxygenNote: 6.0.1
+RoxygenNote: 7.1.0
 Suggests: testthat

@@ -4,8 +4,15 @@
 \alias{quanteda.corpus}
 \title{Download articles from AmCAT into a Quanteda corpus object}
 \usage{
-quanteda.corpus(conn, project, articleset, textcolumns = c("headline",
-  "text"), metacolumns = c("date", "medium"), headline.as.docvar = T, ...)
+quanteda.corpus(
+  conn,
+  project,
+  articleset,
+  textcolumns = c("headline", "text"),
+  metacolumns = c("date", "medium"),
+  headline.as.docvar = T,
+  ...
+)
 }
 \arguments{
 \item{conn}{the connection object from \code{\link{amcat.connect}}}

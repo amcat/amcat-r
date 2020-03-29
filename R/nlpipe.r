@@ -19,7 +19,7 @@ amcat.nlpipe <- function(conn, project, articleset, module, nlpipe_server=getOpt
     message("Assigning ", length(todo), " articles from ", conn$host, " set ", articleset, " for processing with ", module, " at ", nlpipe_server)
     chunks = split(todo, ceiling(seq_along(todo)/1000))
     for (chunk in chunks) {
-      articles = amcat.articles(conn, project, articles=chunk, columns=c("headline", "text"))
+      articles = amcat.articles(conn, project, articles=chunk, columns=c(title.column(conn), "text"))
       texts = paste(articles$headline, articles$text, sep="\n\n")
       nlpiper::process_async(module, texts, ids=articles$id, server = nlpipe_server)
     }

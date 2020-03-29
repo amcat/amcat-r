@@ -4,9 +4,16 @@
 \alias{amcat.create.codingjob}
 \title{Create a new codingjob}
 \usage{
-amcat.create.codingjob(conn, project, codingjobname, coder,
-  articleschema = NULL, unitschema = NULL, articleset = NULL,
-  articles = NULL)
+amcat.create.codingjob(
+  conn,
+  project,
+  codingjobname,
+  coder,
+  articleschema = NULL,
+  unitschema = NULL,
+  articleset = NULL,
+  articles = NULL
+)
 }
 \arguments{
 \item{conn}{the connection object from \code{\link{amcat.connect}}}

@@ -4,8 +4,15 @@
 \alias{amcat.aggregate}
 \title{Conduct an aggregate query on amcat}
 \usage{
-amcat.aggregate(conn, queries, labels = queries, sets, axis1 = NULL,
-  axis2 = NULL, ...)
+amcat.aggregate(
+  conn,
+  queries,
+  labels = queries,
+  sets,
+  axis1 = NULL,
+  axis2 = NULL,
+  ...
+)
 }
 \arguments{
 \item{conn}{the connection object from \code{\link{amcat.connect}}}

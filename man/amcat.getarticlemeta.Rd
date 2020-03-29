@@ -4,9 +4,17 @@
 \alias{amcat.getarticlemeta}
 \title{Get article metadata from AmCAT}
 \usage{
-amcat.getarticlemeta(conn, project, articleset = NULL, articles = NULL,
-  uuid = NULL, columns = c("date", "medium"), time = F, dateparts = F,
-  page_size = 10000)
+amcat.getarticlemeta(
+  conn,
+  project,
+  articleset = NULL,
+  articles = NULL,
+  uuid = NULL,
+  columns = c("date", "medium"),
+  time = F,
+  dateparts = F,
+  page_size = 10000
+)
 }
 \arguments{
 \item{conn}{the connection object from \code{\link{amcat.connect}}}

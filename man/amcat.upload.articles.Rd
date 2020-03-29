@@ -4,8 +4,17 @@
 \alias{amcat.upload.articles}
 \title{Upload new articles to AmCAT}
 \usage{
-amcat.upload.articles(conn, project, articleset, text, headline, date, medium,
-  provenance = NULL, ...)
+amcat.upload.articles(
+  conn,
+  project,
+  articleset,
+  text,
+  headline,
+  date,
+  medium,
+  provenance = NULL,
+  ...
+)
 }
 \arguments{
 \item{conn}{the connection object from \code{\link{amcat.connect}}}

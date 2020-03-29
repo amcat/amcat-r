@@ -4,9 +4,17 @@
 \alias{amcat.gettokens}
 \title{Get Tokens from AmCAT}
 \usage{
-amcat.gettokens(conn, project = NULL, articleset = NULL,
-  module = "elastic", filters = NULL, page_size = 1, sentence = NULL,
-  only_cached = F, ...)
+amcat.gettokens(
+  conn,
+  project = NULL,
+  articleset = NULL,
+  module = "elastic",
+  filters = NULL,
+  page_size = 1,
+  sentence = NULL,
+  only_cached = F,
+  ...
+)
 }
 \arguments{
 \item{conn}{the connection object from \code{\link{amcat.connect}}}

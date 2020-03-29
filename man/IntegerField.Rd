@@ -4,8 +4,14 @@
 \alias{IntegerField}
 \title{Create a Django Form Field}
 \usage{
-IntegerField(label = NA, initial = 0, required = T, min_value = NA,
-  max_value = NA, help_text = NA)
+IntegerField(
+  label = NA,
+  initial = 0,
+  required = T,
+  min_value = NA,
+  max_value = NA,
+  help_text = NA
+)
 }
 \description{
 Use to create field objects for R plugins in AmCAT. See djangoFormFields().

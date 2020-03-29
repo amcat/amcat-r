@@ -4,8 +4,15 @@
 \alias{amcat.hits}
 \title{Conduct a query on amcat}
 \usage{
-amcat.hits(conn, queries, labels = queries, sets, minimal = T,
-  warn.no.result = T, ...)
+amcat.hits(
+  conn,
+  queries,
+  labels = queries,
+  sets,
+  minimal = T,
+  warn.no.result = T,
+  ...
+)
 }
 \arguments{
 \item{conn}{the connection object from \code{\link{amcat.connect}}}

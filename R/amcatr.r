@@ -181,7 +181,8 @@ amcat.getpages <- function(conn, path, format=NULL, page=1, page_size=1000, filt
   
 .read.version <- function(vstr) {
   if (!is.null(vstr)) {
-    m = str_match(vstr, "(\\d+)\\.(\\d+)\\.(\\w+)\\s*")
+    
+    m = stringr::str_match(vstr, "(\\d+)\\.(\\d+)(\\.(\\w+))?\\s*")
     if (!is.na(m[[1]]))  {
       return(list(major=as.numeric(m[[2]]), minor=as.numeric(m[[3]]), patch=m[[4]]))
     }
@@ -489,4 +490,20 @@ quanteda.corpus <- function(conn, project, articleset, textcolumns=c("headline",
   x = apply(articles[textcolumns], 1, paste, collapse='\n')
   texts = apply(articles[textcolumns], 1, paste, collapse='\n')
   quanteda::corpus(texts, docnames=articles$id, docvars=articles[metavars])
+}
+
+
+
+#' Return the column for title/headline depending om AmCAT version
+#'
+#' @param conn the connection object from \code{\link{amcat.connect}}
+#' @export
+title.column <- function(conn) {
+  if (.has.version(conn$version, "3.5")) "title" else "headline"
+}
+
+#' Return the column for publisher/medium depending om AmCAT version
+#' @export
+publisher.column <- function(conn) {
+  if (.has.version(conn$version, "3.5")) "publisher" else "medium"
 }
