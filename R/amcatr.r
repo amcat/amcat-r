@@ -425,6 +425,66 @@ amcat.upload.articles <- function(conn, project, articleset, text, headline, dat
   invisible(articleset)
 }
 
+#' Alternative upload function to add new articles to AmCAT
+#' 
+#' Provides alternative to: amcat.upload.articles
+#' Uses jsonlite instead of rjson, can handle emojis.
+#' Does not require a headline field.
+#' Upload articles into a given project and article set, or into a new article set if the articleset argument is character
+#' All arguments title, medium etc. should be either of the same length as text, or of length 1
+#' All factor arguments will be converted to character using as.character
+#' For date, please provide either a string in ISO notatoin (i.e. "2010-12-31" or "2010-12-31T23:59:00")
+#' or a variable that can be converted to string using format(), e.g. Date, POSIXct or POSIXlt. 
+#' The articles will be uploaded in batches of 100. 
+#' 
+#' @param conn the connection object from \code{\link{amcat.connect}}
+#' @param project the project to add the articles to
+#' @param articleset the article set id of an existing set, or the name of a new set to create
+#' @param text the text of the articles to upload
+#' @param title the headlines/title of the articles to upload
+#' @param medium the medium of the articles to upload. 
+#' @param provenance if articleset is character, an optional provenance string to store with the new set
+#' @param ... and additional fields to upload, e.g. author, byline etc. 
+#' @export
+
+amcat.upload.articles.jsonlite <- function(conn, project, articleset, text, title, date, medium, provenance=NULL, ...) {
+  require(jsonlite)
+  n = length(text)
+  if (is.character(articleset)) {
+    if (is.null(provenance)) provenance=paste("Uploaded", n, "articles using R function amcat.upload.articles")
+    articleset = amcat.add.articles.to.set(conn, project, articles=NULL, articleset.name=articleset, articleset.provenance=provenance) 
+  }
+  
+  if (is.factor(date)) date=as.character(date)
+  if (!is.character(date)) date = format(date, "%Y-%m-%dT%H:%M:%S")
+  fields = data.frame(title=title, text=text, date=date, medium=medium, ...)
+  # make sure all fields have correct length
+  for (f in names(fields)) {
+    if (is.factor(fields[[f]])) fields[[f]] = as.character(fields[[f]])
+    if (length(fields[[f]]) == 1) fields[[f]] = rep(fields[[f]], n)
+    if (length(fields[[f]]) != n) stop(paste("Field", f, "has incorrect length:", length(fields[[f]]), "should be 1 or ", n))
+  }
+  
+  # not very efficient, but probably not the bottleneck
+  chunks = split(fields, ceiling((1:n)/100))
+
+  i <- 0 # primitive, but works
+  for(chunk in chunks) {
+    # this package can also transfrom df to json directly, less code required
+    json_data = jsonlite::toJSON(chunk, dataframe = 'row')
+    
+    # provide better overview for upload progress
+    i <- i + 1
+    message("Uploading chunk ", i, "/", length(chunks), ". With ", nrow(chunk), " articles to set ", articleset)
+    
+    url = paste(conn$host, "api", "v4", "projects",project, "articlesets", articleset, "articles", "", sep="/")
+    
+    resp = POST(url, body=json_data, content_type_json(), accept_json(), add_headers(Authorization=paste("Token", conn$token)))
+    if (resp$status_code != 201) stop("Unexpected status: ", resp$status_code, "\n", content(resp, type="text/plain"))
+  }
+  invisible(articleset)
+}
+
 #' Scroll an amcat API page with 'next' link
 #'
 #' @param conn the connection object from \code{\link{amcat.connect}}
