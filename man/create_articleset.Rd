@@ -4,7 +4,8 @@
 \alias{create_articleset}
 \title{Create a new articleset on AmCAT}
 \usage{
-create_articleset(project, name, provenance = NULL, conn = conn_from_env())
+create_articleset(project, name, provenance = NULL,
+  conn = conn_from_env())
 }
 \arguments{
 \item{project}{The project id}

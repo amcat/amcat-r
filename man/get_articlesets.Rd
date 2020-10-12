@@ -4,8 +4,9 @@
 \alias{get_articlesets}
 \title{View projects}
 \usage{
-get_articlesets(project, only_favourite = F, columns = c("id", "project",
-  "name", "featured", "favourite", "provenance"), conn = conn_from_env())
+get_articlesets(project, only_favourite = F, columns = c("id",
+  "project", "name", "featured", "favourite", "provenance"),
+  conn = conn_from_env())
 }
 \arguments{
 \item{project}{The project id}

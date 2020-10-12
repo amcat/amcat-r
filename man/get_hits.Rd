@@ -4,9 +4,9 @@
 \alias{get_hits}
 \title{Perform a query on AmCAT}
 \usage{
-get_hits(project, articleset, queries = "*", labels = substr(queries, 0,
-  25), start_date = NULL, end_date = NULL, hits = T, columns = NULL,
-  conn = conn_from_env(), verbose = T, ...)
+get_hits(project, articleset, queries = "*", labels = substr(queries,
+  0, 25), start_date = NULL, end_date = NULL, hits = T,
+  columns = NULL, conn = conn_from_env(), verbose = T, ...)
 }
 \arguments{
 \item{project}{The project id}

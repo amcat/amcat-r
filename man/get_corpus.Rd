@@ -7,8 +7,8 @@
 get_corpus(project, articleset = NULL, articles = NULL,
   conn = conn_from_env(), uuid = NULL, text_columns = c("headline",
   "byline", "text"), meta_columns = NULL, time = F, dateparts = F,
-  page_size = 1000, format = c("quanteda_corpus", "tcorpus", "data.frame"),
-  ...)
+  page_size = 1000, format = c("quanteda_corpus", "tcorpus",
+  "data.frame"), ...)
 }
 \arguments{
 \item{project}{the project of a set to retrieve metadata from}
@@ -34,6 +34,9 @@ get_corpus(project, articleset = NULL, articles = NULL,
 \item{format}{determine whether article data is returned as a "data.frame", "quanteda_corpus" (default, but requires quanteda package) or "tcorpus" (requires corpustools package).}
 
 \item{...}{additional arguments are passed to quanteda::corpus or corpustools::create_tcorpus.}
+}
+\value{
+Either a data.frame, quanteda corpus or corpustools tcorpus
 }
 \description{
 Uses the \code{\link{get_objects}} function to retrieve article metadata, and applies some

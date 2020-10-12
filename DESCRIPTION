@@ -6,8 +6,6 @@ Author: Wouter van Atteveldt and Kasper Welbers
 Maintainer: Wouter van Atteveldt <wouter@vanatteveldt.com>
 Imports: 
     jsonlite,
-    RCurl,
-    stringr,
     httr,
     data.table,
     methods,
@@ -16,10 +14,8 @@ Suggests:
     testthat,
     quanteda,
     corpustools
-Remotes:
-    github::vanatteveldt/nlpiper
 Description: Functions to call the AmCAT API.
 License: GPL-3
 URL: http://github.com/amcat/amcat
 Roxygen: list(wrap = FALSE)
-RoxygenNote: 6.0.1
+RoxygenNote: 6.1.0

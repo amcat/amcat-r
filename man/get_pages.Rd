@@ -5,7 +5,8 @@
 \title{A wrapper for request to get data from multiple pages}
 \usage{
 get_pages(branch, param = list(), page_size = 500, start_page = 1,
-  end_page = NA, as_dt = F, conn = conn_from_env(), verbose = T, ...)
+  end_page = NA, as_dt = F, conn = conn_from_env(), verbose = T,
+  ...)
 }
 \arguments{
 \item{branch}{a character vector with the names and values of the API resources. For example, use c('projects', 1, 'articlesets', 10) for the url host/api/v4/projects/1/articlesets/10}

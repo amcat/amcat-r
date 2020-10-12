@@ -150,6 +150,36 @@ create_project <- function(name, description, owner=NULL, active=T, guest_role=c
 }
 
 
+#' Create a new user on AmCAT
+#' 
+#' If the current user is a superuser, new users can be added.
+#'
+#' @param username    The username on AmCAT. Max 30 characters. Letters, digits and [@.+-_] only.
+#' @param password    The password of the new user
+#' @param first_name  The first name of the new user
+#' @param last_name   The last name of the new user
+#' @param email       The user's email adress
+#' @param active      If False, users are not considered 'active'. Unselect this instead of deleting accounts.
+#' @param superuser   If TRUE, make user a superuser
+#' @param staff       If TRUE, give user staff status
+#' @param conn        The connection object from \code{\link{amcat_connect}}. 
+#'
+#' @return The id of the new articleset
+#' @export
+create_user <- function(username, password, first_name, last_name, email, active=T, superuser=F, staff=F, conn=conn_from_env()) {
+  if (is.null(conn)) stop('conn not specified. Either provide conn as argument or run amcat_connect in the current session')
+  
+  r = request('users', username=username, password=password, 
+              first_name=first_name, last_name=last_name, email=email,
+              is_staff=staff, is_active=active, is_superuser=superuser, conn=conn, post=TRUE) 
+  
+  request(c('user', 2), username='non', post=T)
+  
+  user_id = r$id
+  message("Created user ", username, ' with id ', user_id)
+  invisible(user_id)
+}
+
 
 prepare_date <- function(date, columnname) {
   date_classes = c('character','factor','Date','POSIXlt','POSIXct')

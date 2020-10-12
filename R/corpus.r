@@ -17,10 +17,8 @@
 #' @param ... additional arguments are passed to quanteda::corpus or corpustools::create_tcorpus. 
 #
 #'
-#' @return
+#' @return Either a data.frame, quanteda corpus or corpustools tcorpus
 #' @export
-#'
-#' @examples
 get_corpus <- function(project, articleset=NULL, articles=NULL, conn=conn_from_env(), uuid=NULL, text_columns = c('headline','byline','text'), meta_columns=NULL, time=F, dateparts=F, page_size=1000, format = c('quanteda_corpus','tcorpus','data.frame'), ...){
   format = match.arg(format)
   if (!is.null(meta_columns)) meta_columns = union(meta_columns, text_columns)

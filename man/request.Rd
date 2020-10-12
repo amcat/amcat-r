@@ -4,9 +4,9 @@
 \alias{request}
 \title{Retrieve a single URL from AmCAT with authentication and specified filters (GET or POST)}
 \usage{
-request(branch = NULL, param = list(), url = NULL, json_data = NULL,
-  post = FALSE, post_options = list(), conn = conn_from_env(),
-  api = "api/v4", read = T, ...)
+request(branch = NULL, param = list(), url = NULL,
+  json_data = NULL, post = FALSE, post_options = list(),
+  conn = conn_from_env(), api = "api/v4", read = T, ...)
 }
 \arguments{
 \item{branch}{a character vector with the names of the API resources. For example, use c('projects','articlesets') for the url host/api/v4/projects/articlesets}

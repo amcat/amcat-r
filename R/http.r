@@ -83,7 +83,6 @@ request <- function(branch=NULL, param=list(), url=NULL, json_data=NULL, post=FA
       path = if (!is.null(api)) paste(api, paste(branch, collapse='/'), sep='/') else paste(branch, collapse='/')
       url = paste0(conn$host, '/', path, '/?', "format=json")
     }
-    print(url)
     if (is.null(json_data)) json_data = jsonlite::toJSON(arrange_url_arguments(param), auto_unbox=T)
     res = httr::POST(url, body = json_data, httr::content_type_json(), httr::accept_json(), get_headers(conn), get_config(conn, post_options))  
   }
@@ -122,19 +121,28 @@ parse_response <- function(res) {
   return(rawToChar(res$content))
 }
 
+
+
 error_handling <- function(res, only_2xx) {
   code_class = floor(res$status_code/100)
+  cutoff_string <- function(x, n=70) if (nchar(x) > n) paste0(substr(x, 0, n), '...') else x
   if (code_class != 2 && only_2xx){
     res_msg = parse_response(res)
     
-    if (!methods::is(res_msg, 'character')) res_msg = jsonlite::toJSON(res_msg)
+    print(res_msg)
+    #if (!methods::is(res_msg, 'character')) {
+    res_msg_json = jsonlite::toJSON(res_msg)
     fn = tempfile()
-    write(res_msg, file=fn)
+    write(res_msg_json, file=fn)
 
     response = paste0("Full response written to ", fn, '\n', 'Use amcat_error() to view')
     
-    if (code_class == 4) msg = "Something went wrong. Please check the error log with amcat_error(), or create an issue (providing the logs) at http://github.com/amcat/amcat-r/issues"
-    if (code_class == 5) msg = "This seems to be an AmCAT server error. Please check the error log with amcat_error(), or create an issue (providing the logs) at http://github.com/amcat/amcat/issues"
+    res_msg = res_msg[!names(res_msg) %in% c('error','status')]
+    response_strings = paste(names(res_msg), 
+                             sapply(res_msg, function(x) cutoff_string(paste(x, collapse=' '))),
+                             sep=':\t')
+    
+    msg = paste(response_strings, collapse='\n')
     
     Sys.setenv(AMCAT_ERROR = fn)
     stop("Unexpected Response Code ", res$status_code, "\n", msg, "\n\n", response, call. = F)

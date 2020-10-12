@@ -120,6 +120,7 @@ login <- function(conn, min_version='3.4.1', passwd=NULL) {
 }
 
 verify_version <- function(version, min_version, feature=NULL) {
+  if (is.null(version)) stop(sprintf('VERSION ERROR. This version of amcatr only works for AmCAT versions >= %s. To connect to the current server, you can use an older version of amcatr hosted on github under amcat/amcat-r.', min_version))
   version = gsub('[a-zA-Z]*', '', version)
   if (compareVersion(version, min_version) < 0) {
     if (is.null(feature)) {

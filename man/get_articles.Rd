@@ -4,9 +4,9 @@
 \alias{get_articles}
 \title{Get article meta data from AmCAT}
 \usage{
-get_articles(project, articleset = NULL, articles = NULL, uuid = NULL,
-  columns = c("date", "medium", "title"), text = F, time = F,
-  dateparts = F, page_size = 10000, ignore_missing = T,
+get_articles(project, articleset = NULL, articles = NULL,
+  uuid = NULL, columns = c("date", "medium", "title"), text = F,
+  time = F, dateparts = F, page_size = 10000, ignore_missing = T,
   conn = conn_from_env(), verbose = T, ...)
 }
 \arguments{
