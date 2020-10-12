@@ -8,10 +8,11 @@ Depends:
     rjson,
     RCurl,
     stringr,
+    jsonlite,
     httr,
     dplyr
 Description: Functions to call the AmCAT API
 License: MIT
 URL: http://github.com/amcat/amcat
-RoxygenNote: 7.1.0
+RoxygenNote: 7.1.1
 Suggests: testthat
