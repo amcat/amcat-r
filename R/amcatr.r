@@ -385,11 +385,10 @@ amcat.add.articles.to.set <- function(conn, project, articles, articleset=NULL,
 #' @param articleset the article set id of an existing set, or the name of a new set to create
 #' @param text the text of the articles to upload
 #' @param headline the headlines of the articles to upload
-#' @param medium the medium of the articles to upload. 
 #' @param provenance if articleset is character, an optional provenance string to store with the new set
 #' @param ... and additional fields to upload, e.g. author, byline etc. 
 #' @export
-amcat.upload.articles <- function(conn, project, articleset, text, headline, date, medium, provenance=NULL, ...) {
+amcat.upload.articles <- function(conn, project, articleset, text, headline, date, provenance=NULL, ...) {
   
   n = length(text)
   if (is.character(articleset)) {
@@ -399,7 +398,7 @@ amcat.upload.articles <- function(conn, project, articleset, text, headline, dat
   
   if (is.factor(date)) date=as.character(date)
   if (!is.character(date)) date = format(date, "%Y-%m-%dT%H:%M:%S")
-  fields = data.frame(headline=headline, text=text, date=date, medium=medium, ...)
+  fields = data.frame(headline=headline, text=text, date=date, ...)
   # make sure all fields have correct length
   for (f in names(fields)) {
     if (is.factor(fields[[f]])) fields[[f]] = as.character(fields[[f]])
@@ -442,12 +441,11 @@ amcat.upload.articles <- function(conn, project, articleset, text, headline, dat
 #' @param articleset the article set id of an existing set, or the name of a new set to create
 #' @param text the text of the articles to upload
 #' @param title the headlines/title of the articles to upload
-#' @param medium the medium of the articles to upload. 
 #' @param provenance if articleset is character, an optional provenance string to store with the new set
 #' @param ... and additional fields to upload, e.g. author, byline etc. 
 #' @export
 
-amcat.upload.articles.jsonlite <- function(conn, project, articleset, text, title, date, medium, provenance=NULL, ...) {
+amcat.upload.articles.jsonlite <- function(conn, project, articleset, text, title, date, provenance=NULL, ...) {
   require(jsonlite)
   n = length(text)
   if (is.character(articleset)) {
@@ -457,7 +455,7 @@ amcat.upload.articles.jsonlite <- function(conn, project, articleset, text, titl
   
   if (is.factor(date)) date=as.character(date)
   if (!is.character(date)) date = format(date, "%Y-%m-%dT%H:%M:%S")
-  fields = data.frame(title=title, text=text, date=date, medium=medium, ...)
+  fields = data.frame(title=title, text=text, date=date, ...)
   # make sure all fields have correct length
   for (f in names(fields)) {
     if (is.factor(fields[[f]])) fields[[f]] = as.character(fields[[f]])
