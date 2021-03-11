@@ -5,8 +5,6 @@ Title: R bindings for the AmCAT API
 Author: Wouter van Atteveldt and Kasper Welbers
 Maintainer: Wouter van Atteveldt <wouter@vanatteveldt.com>
 Depends: 
-    rjson,
-    RCurl,
     stringr,
     jsonlite,
     httr,

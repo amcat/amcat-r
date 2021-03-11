@@ -1,6 +1,3 @@
-library(rjson)
-library(RCurl)
-
 #' Connect to the AmCAT API
 #'
 #' Connect to the AmCAT API and requests a temporary (24h) authentication token that will be stored in the output
@@ -25,16 +22,17 @@ amcat.connect <- function(host,token=NULL, disable_ipv6=TRUE, ssl.verifypeer=FAL
       
     # get auth token
     url = paste(host, path, sep='')
-    res = tryCatch(postForm(url, username=username, password=passwd, .checkParams=F, .opts=opts), 
-                   error=function(e) stop(paste("Could not get token from ",
-                                                 username,"@", host,
-                                                 " please check host, username and password. Error: ", e, sep="")))
+    form = list(username=username, password=passwd)
+    r = httr::POST(url, body=form)
+    stop_for_status(r, task="login")
     } else {
      conn = list(host=host, token=token, opts=opts)
      res = amcat.getURL(conn, "/api/v4/get_token", post=T, filters=list(dummy=1)) # dummy to prevent warning msg, sorry
-      }
-  token = fromJSON(res)$token
-  version = fromJSON(res)$version
+    }
+  
+  content = httr::content(r, as="parsed")
+  token = content$token
+  version = content$version
   if (is.null(version)) version = "0"
   
   list(host=host, token=token, version=version, opts=opts)
@@ -78,51 +76,41 @@ amcat.save.password <- function(host, username, password, passwordfile="~/.amcat
 #' @param post use HTTP POST instead of GET
 #' @return the raw result
 #' @export
-amcat.getURL <- function(conn, path, filters=NULL, post=FALSE, post_options=list(), error_unless_200=TRUE, null_on_404=FALSE, binary=FALSE, verbose=TRUE) {
+amcat.getURL <- function(conn, path, filters=NULL, post=FALSE, verbose=TRUE) {
   httpheader = c(Authorization=paste("Token", conn$token))
-  url = parse_url(conn$host)
+  url = httr::parse_url(conn$host)
   url$path = paste(path, sep="/")
-  h = getCurlHandle()
   # strip NULL filters
   for (n in names(filters)) if (is.null(filters[[n]])) filters[[n]] <- NULL
   if (!post) {
     # convert list(a=c(1,2)) to list(a=1, a=2). From: http://stackoverflow.com/a/22346656
     url$query = structure(do.call(c, lapply(filters, function(z) as.list(z))), names=rep(names(filters), sapply(filters, length)))
-    
     # build GET url query
-    url = build_url(url)
+    url = httr::build_url(url)
     if (verbose) message("GET ", url)
-    urlfunc = if (binary) getBinaryURL else getURL
-    result = urlfunc(url, httpheader=httpheader, .opts=conn$opts, curl=h)
-    if (getCurlInfo(h)$response.code != 200){
-      if (error_unless_200 && !(null_on_404 && getCurlInfo(h)$response.code == 404)) {
-        
-        if (!is.null(getCurlInfo(h)$content.type) && grepl("application/x-r-rda", getCurlInfo(h)$content.type)) {
-          result = .load.rda(result)
-          result = paste(result$exception_type, result$detail, sep = ": ")
-        } else {
-          if (binary) result = rawToChar(result) 
-          fn = tempfile()
-          write(result, file=fn)
-          result = paste("Response written to", fn)
-        }
-        error_type = floor(getCurlInfo(h)$response.code / 100)
-        if (error_type == 5) msg = "This seems to be an AmCAT server error. Please see the server logs or create an issue at http://github.com/amcat/amcat/issues"
-        if (error_type == 4) msg = "It looks like you did something wrong, or there is something wrong in the amcat-r library. Please check your command and the error message below, or create an issue at http://github.com/amcat/amcat-r/issues"
-        
-        stop("Unexpected Response Code ", getCurlInfo(h)$response.code, "\n", msg, "\n", result)
-      }
-      return(NULL)
-    }
+    result = httr::GET(url, httr::add_headers(httpheader))
+    stop_with_message(result)
     result
   } else {  
-    post_opts = modifyList(conn$opts, list(httpheader=httpheader))    
-    post_opts = modifyList(post_opts, post_options)
-    postForm(build_url(url), .params=filters, .opts=post_opts)
+    result = httr::POST(url, config=httr::add_headers(httpheader), body=filters)
+    stop_with_message(result)
+    result
   }
 }
 
-
+stop_with_message= function(httr_result) {
+  if (httr::http_error(httr_result)) {
+    error = httr::content(httr_result, as="raw")
+    if (str_starts(httr_result$headers$`content-type`, 'application/x-r-rda')) {
+      error = .load.rda(error)
+    } 
+    error_type = floor(httr_result$status_code / 100)
+    if (class(error) == "list" & !is.null(error$detail)) error=error$detail
+    if (error_type == 5) msg = "This seems to be an AmCAT server error. Please see the server logs or create an issue at http://github.com/amcat/amcat/issues"
+    if (error_type == 4) msg = "It looks like you did something wrong, or there is something wrong in the amcat-r library. Please check your command and the error message below, or create an issue at http://github.com/amcat/amcat-r/issues"
+    stop(paste0("Unexpected Response Code: ", httr_result$status_code, "\n", toString(error), "\n", msg))
+  }
+}
 
 #' Get and rbind pages from the AmCAT API
 #' 
@@ -136,7 +124,7 @@ amcat.getURL <- function(conn, path, filters=NULL, post=FALSE, post_options=list
 #' @return dataframe 
 #' @export
 amcat.getpages <- function(conn, path, format=NULL, page=1, page_size=1000, filters=NULL, 
-                           post=FALSE, post_options=list(), max_page=NULL, rbind_results=format != "json",
+                           post=FALSE,  max_page=NULL, rbind_results=format != "json",
                            verbose=TRUE) {
 
   if (is.null(format)) format = if (.has.version(conn$version, "3.4.2")) "rda" else "csv" 
@@ -146,9 +134,9 @@ amcat.getpages <- function(conn, path, format=NULL, page=1, page_size=1000, filt
   while (TRUE) {
     if (!is.null(max_page)) if (page > max_page) break
     page_filters = c(filters, page=page)
-    subresult = amcat.getURL(conn, path, page_filters, post=post, post_options, binary = format=="rda", null_on_404 = format != "rda", verbose=verbose)
+    subresult = amcat.getURL(conn, path, page_filters, post=post, verbose=verbose)
     if (format == "rda") {
-      res = .load.rda(subresult)
+      res = .load.rda(httr::content(subresult))
       npages = res$pages
       subresult = res$result
       result = c(result, list(subresult))
@@ -371,64 +359,8 @@ amcat.add.articles.to.set <- function(conn, project, articles, articleset=NULL,
   invisible(articleset)
 }
 
-#' Upload new articles to AmCAT
+#' Add new articles to AmCAT
 #' 
-#' Upload articles into a given project and article set, or into a new article set if the articleset argument is character
-#' All arguments headline, medium etc. should be either of the same length as text, or of length 1
-#' All factor arguments will be converted to character using as.character
-#' For date, please provide either a string in ISO notatoin (i.e. "2010-12-31" or "2010-12-31T23:59:00")
-#' or a variable that can be converted to string using format(), e.g. Date, POSIXct or POSIXlt. 
-#' The articles will be uploaded in batches of 100. 
-#' 
-#' @param conn the connection object from \code{\link{amcat.connect}}
-#' @param project the project to add the articles to
-#' @param articleset the article set id of an existing set, or the name of a new set to create
-#' @param text the text of the articles to upload
-#' @param headline the headlines of the articles to upload
-#' @param provenance if articleset is character, an optional provenance string to store with the new set
-#' @param ... and additional fields to upload, e.g. author, byline etc. 
-#' @export
-amcat.upload.articles <- function(conn, project, articleset, text, headline, date, provenance=NULL, ...) {
-  
-  n = length(text)
-  if (is.character(articleset)) {
-    if (is.null(provenance)) provenance=paste("Uploaded", n, "articles using R function amcat.upload.articles")
-    articleset = amcat.add.articles.to.set(conn, project, articles=NULL, articleset.name=articleset, articleset.provenance=provenance) 
-  }
-  
-  if (is.factor(date)) date=as.character(date)
-  if (!is.character(date)) date = format(date, "%Y-%m-%dT%H:%M:%S")
-  fields = data.frame(headline=headline, text=text, date=date, ...)
-  # make sure all fields have correct length
-  for (f in names(fields)) {
-    if (is.factor(fields[[f]])) fields[[f]] = as.character(fields[[f]])
-    if (length(fields[[f]]) == 1) fields[[f]] = rep(fields[[f]], n)
-    if (length(fields[[f]]) != n) stop(paste("Field", f, "has incorrect length:", length(fields[[f]]), "should be 1 or ", n))
-  }
-  
-  # not very efficient, but probably not the bottleneck
-  chunks = split(fields, ceiling((1:n)/100))
-  for(chunk in chunks) {
-    json_data = vector("list", nrow(chunk))
-    for (i in seq_along(json_data)) {
-      json_data[[i]] = unlist(lapply(chunk, function(x) x[i]))
-    }
-    json_data = toJSON(json_data)
-    message("Uploading ", nrow(chunk), " articles to set ", articleset)
-    
-    url = paste(conn$host, "api", "v4", "projects",project, "articlesets", articleset, "articles", "", sep="/")
-    
-    resp = POST(url, body=json_data, content_type_json(), accept_json(), add_headers(Authorization=paste("Token", conn$token)))
-    if (resp$status_code != 201) stop("Unexpected status: ", resp$status_code, "\n", content(resp, type="text/plain"))
-  }
-  invisible(articleset)
-}
-
-#' Alternative upload function to add new articles to AmCAT
-#' 
-#' Provides alternative to: amcat.upload.articles
-#' Uses jsonlite instead of rjson, can handle emojis.
-#' Does not require a headline field.
 #' Upload articles into a given project and article set, or into a new article set if the articleset argument is character
 #' All arguments title, medium etc. should be either of the same length as text, or of length 1
 #' All factor arguments will be converted to character using as.character
@@ -445,7 +377,7 @@ amcat.upload.articles <- function(conn, project, articleset, text, headline, dat
 #' @param ... and additional fields to upload, e.g. author, byline etc. 
 #' @export
 
-amcat.upload.articles.jsonlite <- function(conn, project, articleset, text, title, date, provenance=NULL, ...) {
+amcat.upload.articles <- function(conn, project, articleset, text, title, date, provenance=NULL, ...) {
   require(jsonlite)
   n = length(text)
   if (is.character(articleset)) {
@@ -483,6 +415,9 @@ amcat.upload.articles.jsonlite <- function(conn, project, articleset, text, titl
   invisible(articleset)
 }
 
+#' Alias for amcat.upload.articles
+amcat.upload.articles.jsonlite = amcat.upload.articles
+
 #' Scroll an amcat API page with 'next' link
 #'
 #' @param conn the connection object from \code{\link{amcat.connect}}
@@ -496,17 +431,16 @@ scroll <- function(conn, path, page_size=100, ...) {
   if (!.has.version(conn$version, "3.4.2")) stop("Scrolling only possible on AmCAT >= 3.4.2")
   result = list()
   httpheader = c(Authorization=paste("Token", conn$token))
-  url = parse_url(conn$host)
+  url = httr::parse_url(conn$host)
   url$path = path
   url$query = list(page_size=page_size, format="rda", ...)
-  url = build_url(url)
+  url = httr::build_url(url)
   n = 0
   while(!is.na(url)) {
-    h = getCurlHandle()
     message(url)
-    res = getBinaryURL(url, httpheader=httpheader, .opts=conn$opts, curl=h)
-    if (getCurlInfo(h)$response.code != 200) stop("Error on scrolling:", getCurlInfo(h)$response.code)
-    res = .load.rda(res)  
+    r = httr::GET(url, httr::add_headers(httpheader))
+    if (httr::http_error(r)) stop("Error on scrolling: ", httr::content(r))
+    res = .load.rda(httr::content(r))
     subresult = res$results
     n = n + nrow(subresult)
     result = c(result, list(subresult))

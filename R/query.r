@@ -54,8 +54,7 @@ amcat.hits <- function(conn, queries, labels=queries, sets,  minimal=T, warn.no.
   
   for (i in 1:length(queries)) {
     q = paste("count", queries[i], sep="#")
-    r = tryCatch(amcat.getobjects(conn, "search",filters=list(q=q, col="hits", sets=sets, minimal=minimal, ...)),
-                 error=function(e) {warning("Error on querying '", labels[i], "': ", e$message); NULL})
+    r = amcat.getobjects(conn, "search", filters=list(q=q, col="hits", sets=sets, minimal=minimal, ...))
     if (is.null(r)) next
     r$hits = NULL
     
