@@ -34,7 +34,7 @@ amcat.aggregate <- function(conn, queries, labels=queries, sets, axis1=NULL, axi
   # convert axis1 to Date object if needed
   if (!is.null(axis1))
     if (axis1 %in% c("year", "quarter", "month", "week", "day")) result[, axis1] = as.Date(result[, axis1])
-  return(result)
+  tibble::as_tibble(result)
 }
 
 #' Conduct a query on amcat
@@ -66,5 +66,5 @@ amcat.hits <- function(conn, queries, labels=queries, sets,  minimal=T, warn.no.
       if (warn.no.result) warning(paste("Query",label," produced no results"))
     }
   }
-  dplyr::bind_rows(result)
+  tibble::as_tibble(dplyr::bind_rows(result))
 }

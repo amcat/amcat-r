@@ -263,7 +263,7 @@ amcat.runaction <- function(conn, action, format='csv', ...) {
 #' @param medium_names if true, retrieve medium names and turn medium column into a factor
 #' @return A dataframe containing the articles and the selected columns
 #' @export
-amcat.articles <- function(conn, project, articleset=NULL, articles=NULL, uuid=NULL, columns=c('date','medium'), time=F, dateparts=F, page_size=10000, ...) {
+amcat.articles <- function(conn, project, articleset=NULL, articles=NULL, uuid=NULL, columns=c('date','title'), time=F, dateparts=F, page_size=10000, ...) {
   if (is.null(articleset) & is.null(articles) & is.null(uuid)) stop("Provide either articleset or articles (ids)/uuids")
   
   if (!is.null(articleset)) {
@@ -296,8 +296,9 @@ amcat.articles <- function(conn, project, articleset=NULL, articles=NULL, uuid=N
     for(missing in setdiff(columns, colnames(result))) result[[missing]] <- NA
     result = result[columns]
   }
+  result$id = as.numeric(result$id)
   
-  result
+  tibble::as_tibble(result)
 }
 #' Get article metadata from AmCAT
 #'
