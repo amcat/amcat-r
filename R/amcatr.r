@@ -142,7 +142,7 @@ amcat.getpages <- function(conn, path, format=NULL, page=1, page_size=1000, filt
       result = c(result, list(subresult))
       if (page >= npages) break
     } else if (format == "json") {
-      subresult = .amcat.readoutput(subresult, format=format)
+      subresult = httr::content(subresult)
       npages = subresult$pages
       result = c(result, subresult$results)
       if (page >= npages) break
