@@ -44,13 +44,13 @@ amcat.get.job.codes <- function(conn, project, job) {
 }
 
 # ' Get the 'raw' codings for a job
-amcat.get.job.codings <- function(conn, project, job, coded_article_ids) {
+amcat.get.job.codings <- function(conn, project, job, coded_article_ids, verbose=F) {
   base = c("projects", project, "codingjobs", job)
   bar = utils::txtProgressBar(max=length(coded_article_ids), style=3)
   result = list()
   for (id in coded_article_ids) {
     bar$up(bar$getVal()+1)
-    codings = amcat.getobjects(conn, c(base, "coded_articles", id, "codings"), format="json", verbose=F)
+    codings = amcat.getobjects(conn, c(base, "coded_articles", id, "codings"), format="json", verbose=verbose)
     for (coding in codings) {
       v = list.to.df(coding$values)
       if (nrow(v) == 0) next
@@ -123,12 +123,14 @@ amcat.codingjob.results <- function(conn, project, job) {
   
   has_scodings = "sentence" %in% names(codings)
   if (!has_scodings) codings$sentence = NA
-  acodings = subset(codings, is.na(sentence))
-  fields$artcoding = fields$id %in% acodings$field
-  acodings = dplyr::select(process.codings(acodings, fields, codes), -sentence)
-  articles
-  result = list(article.codings = merge(articles, acodings, all.x = T),
-                fields = fields)
+  has_acodings = any(is.na(codings$sentence))
+  result = list(fields = fields)
+  if (has_acodings) {
+    acodings = subset(codings, is.na(sentence))
+    fields$artcoding = fields$id %in% acodings$field
+    acodings = dplyr::select(process.codings(acodings, fields, codes), -sentence)
+    result[["article.codings"]] = merge(articles, acodings, all.x = T)
+  }
   if (has_scodings) {
     scodings = process.codings(subset(codings, !is.na(sentence)), fields, codes)
     result[["sentence.codings"]] = merge(dplyr::select(articles, -status, -comments), scodings)
