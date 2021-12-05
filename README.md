@@ -7,11 +7,10 @@ which has a number of useful functions for working with the AmCAT API in R.
 Installing
 ----
 
-You can install `amcatr` directly from this github repository uising devtools:
+You can install `amcatr` directly from this github repository uising `remotes`:
 
 ```
-if (!require(devtools)) {install.packages("devtools"); library(devtools)}
-install_github("amcat/amcat-r")
+remotes::install_github("amcat/amcat-r")
 ```
 
 Note: Every time you run the `install_github` command, 
